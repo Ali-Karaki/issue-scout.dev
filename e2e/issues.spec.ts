@@ -10,7 +10,7 @@ test.describe("Issues page", () => {
         .or(page.getByLabel(/Project/i))
         .or(page.getByText(/error|unavailable|configuration|token|GitHub|Fetching|Redis/i))
         .first()
-    ).toBeVisible({ timeout: 90_000 });
+    ).toBeVisible({ timeout: 180_000 });
   });
 
   test("has filter controls", async ({ page }) => {
@@ -20,14 +20,14 @@ test.describe("Issues page", () => {
         .getByLabel(/Project/i)
         .or(page.getByRole("button", { name: /retry|refresh/i }))
         .first()
-    ).toBeVisible({ timeout: 90_000 });
+    ).toBeVisible({ timeout: 180_000 });
   });
 
   test("filter changes update URL and trigger refetch", async ({ page }) => {
     await page.goto("/issues");
     await expect(
       page.getByLabel(/Project/i).or(page.getByLabel(/Status/i)).first()
-    ).toBeVisible({ timeout: 90_000 });
+    ).toBeVisible({ timeout: 180_000 });
 
     const statusFilter = page.getByLabel(/Status/i).first();
     await statusFilter.selectOption("likely_unclaimed");

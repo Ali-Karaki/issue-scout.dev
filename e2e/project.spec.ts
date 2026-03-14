@@ -14,7 +14,9 @@ test.describe("Project page", () => {
 
   test("shows 404 for invalid project id", async ({ page }) => {
     await page.goto("/project/invalid-id");
-    await expect(page.getByText(/Page not found|doesn't exist/i)).toBeVisible({
+    await expect(
+      page.getByRole("heading", { name: "Page not found" })
+    ).toBeVisible({
       timeout: 5000,
     });
   });
