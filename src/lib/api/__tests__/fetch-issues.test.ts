@@ -5,6 +5,7 @@ import {
   refreshAllProjects,
   type IssuesResponse,
 } from "../fetch-issues";
+import { PROJECTS } from "../../projects.config";
 import type { RawIssueWithPrCount } from "../../github";
 
 const mockGetIssuesForRepos = vi.fn();
@@ -117,28 +118,29 @@ describe("getIssuesFromCache", () => {
   });
 
   it('"all" projects merges per-project results when issues:all miss', async () => {
-    const tanstack = makeMockResponse("tanstack");
-    const vercel = makeMockResponse("vercel");
     mockHasKv.mockReturnValue(true);
-    mockKvGet
-      .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce(tanstack)
-      .mockResolvedValueOnce(vercel);
+    mockKvGet.mockImplementation((key: string) => {
+      if (key === "issues:all") return Promise.resolve(null);
+      const projectId = key.replace("issues:", "");
+      return Promise.resolve(makeMockResponse(projectId));
+    });
 
     const result = await getIssuesFromCache(null);
 
     expect(result).not.toBeNull();
-    expect(result!.issues).toHaveLength(2);
-    expect(result!.summary.total).toBe(2);
+    expect(result!.issues).toHaveLength(PROJECTS.length);
+    expect(result!.summary.total).toBe(PROJECTS.length);
     expect(mockKvGet).toHaveBeenCalledWith("issues:all");
   });
 
   it('"all" projects returns null when any cache miss', async () => {
     mockHasKv.mockReturnValue(true);
-    mockKvGet
-      .mockResolvedValueOnce(null)
-      .mockResolvedValueOnce(makeMockResponse("tanstack"))
-      .mockResolvedValueOnce(null);
+    mockKvGet.mockImplementation((key: string) => {
+      if (key === "issues:all") return Promise.resolve(null);
+      if (key === "issues:vercel") return Promise.resolve(null);
+      const projectId = key.replace("issues:", "");
+      return Promise.resolve(makeMockResponse(projectId));
+    });
 
     const result = await getIssuesFromCache(null);
 
@@ -214,10 +216,10 @@ describe("refreshAllProjects", () => {
     const result = await refreshAllProjects("token");
 
     expect(result.ok).toBe(true);
-    expect(result.projects).toHaveLength(2);
+    expect(result.projects).toHaveLength(PROJECTS.length);
     expect(result.projects.every((p) => p.ok)).toBe(true);
-    expect(mockGetIssuesForRepos).toHaveBeenCalledTimes(2);
-    expect(mockKvSet).toHaveBeenCalledTimes(3);
+    expect(mockGetIssuesForRepos).toHaveBeenCalledTimes(PROJECTS.length);
+    expect(mockKvSet).toHaveBeenCalledTimes(PROJECTS.length + 1);
   });
 
   it("returns error when KV not configured", async () => {
@@ -236,12 +238,13 @@ describe("refreshAllProjects", () => {
     mockKvSet.mockResolvedValue(true);
     mockGetIssuesForRepos
       .mockResolvedValueOnce({ raw: [], failedRepos: [] })
-      .mockRejectedValueOnce(new Error("GitHub API error"));
+      .mockRejectedValueOnce(new Error("GitHub API error"))
+      .mockResolvedValue({ raw: [], failedRepos: [] });
 
     const result = await refreshAllProjects("token");
 
     expect(result.ok).toBe(false);
-    expect(result.projects).toHaveLength(2);
+    expect(result.projects).toHaveLength(PROJECTS.length);
     const failed = result.projects.find((p) => !p.ok);
     expect(failed?.error).toBe("GitHub API error");
   });
