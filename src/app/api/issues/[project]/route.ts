@@ -2,10 +2,17 @@ import { NextRequest, NextResponse } from "next/server";
 import { PROJECTS } from "@/lib/projects.config";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import { hasKv } from "@/lib/kv";
-import { getIssuesFromCache } from "@/lib/api/fetch-issues";
+import {
+  getIssuesFromCache,
+  fetchIssuesFromGitHub,
+} from "@/lib/api/fetch-issues";
 import { CACHE_REVALIDATE_SECONDS } from "@/lib/constants";
 import { applyFiltersAndSort } from "@/lib/filters";
 import { paramsToFilters } from "@/lib/url-filters";
+
+function canUseDevFallback(): boolean {
+  return process.env.NODE_ENV !== "production";
+}
 
 export async function GET(
   request: NextRequest,
@@ -26,7 +33,7 @@ export async function GET(
       { status: 429, headers: { "Retry-After": "60" } }
     );
   }
-  if (!hasKv()) {
+  if (!hasKv() && !canUseDevFallback()) {
     return NextResponse.json(
       {
         error:
@@ -44,7 +51,11 @@ export async function GET(
     : 50;
 
   try {
-    const data = await getIssuesFromCache(project);
+    let data = hasKv() ? await getIssuesFromCache(project) : null;
+    if (!data && canUseDevFallback()) {
+      const token = process.env.GITHUB_TOKEN ?? "";
+      data = await fetchIssuesFromGitHub(project, token);
+    }
     if (!data) {
       return NextResponse.json(
         { error: "Data not yet available. Try again later." },

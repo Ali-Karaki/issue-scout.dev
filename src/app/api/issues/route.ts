@@ -1,11 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import { hasKv } from "@/lib/kv";
-import { getIssuesFromCache } from "@/lib/api/fetch-issues";
+import {
+  getIssuesFromCache,
+  fetchIssuesFromGitHub,
+} from "@/lib/api/fetch-issues";
 import { CACHE_REVALIDATE_SECONDS } from "@/lib/constants";
 import { PROJECTS } from "@/lib/projects.config";
 import { applyFiltersAndSort } from "@/lib/filters";
 import { paramsToFilters } from "@/lib/url-filters";
+
+function canUseDevFallback(): boolean {
+  return process.env.NODE_ENV !== "production";
+}
 
 export async function GET(request: NextRequest) {
   const ip = getClientIp(request);
@@ -15,7 +22,7 @@ export async function GET(request: NextRequest) {
       { status: 429, headers: { "Retry-After": "60" } }
     );
   }
-  if (!hasKv()) {
+  if (!hasKv() && !canUseDevFallback()) {
     return NextResponse.json(
       {
         error:
@@ -43,7 +50,11 @@ export async function GET(request: NextRequest) {
   const projectParam = project === "" ? null : project;
 
   try {
-    const data = await getIssuesFromCache(projectParam);
+    let data = hasKv() ? await getIssuesFromCache(projectParam) : null;
+    if (!data && canUseDevFallback()) {
+      const token = process.env.GITHUB_TOKEN ?? "";
+      data = await fetchIssuesFromGitHub(projectParam, token);
+    }
     if (!data) {
       return NextResponse.json(
         { error: "Data not yet available. Try again later." },

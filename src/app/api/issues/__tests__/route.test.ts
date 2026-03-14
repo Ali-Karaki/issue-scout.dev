@@ -59,7 +59,7 @@ describe("GET /api/issues", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    process.env = { ...originalEnv };
+    process.env = { ...originalEnv, NODE_ENV: "production" };
     mockCheckRateLimit.mockResolvedValue(true);
     mockGetClientIp.mockReturnValue("127.0.0.1");
     mockHasKv.mockReturnValue(true);
@@ -113,7 +113,7 @@ describe("GET /api/issues", () => {
     const body = await res.json();
 
     expect(res.status).toBe(500);
-    expect(body.error).toBe("Cache error");
+    expect(body.error).toBe("Internal server error"); // production mode hides error details
   });
 
   it("returns success with pagination and Cache-Control", async () => {

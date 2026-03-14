@@ -126,6 +126,39 @@ export async function refreshAllProjects(
 }
 
 /**
+ * Fetch issues directly from GitHub (no cache).
+ * Used as dev fallback when cache is empty or Redis not configured.
+ */
+export async function fetchIssuesFromGitHub(
+  projectId: string | null,
+  token: string
+): Promise<IssuesResponse> {
+  if (projectId) {
+    return fetchSingleProjectUncached(projectId, token);
+  }
+  const allData: IssuesResponse[] = [];
+  for (const proj of PROJECTS) {
+    const data = await fetchSingleProjectUncached(proj.id, token);
+    allData.push(data);
+  }
+  const allIssues = allData.flatMap((d) => d.issues);
+  const allFailedRepos = allData.flatMap((d) => d.summary.failedRepos);
+  return {
+    issues: allIssues,
+    summary: {
+      total: allIssues.length,
+      likelyUnclaimed: allIssues.filter(
+        (i) => i.status === "likely_unclaimed"
+      ).length,
+      beginnerFriendly: allIssues.filter((i) => i.isBeginnerFriendly).length,
+      stale: allIssues.filter((i) => i.isStale).length,
+      reposCovered: new Set(allIssues.map((i) => i.repo)).size,
+      failedRepos: allFailedRepos,
+    },
+  };
+}
+
+/**
  * Read issues from Upstash cache only. No GitHub API calls.
  * Returns null on cache miss.
  */
