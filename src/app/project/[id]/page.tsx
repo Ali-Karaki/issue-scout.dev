@@ -208,7 +208,7 @@ export default function ProjectPage() {
         <AnimatePresence>
           {isRevalidating && (
             <motion.div
-              className="absolute inset-0 z-10 flex items-start justify-center pt-8 bg-bg/60"
+              className="fixed inset-0 z-50 flex items-start justify-center pt-28 bg-bg/40"
               aria-live="polite"
               aria-busy="true"
               variants={fadeIn}
@@ -217,10 +217,10 @@ export default function ProjectPage() {
               exit="exit"
               transition={defaultTransition}
             >
-              <div className="flex flex-col items-center gap-2 rounded-lg bg-zinc-800/90 px-4 py-3 border border-zinc-600">
-                <div className="w-6 h-6 border-2 border-zinc-600 border-t-amber-500 rounded-full animate-spin" />
-                <span className="text-sm text-zinc-400">Updating results…</span>
-              </div>
+              <div
+                className="w-8 h-8 border-2 border-zinc-600 border-t-amber-500 rounded-full animate-spin"
+                aria-hidden="true"
+              />
             </motion.div>
           )}
         </AnimatePresence>
