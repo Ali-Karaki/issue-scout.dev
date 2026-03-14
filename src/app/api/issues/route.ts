@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
     );
   }
   const { searchParams } = new URL(request.url);
-  const project = searchParams.get("project");
+  const projectParams = searchParams.getAll("project").filter(Boolean);
   const rawPage = parseInt(searchParams.get("page") ?? "1", 10);
   const rawLimit = parseInt(searchParams.get("limit") ?? "50", 10);
   const page = Number.isFinite(rawPage) ? Math.max(1, rawPage) : 1;
@@ -37,14 +37,14 @@ export async function GET(request: NextRequest) {
     ? Math.min(100, Math.max(1, rawLimit))
     : 50;
 
-  if (project !== null && project !== "") {
-    const valid = PROJECTS.some((e) => e.id === project);
-    if (!valid) {
+  for (const p of projectParams) {
+    if (!PROJECTS.some((e) => e.id === p)) {
       return NextResponse.json({ error: "Invalid project" }, { status: 400 });
     }
   }
 
-  const projectParam = project === "" ? null : project;
+  const projectParam =
+    projectParams.length === 1 ? projectParams[0] : null;
 
   try {
     let data = hasKv() ? await getIssuesFromCache(projectParam) : null;

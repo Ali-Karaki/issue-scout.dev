@@ -16,7 +16,8 @@ export function PageTransition({ children, className }: PageTransitionProps) {
   const variants = reduceMotion ? fadeInUpReduced : fadeInUp;
 
   useEffect(() => {
-    setMounted(true);
+    const id = requestAnimationFrame(() => setMounted(true));
+    return () => cancelAnimationFrame(id);
   }, []);
 
   // Render plain div on server/first paint to avoid motion style hydration mismatch

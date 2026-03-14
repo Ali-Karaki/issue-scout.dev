@@ -62,7 +62,7 @@ export async function GET(
       );
     }
     const filters = paramsToFilters(searchParams);
-    filters.project = project;
+    filters.project = [project];
     const filteredIssues = applyFiltersAndSort(data.issues, filters, {
       skipProjectFilter: true,
     });

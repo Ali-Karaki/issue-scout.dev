@@ -17,13 +17,12 @@ export type SortColumn =
   | "comments";
 
 export interface FilterState {
-  project: string;
-  repo: string;
+  project: string[];
+  repo: string[];
   status: IssueStatus | "";
   beginnerOnly: boolean;
   excludeStale: boolean;
-  label: string;
-  tech: string;
+  tech: string[];
   sort: SortOption;
   sortColumn: SortColumn | null;
   sortDesc: boolean;
@@ -31,13 +30,12 @@ export interface FilterState {
 }
 
 export const INITIAL_FILTERS: FilterState = {
-  project: "",
-  repo: "",
+  project: [],
+  repo: [],
   status: "",
   beginnerOnly: false,
   excludeStale: false,
-  label: "",
-  tech: "",
+  tech: [],
   sort: "best_match",
   sortColumn: null,
   sortDesc: false,
@@ -59,25 +57,21 @@ export function applyFiltersAndSort(
         i.labels.some((l) => l.toLowerCase().includes(q))
     );
   }
-  if (!options?.skipProjectFilter && filters.project) {
-    result = result.filter((i) => i.project === filters.project);
+  if (!options?.skipProjectFilter && filters.project.length) {
+    const projectSet = new Set(filters.project);
+    result = result.filter((i) => projectSet.has(i.project));
   }
-  if (filters.repo) {
-    result = result.filter((i) => i.repo === filters.repo);
+  if (filters.repo.length) {
+    const repoSet = new Set(filters.repo);
+    result = result.filter((i) => repoSet.has(i.repo));
   }
   if (filters.status) {
     result = result.filter((i) => i.status === filters.status);
   }
-  if (filters.label) {
+  if (filters.tech.length) {
+    const techSet = new Set(filters.tech.map((t) => t.toLowerCase()));
     result = result.filter((i) =>
-      i.labels.some((l) => l.toLowerCase() === filters.label.toLowerCase())
-    );
-  }
-  if (filters.tech) {
-    result = result.filter((i) =>
-      (i.languages ?? []).some(
-        (l) => l.toLowerCase() === filters.tech.toLowerCase()
-      )
+      (i.languages ?? []).some((l) => techSet.has(l.toLowerCase()))
     );
   }
   if (filters.beginnerOnly) {

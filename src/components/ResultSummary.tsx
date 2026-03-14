@@ -2,6 +2,7 @@
 
 import { AnimatePresence, motion } from "motion/react";
 import { AnimatedNumber } from "@/components/AnimatedNumber";
+import { PROJECTS } from "@/lib/projects.config";
 import type { FilterState } from "@/lib/filters";
 
 interface ResultSummaryProps {
@@ -40,28 +41,26 @@ export function ResultSummary({
       remove: () => onRemoveFilter({ excludeStale: false }),
     });
   }
-  if (filters.repo) {
+  for (const r of filters.repo) {
     chips.push({
-      label: `Repo: ${filters.repo}`,
-      remove: () => onRemoveFilter({ repo: "" }),
+      label: `Repo: ${r}`,
+      remove: () =>
+        onRemoveFilter({ repo: filters.repo.filter((x) => x !== r) }),
     });
   }
-  if (filters.label) {
+  for (const t of filters.tech) {
     chips.push({
-      label: `Label: ${filters.label}`,
-      remove: () => onRemoveFilter({ label: "" }),
+      label: `Tech: ${t}`,
+      remove: () =>
+        onRemoveFilter({ tech: filters.tech.filter((x) => x !== t) }),
     });
   }
-  if (filters.tech) {
+  for (const p of filters.project) {
+    const name = PROJECTS.find((e) => e.id === p)?.name ?? p;
     chips.push({
-      label: `Tech: ${filters.tech}`,
-      remove: () => onRemoveFilter({ tech: "" }),
-    });
-  }
-  if (filters.project && filters.project !== initialFilters.project) {
-    chips.push({
-      label: `Project: ${filters.project}`,
-      remove: () => onRemoveFilter({ project: initialFilters.project }),
+      label: `Project: ${name}`,
+      remove: () =>
+        onRemoveFilter({ project: filters.project.filter((x) => x !== p) }),
     });
   }
 

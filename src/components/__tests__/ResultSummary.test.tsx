@@ -58,4 +58,46 @@ describe("ResultSummary", () => {
 
     expect(onRemoveFilter).toHaveBeenCalledWith({ beginnerOnly: false });
   });
+
+  it("renders one chip per selected repo and removes single value on click", () => {
+    const onRemoveFilter = vi.fn();
+
+    render(
+      <ResultSummary
+        count={3}
+        filters={{
+          ...INITIAL_FILTERS,
+          repo: ["a/b", "c/d"],
+        }}
+        initialFilters={INITIAL_FILTERS}
+        onRemoveFilter={onRemoveFilter}
+      />
+    );
+
+    expect(screen.getByText("Repo: a/b")).toBeInTheDocument();
+    expect(screen.getByText("Repo: c/d")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Remove Repo: a\/b filter/i }));
+    expect(onRemoveFilter).toHaveBeenCalledWith({ repo: ["c/d"] });
+  });
+
+  it("renders one chip per selected tech", () => {
+    const onRemoveFilter = vi.fn();
+
+    render(
+      <ResultSummary
+        count={5}
+        filters={{
+          ...INITIAL_FILTERS,
+          tech: ["TypeScript", "Python"],
+        }}
+        initialFilters={INITIAL_FILTERS}
+        onRemoveFilter={onRemoveFilter}
+      />
+    );
+
+    expect(screen.getByText("Tech: TypeScript")).toBeInTheDocument();
+    expect(screen.getByText("Tech: Python")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Remove Tech: Python filter/i }));
+    expect(onRemoveFilter).toHaveBeenCalledWith({ tech: ["TypeScript"] });
+  });
 });

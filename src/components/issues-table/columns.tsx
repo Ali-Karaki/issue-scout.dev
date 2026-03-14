@@ -28,22 +28,22 @@ export function createColumns(): ColumnDef<NormalizedIssue>[] {
       cell: ({ row }) => {
         const issue = row.original;
         const title = issue.title ?? "";
-        const displayTitle = title.length > 80 ? title.slice(0, 80) + "…" : title;
         return (
           <div className="min-w-0 overflow-hidden">
             <a
               href={issue.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-zinc-200 hover:text-amber-400 font-medium no-underline truncate block focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 focus:ring-offset-bg rounded"
+              className="text-zinc-200 hover:text-amber-400 font-medium no-underline break-words block focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 focus:ring-offset-bg rounded"
+              style={{
+                display: "-webkit-box",
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: "vertical",
+                overflow: "hidden",
+              }}
             >
-              {displayTitle}
+              {title}
             </a>
-            {issue.explanation && (
-              <p className="text-xs text-zinc-500 mt-0.5 truncate" title={issue.explanation}>
-                {issue.explanation}
-              </p>
-            )}
           </div>
         );
       },
@@ -63,6 +63,22 @@ export function createColumns(): ColumnDef<NormalizedIssue>[] {
       },
     },
     {
+      id: "tech",
+      accessorFn: (row) => (row.languages ?? []).join(", "),
+      header: "Tech",
+      cell: ({ row }) => {
+        const langs = row.original.languages ?? [];
+        if (langs.length === 0) {
+          return <span className="text-zinc-600">—</span>;
+        }
+        return (
+          <div className="text-zinc-400 text-xs min-w-0 max-w-[120px] truncate" title={langs.join(", ")}>
+            {langs.join(", ")}
+          </div>
+        );
+      },
+    },
+    {
       id: "claim",
       accessorKey: "status",
       header: "Claim",
@@ -70,10 +86,17 @@ export function createColumns(): ColumnDef<NormalizedIssue>[] {
         const { status } = row.original;
         return (
           <span
-            className={`text-xs px-2 py-0.5 rounded border font-medium w-fit ${STATUS_STYLES[status]}`}
+            className={`text-xs px-2 py-0.5 rounded border font-medium w-fit ${status === "possible_wip" ? "inline-flex flex-col items-center" : ""} ${STATUS_STYLES[status]}`}
             title={getClaimStatusTooltip(status)}
           >
-            {getClaimStatusLabel(status)}
+            {status === "possible_wip" ? (
+              <>
+                <span>Possibly</span>
+                <span>active</span>
+              </>
+            ) : (
+              getClaimStatusLabel(status)
+            )}
           </span>
         );
       },
@@ -117,8 +140,8 @@ export function createColumns(): ColumnDef<NormalizedIssue>[] {
         const { comments, matchedOpenPrs } = row.original;
         return (
           <div className="text-zinc-500 text-xs shrink-0">
-            {comments} comments
-            {matchedOpenPrs > 0 && ` · ${matchedOpenPrs} PR refs`}
+            <div>{comments} comments</div>
+            <div>{matchedOpenPrs} PR refs</div>
           </div>
         );
       },

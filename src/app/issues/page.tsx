@@ -7,7 +7,6 @@ import { IssueFilters } from "@/components/IssueFilters";
 import { IssueCard } from "@/components/IssueCard";
 import { IssuesTable } from "@/components/issues-table/IssuesTable";
 import { Pagination } from "@/components/Pagination";
-import { ResultSummary } from "@/components/ResultSummary";
 import { AnimatePresence, motion } from "motion/react";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { formatUpdatedAgo } from "@/lib/utils";
@@ -90,15 +89,6 @@ export default function IssuesPage() {
     return [...new Set(data.issues.map((i) => i.repo))].sort();
   }, [data]);
 
-  const labels = useMemo(() => {
-    if (!data) return [];
-    const set = new Set<string>();
-    for (const i of data.issues) {
-      for (const l of i.labels) set.add(l);
-    }
-    return [...set].sort();
-  }, [data]);
-
   const techs = useMemo(() => {
     if (!data) return [];
     const set = new Set<string>();
@@ -113,7 +103,7 @@ export default function IssuesPage() {
   if (loading) {
     return (
       <div
-        className="max-w-4xl mx-auto px-6 py-12"
+        className="max-w-7xl mx-auto px-6 py-12"
         aria-busy="true"
         aria-live="polite"
       >
@@ -125,7 +115,7 @@ export default function IssuesPage() {
   if (error) {
     return (
       <div
-        className="max-w-4xl mx-auto px-6 py-12"
+        className="max-w-7xl mx-auto px-6 py-12"
         aria-live="polite"
       >
         <motion.div
@@ -152,11 +142,8 @@ export default function IssuesPage() {
     return null;
   }
 
-  const displayCount = data.filteredSummary?.total ?? total;
-  const totalCount = data.summary.total;
-
   return (
-    <div className="max-w-4xl mx-auto px-6 py-8">
+    <div className="max-w-7xl mx-auto px-6 py-8">
       <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
         <h1 className="text-xl font-semibold text-zinc-100">Issues</h1>
         <button
@@ -174,19 +161,20 @@ export default function IssuesPage() {
         filters={filters}
         onChange={updateFilters}
         repos={repos}
-        labels={labels}
         techs={techs}
         initialFilters={INITIAL_FILTERS}
         onClear={() => updateFilters(INITIAL_FILTERS)}
         showProject={true}
       />
 
-      <ResultSummary
-        count={displayCount}
-        total={totalCount}
-        filters={filters}
-        initialFilters={INITIAL_FILTERS}
-        onRemoveFilter={(updates) => updateFilters({ ...filters, ...updates })}
+      <SummaryBar
+        total={data.summary.total}
+        likelyUnclaimed={data.summary.likelyUnclaimed}
+        beginnerFriendly={data.summary.beginnerFriendly}
+        stale={data.summary.stale}
+        reposCovered={data.summary.reposCovered}
+        failedRepos={data.summary.failedRepos}
+        filteredSummary={data.filteredSummary}
       />
 
       <div className="relative space-y-4">
@@ -249,16 +237,6 @@ export default function IssuesPage() {
           </>
         )}
       </div>
-
-      <SummaryBar
-        total={data.summary.total}
-        likelyUnclaimed={data.summary.likelyUnclaimed}
-        beginnerFriendly={data.summary.beginnerFriendly}
-        stale={data.summary.stale}
-        reposCovered={data.summary.reposCovered}
-        failedRepos={data.summary.failedRepos}
-        filteredSummary={data.filteredSummary}
-      />
     </div>
   );
 }

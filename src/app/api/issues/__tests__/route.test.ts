@@ -278,4 +278,46 @@ describe("GET /api/issues", () => {
     expect(body.pagination.total).toBe(3);
     expect(body.issues.every((i: { languages: string[] }) => i.languages?.includes("TypeScript"))).toBe(true);
   });
+
+  it("applies multi-tech filter server-side", async () => {
+    const data = makeMockResponse(10);
+    data.issues = data.issues.map((issue, i) => ({
+      ...issue,
+      id: `owner/repo#${i + 1}`,
+      languages: i < 3 ? ["TypeScript"] : i < 6 ? ["Python"] : ["Rust"],
+    }));
+    mockGetIssuesFromCache.mockResolvedValue(data);
+
+    const req = new NextRequest(
+      "http://localhost:3000/api/issues?tech=TypeScript&tech=Python&page=1&limit=50"
+    );
+    const res = await GET(req);
+    const body = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(body.issues).toHaveLength(6);
+    expect(body.pagination.total).toBe(6);
+  });
+
+  it("applies multi-repo filter server-side", async () => {
+    const data = makeMockResponse(6);
+    data.issues = data.issues.map((issue, i) => ({
+      ...issue,
+      id: `repo-${i}#1`,
+      repo: i < 2 ? "a/b" : i < 4 ? "c/d" : "e/f",
+    }));
+    mockGetIssuesFromCache.mockResolvedValue(data);
+
+    const req = new NextRequest(
+      "http://localhost:3000/api/issues?repo=a%2Fb&repo=e%2Ff&page=1&limit=50"
+    );
+    const res = await GET(req);
+    const body = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(body.issues).toHaveLength(4);
+    expect(body.pagination.total).toBe(4);
+    expect(body.issues.every((i: { repo: string }) => ["a/b", "e/f"].includes(i.repo))).toBe(true);
+  });
+
 });

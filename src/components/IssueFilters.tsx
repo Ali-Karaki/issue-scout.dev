@@ -5,6 +5,14 @@ import { AnimatePresence, motion } from "motion/react";
 import { PROJECTS } from "@/lib/projects.config";
 import type { FilterState, SortOption } from "@/lib/filters";
 import { CLAIM_STATUS, BEGINNER } from "@/lib/terminology";
+import { MultiSelectFilter } from "@/components/MultiSelectFilter";
+
+function arraysEqual(a: string[], b: string[]): boolean {
+  if (a.length !== b.length) return false;
+  const sortedA = [...a].sort();
+  const sortedB = [...b].sort();
+  return sortedA.every((v, i) => v === sortedB[i]);
+}
 
 export type { FilterState, SortOption };
 
@@ -20,7 +28,6 @@ interface IssueFiltersProps {
   filters: FilterState;
   onChange: (filters: FilterState) => void;
   repos: string[];
-  labels: string[];
   techs: string[];
   initialFilters?: FilterState;
   onClear?: () => void;
@@ -31,7 +38,6 @@ export function IssueFilters({
   filters,
   onChange,
   repos,
-  labels,
   techs,
   initialFilters,
   onClear,
@@ -45,19 +51,18 @@ export function IssueFilters({
     [filters, onChange]
   );
 
-  const hasActiveFilters = initialFilters && (
-    filters.q !== initialFilters.q ||
-    filters.project !== initialFilters.project ||
-    filters.repo !== initialFilters.repo ||
-    filters.status !== initialFilters.status ||
-    filters.label !== initialFilters.label ||
-    filters.tech !== initialFilters.tech ||
-    filters.sort !== initialFilters.sort ||
-    filters.sortColumn !== initialFilters.sortColumn ||
-    filters.sortDesc !== initialFilters.sortDesc ||
-    filters.beginnerOnly !== initialFilters.beginnerOnly ||
-    filters.excludeStale !== initialFilters.excludeStale
-  );
+  const hasActiveFilters =
+    initialFilters &&
+    (filters.q !== initialFilters.q ||
+      !arraysEqual(filters.project, initialFilters.project) ||
+      !arraysEqual(filters.repo, initialFilters.repo) ||
+      filters.status !== initialFilters.status ||
+      !arraysEqual(filters.tech, initialFilters.tech) ||
+      filters.sort !== initialFilters.sort ||
+      filters.sortColumn !== initialFilters.sortColumn ||
+      filters.sortDesc !== initialFilters.sortDesc ||
+      filters.beginnerOnly !== initialFilters.beginnerOnly ||
+      filters.excludeStale !== initialFilters.excludeStale);
 
   const unclaimedActive =
     filters.status === "likely_unclaimed" && filters.excludeStale;
@@ -175,111 +180,35 @@ export function IssueFilters({
           >
             <div className="flex flex-wrap items-end gap-x-6 gap-y-3 p-3">
           {showProject && (
-            <div className="min-w-[140px]">
-              <label
-                htmlFor="filter-project"
-                className="block text-xs text-zinc-500 mb-1"
-              >
-                Project
-              </label>
-              <div className={selectWrapperClass}>
-                <select
-                  id="filter-project"
-                  value={filters.project}
-                  onChange={(e) => update("project", e.target.value)}
-                  className={selectClass}
-                >
-                  <option value="">All</option>
-                  {PROJECTS.map((e) => (
-                    <option key={e.id} value={e.id}>
-                      {e.name}
-                    </option>
-                  ))}
-                </select>
-                <span className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-400 text-xs">
-                  ▼
-                </span>
-              </div>
-            </div>
+            <MultiSelectFilter
+              id="filter-project"
+              label="Project"
+              options={PROJECTS.map((e) => e.id)}
+              selected={filters.project}
+              onChange={(selected) => onChange({ ...filters, project: selected })}
+              placeholder="All projects"
+              optionLabels={Object.fromEntries(PROJECTS.map((e) => [e.id, e.name]))}
+              className="min-w-[140px]"
+            />
           )}
-          <div className="min-w-[180px]">
-            <label
-              htmlFor="filter-repo"
-              className="block text-xs text-zinc-500 mb-1"
-            >
-              Repo
-            </label>
-            <div className={selectWrapperClass}>
-              <select
-                id="filter-repo"
-                value={filters.repo}
-                onChange={(e) => update("repo", e.target.value)}
-                className={`${selectClass} min-w-[180px]`}
-              >
-                <option value="">All</option>
-                {repos.map((r) => (
-                  <option key={r} value={r}>
-                    {r}
-                  </option>
-                ))}
-              </select>
-              <span className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-400 text-xs">
-                ▼
-              </span>
-            </div>
-          </div>
-          <div className="min-w-[140px]">
-            <label
-              htmlFor="filter-label"
-              className="block text-xs text-zinc-500 mb-1"
-            >
-              Label
-            </label>
-            <div className={selectWrapperClass}>
-              <select
-                id="filter-label"
-                value={filters.label}
-                onChange={(e) => update("label", e.target.value)}
-                className={`${selectClass} min-w-[140px]`}
-              >
-                <option value="">All</option>
-                {labels.map((l) => (
-                  <option key={l} value={l}>
-                    {l}
-                  </option>
-                ))}
-              </select>
-              <span className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-400 text-xs">
-                ▼
-              </span>
-            </div>
-          </div>
-          <div className="min-w-[140px]">
-            <label
-              htmlFor="filter-tech"
-              className="block text-xs text-zinc-500 mb-1"
-            >
-              Tech
-            </label>
-            <div className={selectWrapperClass}>
-              <select
-                id="filter-tech"
-                value={filters.tech}
-                onChange={(e) => update("tech", e.target.value)}
-                className={`${selectClass} min-w-[140px]`}
-              >
-                <option value="">All</option>
-                {techs.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
-                ))}
-              </select>
-              <span className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-400 text-xs">
-                ▼
-              </span>
-            </div>
-          </div>
+          <MultiSelectFilter
+            id="filter-repo"
+            label="Repo"
+            options={repos}
+            selected={filters.repo}
+            onChange={(selected) => onChange({ ...filters, repo: selected })}
+            placeholder="All repos"
+            className="min-w-[180px]"
+          />
+          <MultiSelectFilter
+            id="filter-tech"
+            label="Tech"
+            options={techs}
+            selected={filters.tech}
+            onChange={(selected) => onChange({ ...filters, tech: selected })}
+            placeholder="All tech"
+            className="min-w-[140px]"
+          />
           <div className="flex items-center gap-4 flex-wrap">
             <label className="flex items-center gap-2 text-sm text-zinc-400 cursor-pointer">
               <input

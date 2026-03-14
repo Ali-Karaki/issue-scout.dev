@@ -11,9 +11,17 @@ describe("filtersToParams", () => {
   it("serializes project", () => {
     const params = filtersToParams({
       ...INITIAL_FILTERS,
-      project: "tanstack",
+      project: ["tanstack"],
     });
-    expect(params.get("project")).toBe("tanstack");
+    expect(params.getAll("project")).toEqual(["tanstack"]);
+  });
+
+  it("serializes multiple projects", () => {
+    const params = filtersToParams({
+      ...INITIAL_FILTERS,
+      project: ["tanstack", "vercel"],
+    });
+    expect(params.getAll("project")).toEqual(["tanstack", "vercel"]);
   });
 
   it("serializes boolean filters", () => {
@@ -29,7 +37,13 @@ describe("paramsToFilters", () => {
   it("parses project", () => {
     const params = new URLSearchParams("project=tanstack");
     const filters = paramsToFilters(params);
-    expect(filters.project).toBe("tanstack");
+    expect(filters.project).toEqual(["tanstack"]);
+  });
+
+  it("parses multiple projects", () => {
+    const params = new URLSearchParams("project=tanstack&project=vercel");
+    const filters = paramsToFilters(params);
+    expect(filters.project).toEqual(["tanstack", "vercel"]);
   });
 
   it("parses boolean from 1", () => {
@@ -41,14 +55,28 @@ describe("paramsToFilters", () => {
   it("round-trips filters", () => {
     const original: typeof INITIAL_FILTERS = {
       ...INITIAL_FILTERS,
-      project: "vercel",
+      project: ["vercel"],
       status: "likely_unclaimed",
       beginnerOnly: true,
     };
     const params = filtersToParams(original);
     const parsed = paramsToFilters(params);
-    expect(parsed.project).toBe(original.project);
+    expect(parsed.project).toEqual(original.project);
     expect(parsed.status).toBe(original.status);
     expect(parsed.beginnerOnly).toBe(original.beginnerOnly);
+  });
+
+  it("round-trips multi repo and tech", () => {
+    const original: typeof INITIAL_FILTERS = {
+      ...INITIAL_FILTERS,
+      repo: ["a/b", "c/d"],
+      tech: ["TypeScript", "JavaScript"],
+    };
+    const params = filtersToParams(original);
+    expect(params.getAll("repo")).toEqual(["a/b", "c/d"]);
+    expect(params.getAll("tech")).toEqual(["TypeScript", "JavaScript"]);
+    const parsed = paramsToFilters(params);
+    expect(parsed.repo).toEqual(["a/b", "c/d"]);
+    expect(parsed.tech).toEqual(["TypeScript", "JavaScript"]);
   });
 });

@@ -40,7 +40,7 @@ function buildUrl(base: string, page: number, filters: FilterState): string {
   params.set("limit", String(DEFAULT_LIMIT));
   const filterParams = filtersToParams(filters);
   filterParams.forEach((value, key) => {
-    params.set(key, value);
+    params.append(key, value);
   });
   const sep = base.includes("?") ? "&" : "?";
   return base + sep + params.toString();

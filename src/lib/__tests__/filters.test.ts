@@ -40,7 +40,7 @@ describe("applyFiltersAndSort", () => {
     ];
     const result = applyFiltersAndSort(issues, {
       ...INITIAL_FILTERS,
-      project: "tanstack",
+      project: ["tanstack"],
     });
     expect(result).toHaveLength(1);
     expect(result[0].project).toBe("tanstack");
@@ -53,7 +53,7 @@ describe("applyFiltersAndSort", () => {
     ];
     const result = applyFiltersAndSort(issues, {
       ...INITIAL_FILTERS,
-      project: "tanstack",
+      project: ["tanstack"],
     }, { skipProjectFilter: true });
     expect(result).toHaveLength(2);
   });
@@ -78,10 +78,24 @@ describe("applyFiltersAndSort", () => {
     ];
     const result = applyFiltersAndSort(issues, {
       ...INITIAL_FILTERS,
-      repo: "owner/repo",
+      repo: ["owner/repo"],
     });
     expect(result).toHaveLength(1);
     expect(result[0].repo).toBe("owner/repo");
+  });
+
+  it("filters by multiple repos", () => {
+    const issues = [
+      makeIssue({ id: "1", repo: "a/b" }),
+      makeIssue({ id: "2", repo: "c/d" }),
+      makeIssue({ id: "3", repo: "e/f" }),
+    ];
+    const result = applyFiltersAndSort(issues, {
+      ...INITIAL_FILTERS,
+      repo: ["a/b", "e/f"],
+    });
+    expect(result).toHaveLength(2);
+    expect(result.map((i) => i.repo).sort()).toEqual(["a/b", "e/f"]);
   });
 
   it("sorts by recently_updated (newest first)", () => {
@@ -170,9 +184,49 @@ describe("applyFiltersAndSort", () => {
     ];
     const result = applyFiltersAndSort(issues, {
       ...INITIAL_FILTERS,
-      tech: "TypeScript",
+      tech: ["TypeScript"],
     });
     expect(result).toHaveLength(1);
     expect(result[0].id).toBe("1");
   });
+
+  it("filters by multiple tech", () => {
+    const issues = [
+      makeIssue({ id: "1", languages: ["TypeScript"] }),
+      makeIssue({ id: "2", languages: ["Python"] }),
+      makeIssue({ id: "3", languages: ["Rust"] }),
+    ];
+    const result = applyFiltersAndSort(issues, {
+      ...INITIAL_FILTERS,
+      tech: ["TypeScript", "Python"],
+    });
+    expect(result).toHaveLength(2);
+    expect(result.map((i) => i.id).sort()).toEqual(["1", "2"]);
+  });
+
+  it("filters tech case-insensitively", () => {
+    const issues = [
+      makeIssue({ id: "1", languages: ["typescript"] }),
+      makeIssue({ id: "2", languages: ["TypeScript"] }),
+    ];
+    const result = applyFiltersAndSort(issues, {
+      ...INITIAL_FILTERS,
+      tech: ["TYPESCRIPT"],
+    });
+    expect(result).toHaveLength(2);
+  });
+
+  it("handles issues with missing or empty languages", () => {
+    const issues = [
+      makeIssue({ id: "1", languages: ["TypeScript"] }),
+      makeIssue({ id: "2", languages: [] }),
+    ];
+    const result = applyFiltersAndSort(issues, {
+      ...INITIAL_FILTERS,
+      tech: ["TypeScript"],
+    });
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe("1");
+  });
+
 });

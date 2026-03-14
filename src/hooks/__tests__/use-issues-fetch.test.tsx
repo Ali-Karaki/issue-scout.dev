@@ -175,4 +175,30 @@ describe("useIssuesFetch", () => {
     );
     expect(result.current.page).toBe(2);
   });
+
+  it("includes multi-value params in URL for repo and tech", () => {
+    useSWRMock.mockImplementation((key) => ({
+      data: key ? makeMockResponse(1) : undefined,
+      error: null,
+      isLoading: false,
+      isValidating: false,
+      mutate: mockMutate,
+    }) as ReturnType<typeof useSWR>);
+
+    const filtersWithMulti = {
+      ...INITIAL_FILTERS,
+      repo: ["a/b", "c/d"],
+      tech: ["TypeScript", "Python"],
+    };
+
+    renderHook(() =>
+      useIssuesFetch("/api/issues", filtersWithMulti, 1)
+    );
+
+    const swrKey = useSWRMock.mock.calls[0][0] as string;
+    expect(swrKey).toContain("repo=a%2Fb");
+    expect(swrKey).toContain("repo=c%2Fd");
+    expect(swrKey).toContain("tech=TypeScript");
+    expect(swrKey).toContain("tech=Python");
+  });
 });

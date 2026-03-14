@@ -8,7 +8,6 @@ import { IssueFilters } from "@/components/IssueFilters";
 import { IssueCard } from "@/components/IssueCard";
 import { IssuesTable } from "@/components/issues-table/IssuesTable";
 import { Pagination } from "@/components/Pagination";
-import { ResultSummary } from "@/components/ResultSummary";
 import { AnimatePresence, motion } from "motion/react";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { formatUpdatedAgo } from "@/lib/utils";
@@ -26,10 +25,10 @@ export default function ProjectPage() {
   const projectConfig = PROJECTS.find((e) => e.id === id);
   const [filters, setFilters] = useState<FilterState>(() => {
     const urlParams = new URLSearchParams(searchParams.toString());
-    const base = { ...INITIAL_FILTERS, project: id ?? "" };
+    const base = { ...INITIAL_FILTERS, project: id ? [id] : [] };
     if (urlParams.toString()) {
       const fromUrl = paramsToFilters(urlParams);
-      return { ...base, ...fromUrl, project: id ?? "" };
+      return { ...base, ...fromUrl, project: id ? [id] : [] };
     }
     return base;
   });
@@ -46,7 +45,7 @@ export default function ProjectPage() {
 
   const updateFilters = useCallback(
     (newFilters: FilterState, resetPage = true) => {
-      const merged = { ...newFilters, project: id ?? "" };
+      const merged = { ...newFilters, project: id ? [id] : [] };
       setFilters(merged);
       const newPage = resetPage ? 1 : page;
       if (resetPage) setPage(1);
@@ -62,7 +61,7 @@ export default function ProjectPage() {
   const handlePageChange = useCallback(
     (newPage: number) => {
       setPage(newPage);
-      const urlParams = filtersToParams({ ...filters, project: id ?? "" });
+      const urlParams = filtersToParams({ ...filters, project: id ? [id] : [] });
       urlParams.set("page", String(newPage));
       const qs = urlParams.toString();
       const url = qs ? `${pathname}?${qs}` : pathname;
@@ -79,14 +78,14 @@ export default function ProjectPage() {
   );
 
   useEffect(() => {
-    setFilters((prev) => ({ ...prev, project: id ?? "" }));
+    setFilters((prev) => ({ ...prev, project: id ? [id] : [] }));
   }, [id]);
 
   useEffect(() => {
     const onPopState = () => {
       const urlParams = new URLSearchParams(window.location.search);
-      const base = { ...INITIAL_FILTERS, project: id ?? "" };
-      setFilters(urlParams.toString() ? { ...base, ...paramsToFilters(urlParams), project: id ?? "" } : base);
+      const base = { ...INITIAL_FILTERS, project: id ? [id] : [] };
+      setFilters(urlParams.toString() ? { ...base, ...paramsToFilters(urlParams), project: id ? [id] : [] } : base);
       const p = parseInt(urlParams.get("page") ?? "1", 10);
       setPage(Number.isFinite(p) && p >= 1 ? p : 1);
     };
@@ -97,7 +96,7 @@ export default function ProjectPage() {
   useEffect(() => {
     const urlParams = new URLSearchParams(searchParams.toString());
     if (urlParams.toString()) {
-      setFilters((prev) => ({ ...prev, ...paramsToFilters(urlParams), project: id ?? "" }));
+      setFilters((prev) => ({ ...prev, ...paramsToFilters(urlParams), project: id ? [id] : [] }));
       const p = parseInt(urlParams.get("page") ?? "1", 10);
       setPage(Number.isFinite(p) && p >= 1 ? p : 1);
     }
@@ -107,15 +106,6 @@ export default function ProjectPage() {
   const repos = useMemo(() => {
     if (!data) return [];
     return [...new Set(data.issues.map((i) => i.repo))].sort();
-  }, [data]);
-
-  const labels = useMemo(() => {
-    if (!data) return [];
-    const set = new Set<string>();
-    for (const i of data.issues) {
-      for (const l of i.labels) set.add(l);
-    }
-    return [...set].sort();
   }, [data]);
 
   const techs = useMemo(() => {
@@ -135,7 +125,7 @@ export default function ProjectPage() {
 
   if (loading) {
     return (
-      <div className="max-w-4xl mx-auto px-6 py-12">
+      <div className="max-w-7xl mx-auto px-6 py-12">
         <LoadingSpinner />
       </div>
     );
@@ -144,7 +134,7 @@ export default function ProjectPage() {
   if (error) {
     return (
       <div
-        className="max-w-4xl mx-auto px-6 py-12"
+        className="max-w-7xl mx-auto px-6 py-12"
         aria-live="polite"
       >
         <motion.div
@@ -171,12 +161,9 @@ export default function ProjectPage() {
     return null;
   }
 
-  const initialFilters = { ...INITIAL_FILTERS, project: id };
-  const displayCount = data.filteredSummary?.total ?? total;
-  const totalCount = data.summary.total;
-
+  const initialFilters = { ...INITIAL_FILTERS, project: id ? [id] : [] };
   return (
-    <div className="max-w-4xl mx-auto px-6 py-8">
+    <div className="max-w-7xl mx-auto px-6 py-8">
       <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
         <div>
           <h1 className="text-xl font-semibold text-zinc-100">
@@ -199,19 +186,20 @@ export default function ProjectPage() {
         filters={filters}
         onChange={updateFilters}
         repos={repos}
-        labels={labels}
         techs={techs}
         initialFilters={initialFilters}
         onClear={() => updateFilters(initialFilters)}
         showProject={false}
       />
 
-      <ResultSummary
-        count={displayCount}
-        total={totalCount}
-        filters={filters}
-        initialFilters={initialFilters}
-        onRemoveFilter={(updates) => updateFilters({ ...filters, ...updates })}
+      <SummaryBar
+        total={data.summary.total}
+        likelyUnclaimed={data.summary.likelyUnclaimed}
+        beginnerFriendly={data.summary.beginnerFriendly}
+        stale={data.summary.stale}
+        reposCovered={data.summary.reposCovered}
+        failedRepos={data.summary.failedRepos}
+        filteredSummary={data.filteredSummary}
       />
 
       <div className="relative space-y-4">
@@ -274,16 +262,6 @@ export default function ProjectPage() {
           </>
         )}
       </div>
-
-      <SummaryBar
-        total={data.summary.total}
-        likelyUnclaimed={data.summary.likelyUnclaimed}
-        beginnerFriendly={data.summary.beginnerFriendly}
-        stale={data.summary.stale}
-        reposCovered={data.summary.reposCovered}
-        failedRepos={data.summary.failedRepos}
-        filteredSummary={data.filteredSummary}
-      />
     </div>
   );
 }

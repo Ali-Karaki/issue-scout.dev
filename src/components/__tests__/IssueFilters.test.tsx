@@ -4,13 +4,12 @@ import { IssueFilters } from "../IssueFilters";
 import type { FilterState } from "@/lib/filters";
 
 const mockFilters: FilterState = {
-  project: "",
-  repo: "",
+  project: [],
+  repo: [],
   status: "",
   beginnerOnly: false,
   excludeStale: false,
-  label: "",
-  tech: "",
+  tech: [],
   sort: "best_match",
   sortColumn: null,
   sortDesc: false,
@@ -25,7 +24,6 @@ describe("IssueFilters", () => {
         filters={mockFilters}
         onChange={onChange}
         repos={[]}
-        labels={[]}
         techs={[]}
       />
     );
@@ -36,12 +34,11 @@ describe("IssueFilters", () => {
 
   it("calls onChange when project is changed", () => {
     const onChange = vi.fn();
-    const { container } = render(
+    const { container, getByRole, getByText } = render(
       <IssueFilters
         filters={mockFilters}
         onChange={onChange}
         repos={["owner/repo"]}
-        labels={["bug"]}
         techs={[]}
         showProject={true}
       />
@@ -50,11 +47,11 @@ describe("IssueFilters", () => {
       (b) => b.textContent?.trim().startsWith("More filters")
     );
     fireEvent.click(moreFiltersBtn!);
-    const selects = container.querySelectorAll("select");
-    const projectSelect = selects[1];
-    fireEvent.change(projectSelect, { target: { value: "tanstack" } });
+    const projectButton = getByRole("button", { name: "Project: All projects" });
+    fireEvent.click(projectButton);
+    fireEvent.click(getByText("TanStack"));
     expect(onChange).toHaveBeenCalledWith(
-      expect.objectContaining({ project: "tanstack" })
+      expect.objectContaining({ project: ["tanstack"] })
     );
   });
 
@@ -65,7 +62,6 @@ describe("IssueFilters", () => {
         filters={mockFilters}
         onChange={onChange}
         repos={[]}
-        labels={[]}
         techs={[]}
       />
     );
@@ -86,7 +82,6 @@ describe("IssueFilters", () => {
         filters={mockFilters}
         onChange={onChange}
         repos={[]}
-        labels={[]}
         techs={[]}
       />
     );

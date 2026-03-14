@@ -44,10 +44,17 @@ export function IssueCard({ issue, compact = false }: IssueCardProps) {
         </a>
         <div className="flex items-center gap-2 shrink-0">
           <span
-            className={`text-xs px-2 py-0.5 rounded border font-medium ${STATUS_STYLES[issue.status]}`}
+            className={`text-xs px-2 py-0.5 rounded border font-medium ${issue.status === "possible_wip" ? "inline-flex flex-col items-center" : ""} ${STATUS_STYLES[issue.status]}`}
             title={getClaimStatusTooltip(issue.status)}
           >
-            {getClaimStatusLabel(issue.status)}
+            {issue.status === "possible_wip" ? (
+              <>
+                <span>Possibly</span>
+                <span>active</span>
+              </>
+            ) : (
+              getClaimStatusLabel(issue.status)
+            )}
           </span>
           {issue.isBeginnerFriendly && (
             <span className="text-xs px-2 py-0.5 rounded bg-amber-900/50 text-amber-400 border border-amber-700">

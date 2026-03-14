@@ -43,13 +43,13 @@ export function IssuesTable({
     <div className="w-full min-w-0">
       <table className="w-full min-w-0 table-fixed border-collapse text-sm">
         <colgroup>
-          <col style={{ width: "32%" }} />
-          <col style={{ width: "15%" }} />
+          <col style={{ width: "24%" }} />
+          <col style={{ width: "18%" }} />
           <col style={{ width: "12%" }} />
           <col style={{ width: "10%" }} />
           <col style={{ width: "10%" }} />
-          <col style={{ width: "15%" }} />
-          <col style={{ width: "6%" }} />
+          <col style={{ width: "8%" }} />
+          <col style={{ width: "12%" }} />
         </colgroup>
         <thead>
           {table.getHeaderGroups().map((headerGroup) => (

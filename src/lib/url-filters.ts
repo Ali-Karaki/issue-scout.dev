@@ -13,11 +13,10 @@ const SORT_COLUMNS: SortColumn[] = [
 export function filtersToParams(filters: FilterState): URLSearchParams {
   const params = new URLSearchParams();
   if (filters.q.trim()) params.set("q", filters.q.trim());
-  if (filters.project) params.set("project", filters.project);
-  if (filters.repo) params.set("repo", filters.repo);
+  filters.project.forEach((p) => params.append("project", p));
+  filters.repo.forEach((r) => params.append("repo", r));
   if (filters.status) params.set("status", filters.status);
-  if (filters.label) params.set("label", filters.label);
-  if (filters.tech) params.set("tech", filters.tech);
+  filters.tech.forEach((t) => params.append("tech", t));
   if (filters.beginnerOnly) params.set("beginnerOnly", "1");
   if (filters.excludeStale) params.set("excludeStale", "1");
   if (filters.sort && filters.sort !== "best_match")
@@ -39,10 +38,9 @@ export function paramsToFilters(params: URLSearchParams): FilterState {
   const filters: FilterState = { ...INITIAL_FILTERS };
   const q = params.get("q");
   if (q) filters.q = q;
-  const project = params.get("project");
-  if (project) filters.project = project;
-  const repo = params.get("repo");
-  if (repo) filters.repo = repo;
+  filters.project = params.getAll("project").filter(Boolean);
+  filters.repo = params.getAll("repo");
+  filters.tech = params.getAll("tech").filter(Boolean);
   const status = params.get("status");
   if (
     status &&
@@ -51,10 +49,6 @@ export function paramsToFilters(params: URLSearchParams): FilterState {
       status === "stale")
   )
     filters.status = status;
-  const label = params.get("label");
-  if (label) filters.label = label;
-  const tech = params.get("tech");
-  if (tech) filters.tech = tech;
   filters.beginnerOnly = params.get("beginnerOnly") === "1";
   filters.excludeStale = params.get("excludeStale") === "1";
   if (sort && sortOptions.includes(sort as SortOption))
