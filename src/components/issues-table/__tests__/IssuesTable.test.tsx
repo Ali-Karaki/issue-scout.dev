@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { render, within } from "@testing-library/react";
+import { within } from "@testing-library/react";
+import { renderWithProviders } from "@/test-utils";
 import { IssuesTable } from "../IssuesTable";
 import type { NormalizedIssue } from "@/lib/types";
 
@@ -28,7 +29,7 @@ const mockIssue: NormalizedIssue = {
 
 describe("IssuesTable", () => {
   it("renders table with header row", () => {
-    const { container } = render(
+    const { container } = renderWithProviders(
       <IssuesTable issues={[]} sortColumn={null} sortDesc={false} onSortChange={noop} />
     );
     const table = container.querySelector("table");
@@ -46,7 +47,7 @@ describe("IssuesTable", () => {
       mockIssue,
       { ...mockIssue, id: "owner/repo-456", number: 456 },
     ];
-    const { container } = render(
+    const { container } = renderWithProviders(
       <IssuesTable issues={issues} sortColumn={null} sortDesc={false} onSortChange={noop} />
     );
     const tbody = container.querySelector("tbody");
@@ -54,7 +55,7 @@ describe("IssuesTable", () => {
   });
 
   it("renders issue title and link", () => {
-    const { container } = render(
+    const { container } = renderWithProviders(
       <IssuesTable issues={[mockIssue]} sortColumn={null} sortDesc={false} onSortChange={noop} />
     );
     const link = within(container).getByRole("link", {
@@ -64,7 +65,7 @@ describe("IssuesTable", () => {
   });
 
   it("renders GitHub icon link", () => {
-    const { container } = render(
+    const { container } = renderWithProviders(
       <IssuesTable issues={[mockIssue]} sortColumn={null} sortDesc={false} onSortChange={noop} />
     );
     const cta = within(container).getByRole("link", { name: /View on GitHub/i });
@@ -73,14 +74,14 @@ describe("IssuesTable", () => {
   });
 
   it("renders status pill", () => {
-    const { container } = render(
+    const { container } = renderWithProviders(
       <IssuesTable issues={[mockIssue]} sortColumn={null} sortDesc={false} onSortChange={noop} />
     );
     expect(within(container).getByText("Unclaimed")).toBeInTheDocument();
   });
 
   it("renders repo and issue number", () => {
-    const { container } = render(
+    const { container } = renderWithProviders(
       <IssuesTable issues={[mockIssue]} sortColumn={null} sortDesc={false} onSortChange={noop} />
     );
     expect(within(container).getByText("owner/repo")).toBeInTheDocument();

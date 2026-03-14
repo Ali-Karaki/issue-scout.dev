@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { filtersToParams, paramsToFilters } from "../url-filters";
+import {
+  filtersToParams,
+  paramsToFilters,
+  getRequestCacheKey,
+} from "../url-filters";
 import { INITIAL_FILTERS } from "../filters";
 
 describe("filtersToParams", () => {
@@ -78,5 +82,43 @@ describe("paramsToFilters", () => {
     const parsed = paramsToFilters(params);
     expect(parsed.repo).toEqual(["a/b", "c/d"]);
     expect(parsed.tech).toEqual(["TypeScript", "JavaScript"]);
+  });
+});
+
+describe("getRequestCacheKey", () => {
+  it("includes project, page, limit", () => {
+    const params = new URLSearchParams();
+    const key = getRequestCacheKey(params, "tanstack", 1, 50);
+    expect(key).toContain("tanstack");
+    expect(key).toContain("1");
+    expect(key).toContain("50");
+  });
+
+  it("uses 'all' when projectParam is null", () => {
+    const params = new URLSearchParams();
+    const key = getRequestCacheKey(params, null, 1, 50);
+    expect(key).toContain("all");
+  });
+
+  it("produces same key for same params in different order", () => {
+    const params1 = new URLSearchParams("page=1&limit=50&status=likely_unclaimed");
+    const params2 = new URLSearchParams("status=likely_unclaimed&limit=50&page=1");
+    const key1 = getRequestCacheKey(params1, null, 1, 50);
+    const key2 = getRequestCacheKey(params2, null, 1, 50);
+    expect(key1).toBe(key2);
+  });
+
+  it("produces different keys for different page", () => {
+    const params = new URLSearchParams();
+    const key1 = getRequestCacheKey(params, null, 1, 50);
+    const key2 = getRequestCacheKey(params, null, 2, 50);
+    expect(key1).not.toBe(key2);
+  });
+
+  it("includes multi-value params in key", () => {
+    const params = new URLSearchParams("project=tanstack&project=vercel");
+    const key = getRequestCacheKey(params, null, 1, 50);
+    expect(key).toContain("project=");
+    expect(key).toMatch(/tanstack|vercel/);
   });
 });

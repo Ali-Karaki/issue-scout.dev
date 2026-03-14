@@ -1,5 +1,6 @@
 import { vi, describe, it, expect } from "vitest";
-import { render, fireEvent } from "@testing-library/react";
+import { fireEvent } from "@testing-library/react";
+import { renderWithProviders } from "@/test-utils";
 import { IssueFilters } from "../IssueFilters";
 import type { FilterState } from "@/lib/filters";
 
@@ -19,7 +20,7 @@ const mockFilters: FilterState = {
 describe("IssueFilters", () => {
   it("renders sort select and search input", () => {
     const onChange = vi.fn();
-    const { container } = render(
+    const { container } = renderWithProviders(
       <IssueFilters
         filters={mockFilters}
         onChange={onChange}
@@ -34,7 +35,7 @@ describe("IssueFilters", () => {
 
   it("calls onChange when project is changed", () => {
     const onChange = vi.fn();
-    const { container, getByRole, getByText } = render(
+    const { container, getByRole, getByText } = renderWithProviders(
       <IssueFilters
         filters={mockFilters}
         onChange={onChange}
@@ -57,7 +58,7 @@ describe("IssueFilters", () => {
 
   it("calls onChange when Unclaimed chip is clicked", () => {
     const onChange = vi.fn();
-    const { container } = render(
+    const { container } = renderWithProviders(
       <IssueFilters
         filters={mockFilters}
         onChange={onChange}
@@ -77,7 +78,7 @@ describe("IssueFilters", () => {
 
   it("calls onChange when Beginner chip is clicked", () => {
     const onChange = vi.fn();
-    const { container } = render(
+    const { container } = renderWithProviders(
       <IssueFilters
         filters={mockFilters}
         onChange={onChange}

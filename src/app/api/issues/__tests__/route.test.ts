@@ -26,6 +26,10 @@ vi.mock("@/lib/api/fetch-issues", () => ({
     mockFetchIssuesFromGitHub(project, _token),
 }));
 
+vi.mock("next/cache", () => ({
+  unstable_cache: (fn: () => Promise<unknown>) => fn,
+}));
+
 function makeMockResponse(issueCount: number): IssuesResponse {
   return {
     issues: Array.from({ length: issueCount }, (_, i) => ({
@@ -191,7 +195,7 @@ describe("GET /api/issues", () => {
       hasMore: true,
     });
     expect(body.summary).toEqual(data.summary);
-    expect(res.headers.get("Cache-Control")).toContain("s-maxage=604800");
+    expect(res.headers.get("Cache-Control")).toContain("s-maxage=86400");
     expect(mockGetCachedIssues).toHaveBeenCalledWith(null);
   });
 

@@ -59,3 +59,28 @@ export function paramsToFilters(params: URLSearchParams): FilterState {
   filters.sortDesc = params.get("sortDesc") === "1";
   return filters;
 }
+
+/**
+ * Stable cache key for API request. Sorts params so same filters in different order hit same cache.
+ */
+export function getRequestCacheKey(
+  searchParams: URLSearchParams,
+  projectParam: string | null,
+  page: number,
+  limit: number
+): string {
+  const parts: string[] = [
+    projectParam ?? "all",
+    String(page),
+    String(limit),
+  ];
+  const keys = [...searchParams.keys()].filter(
+    (k) => !["page", "limit"].includes(k)
+  );
+  keys.sort();
+  for (const k of keys) {
+    const vals = searchParams.getAll(k).sort();
+    parts.push(`${k}=${vals.join(",")}`);
+  }
+  return parts.join("|");
+}

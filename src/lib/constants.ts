@@ -31,6 +31,8 @@ export const RECENTLY_ACTIVE_DAYS = 30;
 export const RECENT_DAYS = 30;
 // 7 days = 7 * 24 * 60 * 60
 export const CACHE_REVALIDATE_SECONDS = 604800;
+// 1 day - CDN TTL to align with daily cron refresh
+export const CDN_CACHE_SECONDS = 86400;
 
 export const STALE_THRESHOLD_MS =
   STALE_THRESHOLD_DAYS * 24 * 60 * 60 * 1000;

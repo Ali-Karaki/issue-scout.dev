@@ -1,5 +1,6 @@
 import { vi, describe, it, expect, beforeEach, afterEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
+import { renderWithProviders } from "@/test-utils";
 import { FeaturedIssues } from "../FeaturedIssues";
 
 vi.mock("next-view-transitions", () => ({
@@ -48,7 +49,7 @@ describe("FeaturedIssues", () => {
       () => new Promise(() => {})
     );
 
-    const { container } = render(<FeaturedIssues />);
+    const { container } = renderWithProviders(<FeaturedIssues />);
 
     expect(container.querySelector(".animate-pulse")).toBeInTheDocument();
   });
@@ -59,7 +60,7 @@ describe("FeaturedIssues", () => {
       json: () => Promise.resolve({ issues: [] }),
     });
 
-    render(<FeaturedIssues />);
+    renderWithProviders(<FeaturedIssues />);
 
     await waitFor(() => {
       expect(screen.getByText(/Issues will appear here once the cache is refreshed/)).toBeInTheDocument();
@@ -72,7 +73,7 @@ describe("FeaturedIssues", () => {
       json: () => Promise.resolve({ issues: [mockIssue] }),
     });
 
-    render(<FeaturedIssues />);
+    renderWithProviders(<FeaturedIssues />);
 
     await waitFor(() => {
       expect(screen.getByText("Test issue")).toBeInTheDocument();

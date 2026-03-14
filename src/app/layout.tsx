@@ -4,6 +4,7 @@ import { ViewTransitions } from "next-view-transitions";
 import "./globals.css";
 import { Header } from "@/components/Header";
 import { JsonLd } from "@/components/JsonLd";
+import { SWRCacheProvider } from "@/components/SWRCacheProvider";
 import { TooltipProvider } from "@/components/ui/Tooltip";
 import { SITE_URL } from "@/lib/constants";
 
@@ -60,7 +61,9 @@ export default function RootLayout({
         </a>
         <Header />
         <TooltipProvider>
-          <main id="main" tabIndex={-1}>{children}</main>
+          <SWRCacheProvider>
+            <main id="main" tabIndex={-1}>{children}</main>
+          </SWRCacheProvider>
         </TooltipProvider>
       </body>
     </html>

@@ -42,6 +42,11 @@ Find OSS issues that don't appear to have an open PR referencing them. Live at [
 3. To populate the cache locally: `curl -X POST -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/cron/refresh` (requires `GITHUB_TOKEN` and `CRON_SECRET`).
 4. [Upstash Console](https://console.upstash.com) → your database → **Data Browser** — After a refresh, you should see keys like `issues:tanstack`, `issues:vercel`.
 
+**Verifying response caching:**
+
+- `curl -I "http://localhost:3000/api/issues?page=1&limit=10"` — Expect `Cache-Control: public, s-maxage=86400, stale-while-revalidate=86400` when data is available.
+- Run `pnpm test src/app/api/issues/__tests__/cache-verification.test.ts` — Verifies that identical requests hit the cache (getCachedIssues called once for two requests).
+
 ---
 
 ## 3. Scripts

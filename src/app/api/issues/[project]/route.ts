@@ -1,3 +1,4 @@
+import { unstable_cache } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { PROJECTS } from "@/lib/projects.config";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
@@ -6,9 +7,9 @@ import {
   getCachedIssues,
   fetchIssuesFromGitHub,
 } from "@/lib/api/fetch-issues";
-import { CACHE_REVALIDATE_SECONDS } from "@/lib/constants";
+import { CACHE_REVALIDATE_SECONDS, CDN_CACHE_SECONDS } from "@/lib/constants";
 import { applyFiltersAndSort } from "@/lib/filters";
-import { paramsToFilters } from "@/lib/url-filters";
+import { paramsToFilters, getRequestCacheKey } from "@/lib/url-filters";
 
 export async function GET(
   request: NextRequest,
@@ -48,53 +49,60 @@ export async function GET(
     : 50;
 
   try {
-    let data = hasKv() ? await getCachedIssues(project) : null;
-    if (!data && token) {
-      data = await fetchIssuesFromGitHub(project, token);
-      if (data && hasKv()) {
-        await kvSet(`issues:${project}`, data, CACHE_REVALIDATE_SECONDS);
-      }
-    }
-    if (!data) {
+    const cacheKey = getRequestCacheKey(searchParams, project, page, limit);
+    const getCachedResponse = unstable_cache(
+      async () => {
+        let data = hasKv() ? await getCachedIssues(project) : null;
+        if (!data && token) {
+          data = await fetchIssuesFromGitHub(project, token);
+          if (data && hasKv()) {
+            await kvSet(`issues:${project}`, data, CACHE_REVALIDATE_SECONDS);
+          }
+        }
+        if (!data) return null;
+        const filters = paramsToFilters(searchParams);
+        filters.project = [project];
+        const filteredIssues = applyFiltersAndSort(data.issues, filters, {
+          skipProjectFilter: true,
+        });
+        const total = filteredIssues.length;
+        const start = (page - 1) * limit;
+        const paginatedIssues = filteredIssues.slice(start, start + limit);
+        const filteredSummary = {
+          total,
+          likelyUnclaimed: filteredIssues.filter((i) => i.status === "likely_unclaimed").length,
+          beginnerFriendly: filteredIssues.filter((i) => i.isBeginnerFriendly).length,
+          stale: filteredIssues.filter((i) => i.isStale).length,
+          reposCovered: new Set(filteredIssues.map((i) => i.repo)).size,
+          failedRepos: data.summary.failedRepos,
+        };
+        return {
+          issues: paginatedIssues,
+          summary: data.summary,
+          filteredSummary,
+          pagination: {
+            page,
+            limit,
+            total,
+            hasMore: start + paginatedIssues.length < total,
+          },
+        };
+      },
+      ["issues-response", project, cacheKey],
+      { revalidate: CDN_CACHE_SECONDS, tags: ["issues"] }
+    );
+    const body = await getCachedResponse();
+    if (!body) {
       return NextResponse.json(
         { error: "Data not yet available. Try again later." },
         { status: 503, headers: { "Retry-After": "300" } }
       );
     }
-    const filters = paramsToFilters(searchParams);
-    filters.project = [project];
-    const filteredIssues = applyFiltersAndSort(data.issues, filters, {
-      skipProjectFilter: true,
-    });
-    const total = filteredIssues.length;
-    const start = (page - 1) * limit;
-    const paginatedIssues = filteredIssues.slice(start, start + limit);
-    const filteredSummary = {
-      total,
-      likelyUnclaimed: filteredIssues.filter((i) => i.status === "likely_unclaimed").length,
-      beginnerFriendly: filteredIssues.filter((i) => i.isBeginnerFriendly).length,
-      stale: filteredIssues.filter((i) => i.isStale).length,
-      reposCovered: new Set(filteredIssues.map((i) => i.repo)).size,
-      failedRepos: data.summary.failedRepos,
-    };
-    return NextResponse.json(
-      {
-        issues: paginatedIssues,
-        summary: data.summary,
-        filteredSummary,
-        pagination: {
-          page,
-          limit,
-          total,
-          hasMore: start + paginatedIssues.length < total,
-        },
+    return NextResponse.json(body, {
+      headers: {
+        "Cache-Control": `public, s-maxage=${CDN_CACHE_SECONDS}, stale-while-revalidate=${CDN_CACHE_SECONDS}`,
       },
-      {
-        headers: {
-          "Cache-Control": `public, s-maxage=${CACHE_REVALIDATE_SECONDS}, stale-while-revalidate=${CACHE_REVALIDATE_SECONDS}`,
-        },
-      }
-    );
+    });
   } catch (err) {
     const message =
       process.env.NODE_ENV === "production"
