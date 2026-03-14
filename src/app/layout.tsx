@@ -5,7 +5,9 @@ import { Header } from "@/components/Header";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.issue-scout.dev";
+import { SITE_URL } from "@/lib/constants";
+
+const siteUrl = SITE_URL;
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),

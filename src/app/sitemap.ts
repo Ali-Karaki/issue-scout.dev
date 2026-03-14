@@ -1,7 +1,9 @@
 import type { MetadataRoute } from "next";
 import { ECOSYSTEMS } from "@/lib/ecosystems.config";
 
-const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.issue-scout.dev";
+import { SITE_URL } from "@/lib/constants";
+
+const baseUrl = SITE_URL;
 
 export default function sitemap(): MetadataRoute.Sitemap {
   return [

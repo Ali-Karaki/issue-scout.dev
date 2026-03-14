@@ -7,11 +7,12 @@ jobs:
   refresh:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - name: Call refresh endpoint
         env:
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
-          SITE_URL: ${{ secrets.SITE_URL }}
         run: |
+          SITE_URL=$(jq -r '.url' config/site.json)
           curl -sf -X POST \
             -H "Authorization: Bearer $CRON_SECRET" \
             "$SITE_URL/api/cron/refresh"

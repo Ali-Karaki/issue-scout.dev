@@ -114,7 +114,7 @@ Edit [src/lib/ecosystems.config.ts](src/lib/ecosystems.config.ts) to add or modi
 
 1. Connect your repo to Vercel.
 2. Set env vars: `GITHUB_TOKEN`, `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`, `CRON_SECRET`. Optionally `NEXT_PUBLIC_SITE_URL` for preview deployments.
-3. Add GitHub secrets: `CRON_SECRET` (same as Vercel), `SITE_URL` (e.g. `https://www.issue-scout.dev`, no trailing slash) for the refresh workflow.
+3. Add GitHub secret: `CRON_SECRET` (same as Vercel). The refresh workflow reads the site URL from [config/site.json](config/site.json).
 4. After first deploy, run the **Refresh cache** workflow manually (Actions → Refresh cache → Run workflow) to populate the cache.
 5. The `vercel.json` `ignoreCommand` runs lint, typecheck, and unit tests before deploy. E2E runs in CI only; deploys are gated by CI (including E2E).
 6. For production, consider adding error tracking (e.g. Sentry) and monitoring `/api/health` for uptime checks.

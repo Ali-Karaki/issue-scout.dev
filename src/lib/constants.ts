@@ -1,7 +1,9 @@
+import siteConfig from "../../config/site.json";
+
 export const GITHUB_API = "https://api.github.com";
 
 export const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.issue-scout.dev";
+  process.env.NEXT_PUBLIC_SITE_URL ?? siteConfig.url;
 
 export const STALE_THRESHOLD_DAYS = 90;
 export const RECENTLY_ACTIVE_DAYS = 30;
