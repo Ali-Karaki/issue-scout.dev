@@ -3,7 +3,7 @@
 import { useState, useCallback } from "react";
 import { PROJECTS } from "@/lib/projects.config";
 import type { FilterState, SortOption } from "@/lib/filters";
-import { CLAIM_STATUS, BEGINNER, READINESS } from "@/lib/terminology";
+import { CLAIM_STATUS, BEGINNER } from "@/lib/terminology";
 
 export type { FilterState, SortOption };
 
@@ -11,11 +11,8 @@ const SORT_LABELS: Record<SortOption, string> = {
   best_match: "Best match",
   best_for_beginners: "Best for beginners",
   most_ready: "Most ready to start",
-  likely_unclaimed: "Likely unclaimed",
   recently_updated: "Recently updated",
   most_comments: "Most comments",
-  likely_easiest: "Likely easiest",
-  highest_readiness: "Highest readiness",
 };
 
 interface IssueFiltersProps {
@@ -51,10 +48,10 @@ export function IssueFilters({
     filters.status !== initialFilters.status ||
     filters.label !== initialFilters.label ||
     filters.sort !== initialFilters.sort ||
+    filters.sortColumn !== initialFilters.sortColumn ||
+    filters.sortDesc !== initialFilters.sortDesc ||
     filters.beginnerOnly !== initialFilters.beginnerOnly ||
-    filters.recentlyActiveOnly !== initialFilters.recentlyActiveOnly ||
-    filters.excludeStale !== initialFilters.excludeStale ||
-    filters.highReadinessOnly !== initialFilters.highReadinessOnly
+    filters.excludeStale !== initialFilters.excludeStale
   );
 
   const unclaimedActive =
@@ -67,8 +64,6 @@ export function IssueFilters({
     }
   };
   const toggleBeginner = () => update("beginnerOnly", !filters.beginnerOnly);
-  const toggleHighReadiness = () =>
-    update("highReadinessOnly", !filters.highReadinessOnly);
 
   const selectClass =
     "w-full min-w-0 px-3 py-1.5 pr-7 rounded-lg bg-zinc-800 border border-zinc-600 text-zinc-200 text-sm focus:outline-none focus:border-amber-600 appearance-none";
@@ -98,7 +93,13 @@ export function IssueFilters({
             <select
               id="filter-sort"
               value={filters.sort}
-              onChange={(e) => update("sort", e.target.value)}
+              onChange={(e) =>
+                onChange({
+                  ...filters,
+                  sort: e.target.value as import("@/lib/filters").SortOption,
+                  sortColumn: null,
+                })
+              }
               className={selectClass}
               aria-label="Sort issues"
             >
@@ -127,14 +128,6 @@ export function IssueFilters({
             title={BEGINNER.tooltip}
           >
             Beginner
-          </button>
-          <button
-            type="button"
-            onClick={toggleHighReadiness}
-            className={`${chipBase} ${filters.highReadinessOnly ? "bg-emerald-600/50 text-emerald-200 " + chipActive : chipInactive}`}
-            title={READINESS.high.tooltip}
-          >
-            High readiness
           </button>
           <button
             type="button"
@@ -243,15 +236,6 @@ export function IssueFilters({
             </div>
           </div>
           <div className="flex items-center gap-4 flex-wrap">
-            <label className="flex items-center gap-2 text-sm text-zinc-400 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={filters.recentlyActiveOnly}
-                onChange={(e) => update("recentlyActiveOnly", e.target.checked)}
-                className="rounded border-zinc-600 bg-zinc-800 text-amber-500 focus:ring-amber-500"
-              />
-              Recently active
-            </label>
             <label className="flex items-center gap-2 text-sm text-zinc-400 cursor-pointer">
               <input
                 type="checkbox"

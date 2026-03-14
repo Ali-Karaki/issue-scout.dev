@@ -1,20 +1,16 @@
 import { vi, describe, it, expect, beforeEach } from "vitest";
 import { renderHook } from "@testing-library/react";
-import useSWRInfinite from "swr/infinite";
+import useSWR from "swr";
 import { useIssuesFetch } from "../use-issues-fetch";
 import type { IssuesResponse } from "@/lib/api/fetch-issues";
 import { INITIAL_FILTERS } from "@/lib/filters";
 
-vi.mock("swr/infinite");
+vi.mock("swr");
 
 const mockMutate = vi.fn();
-const mockSetSize = vi.fn();
-const useSWRInfiniteMock = vi.mocked(useSWRInfinite);
+const useSWRMock = vi.mocked(useSWR);
 
-function makeMockResponse(
-  page: number,
-  hasMore: boolean
-): IssuesResponse {
+function makeMockResponse(page: number): IssuesResponse {
   return {
     issues: [
       {
@@ -23,7 +19,7 @@ function makeMockResponse(
         title: "Test",
         url: "https://github.com/owner/repo/issues/1",
         repo: "owner/repo",
-        ecosystem: "tanstack",
+        project: "tanstack",
         labels: ["bug"],
         state: "open",
         comments: 0,
@@ -49,7 +45,7 @@ function makeMockResponse(
       page,
       limit: 50,
       total: 2,
-      hasMore,
+      hasMore: page < 1,
     },
   };
 }
@@ -59,113 +55,80 @@ describe("useIssuesFetch", () => {
     vi.clearAllMocks();
   });
 
-  it("returns null data and loading false when apiUrl is empty", () => {
-    useSWRInfiniteMock.mockReturnValue({
+  it("returns null data and loading when apiUrl is empty", () => {
+    useSWRMock.mockReturnValue({
       data: undefined,
       error: null,
       isLoading: false,
       isValidating: false,
-      size: 0,
-      setSize: mockSetSize,
       mutate: mockMutate,
-    });
+    } as ReturnType<typeof useSWR>);
 
-    const { result } = renderHook(() => useIssuesFetch("", INITIAL_FILTERS));
+    const { result } = renderHook(() =>
+      useIssuesFetch("", INITIAL_FILTERS, 1)
+    );
 
-    expect(result.current.data).toBeNull();
+    expect(result.current.data).toBeUndefined();
     expect(result.current.loading).toBe(false);
-    expect(result.current.loadingMore).toBe(false);
     expect(result.current.error).toBeNull();
-    expect(result.current.hasMore).toBe(false);
-    expect(useSWRInfiniteMock).toHaveBeenCalledWith(
-      expect.any(Function),
-      expect.any(Function),
-      expect.objectContaining({
-        revalidateOnFocus: false,
-        dedupingInterval: 2000,
-        errorRetryCount: 2,
-      })
-    );
+    expect(result.current.totalPages).toBe(1);
+    expect(result.current.hasNextPage).toBe(false);
+    expect(useSWRMock).toHaveBeenCalledWith(null, expect.any(Function), expect.any(Object));
   });
 
-  it("returns merged data when SWR has data", () => {
-    const page1 = makeMockResponse(1, true);
-    const page2 = makeMockResponse(2, false);
-    useSWRInfiniteMock.mockReturnValue({
-      data: [page1, page2],
+  it("returns data when SWR has data", () => {
+    const page1 = makeMockResponse(1);
+    useSWRMock.mockReturnValue({
+      data: page1,
       error: null,
       isLoading: false,
       isValidating: false,
-      size: 2,
-      setSize: mockSetSize,
       mutate: mockMutate,
-    });
+    } as ReturnType<typeof useSWR>);
 
     const { result } = renderHook(() =>
-      useIssuesFetch("/api/issues/tanstack", INITIAL_FILTERS)
+      useIssuesFetch("/api/issues/tanstack", INITIAL_FILTERS, 1)
     );
 
-    expect(result.current.data).not.toBeNull();
-    expect(result.current.data?.issues).toHaveLength(2);
-    expect(result.current.data?.summary).toEqual(page1.summary);
-    expect(result.current.data?.pagination?.hasMore).toBe(false);
-    expect(result.current.hasMore).toBe(false);
+    expect(result.current.data).toEqual(page1);
+    expect(result.current.data?.issues).toHaveLength(1);
+    expect(result.current.data?.pagination?.total).toBe(2);
+    expect(result.current.totalPages).toBe(1);
+    expect(result.current.total).toBe(2);
+    expect(result.current.limit).toBe(50);
     expect(result.current.loading).toBe(false);
   });
 
-  it("returns hasMore true when last page has hasMore", () => {
-    const page1 = makeMockResponse(1, true);
-    useSWRInfiniteMock.mockReturnValue({
-      data: [page1],
+  it("returns hasNextPage true when page < totalPages", () => {
+    const page1 = makeMockResponse(1);
+    (page1.pagination as { hasMore: boolean }).hasMore = true;
+    useSWRMock.mockReturnValue({
+      data: page1,
       error: null,
       isLoading: false,
       isValidating: false,
-      size: 1,
-      setSize: mockSetSize,
       mutate: mockMutate,
-    });
+    } as ReturnType<typeof useSWR>);
 
     const { result } = renderHook(() =>
-      useIssuesFetch("/api/issues/tanstack", INITIAL_FILTERS)
+      useIssuesFetch("/api/issues/tanstack", INITIAL_FILTERS, 1)
     );
 
-    expect(result.current.hasMore).toBe(true);
-  });
-
-  it("loadMore calls setSize when hasMore and not loadingMore", () => {
-    const page1 = makeMockResponse(1, true);
-    useSWRInfiniteMock.mockReturnValue({
-      data: [page1],
-      error: null,
-      isLoading: false,
-      isValidating: false,
-      size: 1,
-      setSize: mockSetSize,
-      mutate: mockMutate,
-    });
-
-    const { result } = renderHook(() =>
-      useIssuesFetch("/api/issues/tanstack", INITIAL_FILTERS)
-    );
-
-    result.current.loadMore();
-
-    expect(mockSetSize).toHaveBeenCalledWith(2);
+    expect(result.current.totalPages).toBe(1);
+    expect(result.current.hasNextPage).toBe(false);
   });
 
   it("fetchData and retry call mutate", () => {
-    useSWRInfiniteMock.mockReturnValue({
-      data: [makeMockResponse(1, false)],
+    useSWRMock.mockReturnValue({
+      data: makeMockResponse(1),
       error: null,
       isLoading: false,
       isValidating: false,
-      size: 1,
-      setSize: mockSetSize,
       mutate: mockMutate,
-    });
+    } as ReturnType<typeof useSWR>);
 
     const { result } = renderHook(() =>
-      useIssuesFetch("/api/issues/tanstack", INITIAL_FILTERS)
+      useIssuesFetch("/api/issues/tanstack", INITIAL_FILTERS, 1)
     );
 
     result.current.fetchData();
@@ -176,20 +139,39 @@ describe("useIssuesFetch", () => {
   });
 
   it("returns error from SWR", () => {
-    useSWRInfiniteMock.mockReturnValue({
+    useSWRMock.mockReturnValue({
       data: undefined,
       error: new Error("API error 503"),
       isLoading: false,
       isValidating: false,
-      size: 1,
-      setSize: mockSetSize,
       mutate: mockMutate,
-    });
+    } as ReturnType<typeof useSWR>);
 
     const { result } = renderHook(() =>
-      useIssuesFetch("/api/issues/tanstack", INITIAL_FILTERS)
+      useIssuesFetch("/api/issues/tanstack", INITIAL_FILTERS, 1)
     );
 
     expect(result.current.error).toBe("API error 503");
+  });
+
+  it("passes page to build URL", () => {
+    useSWRMock.mockImplementation((key) => ({
+      data: key ? makeMockResponse(2) : undefined,
+      error: null,
+      isLoading: false,
+      isValidating: false,
+      mutate: mockMutate,
+    }) as ReturnType<typeof useSWR>);
+
+    const { result } = renderHook(() =>
+      useIssuesFetch("/api/issues/tanstack", INITIAL_FILTERS, 2)
+    );
+
+    expect(useSWRMock).toHaveBeenCalledWith(
+      expect.stringContaining("page=2"),
+      expect.any(Function),
+      expect.any(Object)
+    );
+    expect(result.current.page).toBe(2);
   });
 });

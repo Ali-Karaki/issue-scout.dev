@@ -9,7 +9,7 @@ function makeIssue(overrides: Partial<NormalizedIssue> = {}): NormalizedIssue {
     title: "Test",
     url: "https://example.com",
     repo: "owner/repo",
-    ecosystem: "tanstack",
+    project: "tanstack",
     labels: ["bug"],
     state: "open",
     comments: 5,
@@ -32,28 +32,28 @@ describe("applyFiltersAndSort", () => {
     expect(result).toHaveLength(2);
   });
 
-  it("filters by ecosystem when ecosystem filter set", () => {
+  it("filters by project when project filter set", () => {
     const issues = [
-      makeIssue({ ecosystem: "tanstack" }),
-      makeIssue({ id: "2", ecosystem: "vercel" }),
+      makeIssue({ project: "tanstack" }),
+      makeIssue({ id: "2", project: "vercel" }),
     ];
     const result = applyFiltersAndSort(issues, {
       ...INITIAL_FILTERS,
-      ecosystem: "tanstack",
+      project: "tanstack",
     });
     expect(result).toHaveLength(1);
-    expect(result[0].ecosystem).toBe("tanstack");
+    expect(result[0].project).toBe("tanstack");
   });
 
-  it("skips ecosystem filter when skipEcosystemFilter true", () => {
+  it("skips project filter when skipProjectFilter true", () => {
     const issues = [
-      makeIssue({ ecosystem: "tanstack" }),
-      makeIssue({ id: "2", ecosystem: "vercel" }),
+      makeIssue({ project: "tanstack" }),
+      makeIssue({ id: "2", project: "vercel" }),
     ];
     const result = applyFiltersAndSort(issues, {
       ...INITIAL_FILTERS,
-      ecosystem: "tanstack",
-    }, { skipEcosystemFilter: true });
+      project: "tanstack",
+    }, { skipProjectFilter: true });
     expect(result).toHaveLength(2);
   });
 
@@ -119,6 +119,34 @@ describe("applyFiltersAndSort", () => {
     });
     expect(result).toHaveLength(1);
     expect(result[0].isBeginnerFriendly).toBe(true);
+  });
+
+  it("sorts by sortColumn when set", () => {
+    const issues = [
+      makeIssue({ id: "1", title: "Beta" }),
+      makeIssue({ id: "2", title: "Alpha" }),
+    ];
+    const result = applyFiltersAndSort(issues, {
+      ...INITIAL_FILTERS,
+      sortColumn: "title",
+      sortDesc: false,
+    });
+    expect(result[0].title).toBe("Alpha");
+    expect(result[1].title).toBe("Beta");
+  });
+
+  it("sorts by sortColumn desc when sortDesc true", () => {
+    const issues = [
+      makeIssue({ id: "1", title: "Alpha" }),
+      makeIssue({ id: "2", title: "Beta" }),
+    ];
+    const result = applyFiltersAndSort(issues, {
+      ...INITIAL_FILTERS,
+      sortColumn: "title",
+      sortDesc: true,
+    });
+    expect(result[0].title).toBe("Beta");
+    expect(result[1].title).toBe("Alpha");
   });
 
   it("filters excludeStale", () => {

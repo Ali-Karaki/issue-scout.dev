@@ -32,22 +32,10 @@ export function ResultSummary({
       remove: () => onRemoveFilter({ beginnerOnly: false }),
     });
   }
-  if (filters.highReadinessOnly) {
-    chips.push({
-      label: "High readiness",
-      remove: () => onRemoveFilter({ highReadinessOnly: false }),
-    });
-  }
   if (filters.excludeStale && !(filters.status === "likely_unclaimed" && filters.excludeStale)) {
     chips.push({
       label: "Exclude stale",
       remove: () => onRemoveFilter({ excludeStale: false }),
-    });
-  }
-  if (filters.recentlyActiveOnly) {
-    chips.push({
-      label: "Recently active",
-      remove: () => onRemoveFilter({ recentlyActiveOnly: false }),
     });
   }
   if (filters.repo) {

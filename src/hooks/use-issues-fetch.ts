@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
-import useSWRInfinite from "swr/infinite";
+import { useCallback, useEffect, useState } from "react";
+import useSWR from "swr";
 import type { IssuesResponse } from "@/lib/api/fetch-issues";
 import type { FilterState } from "@/lib/filters";
 import { filtersToParams } from "@/lib/url-filters";
@@ -46,27 +46,20 @@ function buildUrl(base: string, page: number, filters: FilterState): string {
   return base + sep + params.toString();
 }
 
-export function useIssuesFetch(apiUrl: string, filters: FilterState) {
-  const getKey = useCallback(
-    (pageIndex: number, previousPageData: IssuesResponse | null) => {
-      if (!apiUrl) return null;
-      if (pageIndex === 0) return buildUrl(apiUrl, 1, filters);
-      if (!previousPageData?.pagination?.hasMore) return null;
-      return buildUrl(apiUrl, pageIndex + 1, filters);
-    },
-    [apiUrl, filters]
-  );
+export function useIssuesFetch(
+  apiUrl: string,
+  filters: FilterState,
+  page: number
+) {
+  const key = apiUrl ? buildUrl(apiUrl, page, filters) : null;
 
   const {
     data,
     error,
     isLoading,
     isValidating,
-    size,
-    setSize,
     mutate,
-    dataUpdatedAt,
-  } = useSWRInfinite(getKey, fetcher, {
+  } = useSWR(key, fetcher, {
     keepPreviousData: true,
     revalidateOnFocus: false,
     dedupingInterval: 2000,
@@ -80,43 +73,36 @@ export function useIssuesFetch(apiUrl: string, filters: FilterState) {
     },
   });
 
-  const mergedData: IssuesResponse | null = useMemo(() => {
-    if (!data || data.length === 0) return null;
-    const allIssues = data.flatMap((d) => d.issues);
-    const last = data[data.length - 1];
-    const first = data[0];
-    return {
-      issues: allIssues,
-      summary: first.summary,
-      filteredSummary: first.filteredSummary,
-      pagination: last.pagination,
-    };
-  }, [data]);
+  const loading = isLoading && !data;
+  const isRevalidating = isValidating && !!data;
 
-  const loading = isLoading && !mergedData;
-  const isRevalidating = isValidating && !!mergedData;
-  const loadingMore = isValidating && size > 1;
-  const hasMore = mergedData?.pagination?.hasMore ?? false;
-
-  const loadMore = useCallback(() => {
-    if (!apiUrl || !hasMore || loadingMore) return;
-    setSize(size + 1);
-  }, [apiUrl, hasMore, loadingMore, size, setSize]);
+  const pagination = data?.pagination;
+  const total = pagination?.total ?? 0;
+  const limit = pagination?.limit ?? DEFAULT_LIMIT;
+  const totalPages = Math.max(1, Math.ceil(total / limit));
+  const hasNextPage = page < totalPages;
+  const hasPrevPage = page > 1;
 
   const fetchData = useCallback(() => mutate(), [mutate]);
 
-  const lastUpdatedAt = dataUpdatedAt ?? 0;
+  const [lastUpdatedAt, setLastUpdatedAt] = useState(0);
+  useEffect(() => {
+    if (data) setLastUpdatedAt(Date.now());
+  }, [data]);
 
   return {
-    data: mergedData,
+    data,
     loading,
     isRevalidating,
-    loadingMore,
     error: error?.message ?? null,
     retry: fetchData,
     fetchData,
-    loadMore,
-    hasMore,
+    page,
+    totalPages,
+    total,
+    limit,
+    hasNextPage,
+    hasPrevPage,
     lastUpdatedAt,
   };
 }

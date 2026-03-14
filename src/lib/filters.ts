@@ -1,4 +1,3 @@
-import { RECENTLY_ACTIVE_MS } from "./constants";
 import type { NormalizedIssue } from "./types";
 import type { IssueStatus } from "./types";
 
@@ -6,22 +5,27 @@ export type SortOption =
   | "best_match"
   | "best_for_beginners"
   | "most_ready"
-  | "likely_unclaimed"
   | "recently_updated"
-  | "most_comments"
-  | "likely_easiest"
-  | "highest_readiness";
+  | "most_comments";
+
+export type SortColumn =
+  | "title"
+  | "repo"
+  | "claim"
+  | "beginner"
+  | "readiness"
+  | "comments";
 
 export interface FilterState {
   project: string;
   repo: string;
   status: IssueStatus | "";
   beginnerOnly: boolean;
-  recentlyActiveOnly: boolean;
   excludeStale: boolean;
-  highReadinessOnly: boolean;
   label: string;
   sort: SortOption;
+  sortColumn: SortColumn | null;
+  sortDesc: boolean;
   q: string;
 }
 
@@ -30,11 +34,11 @@ export const INITIAL_FILTERS: FilterState = {
   repo: "",
   status: "",
   beginnerOnly: false,
-  recentlyActiveOnly: false,
   excludeStale: false,
-  highReadinessOnly: false,
   label: "",
   sort: "best_match",
+  sortColumn: null,
+  sortDesc: false,
   q: "",
 };
 
@@ -70,25 +74,52 @@ export function applyFiltersAndSort(
   if (filters.beginnerOnly) {
     result = result.filter((i) => i.isBeginnerFriendly);
   }
-  if (filters.recentlyActiveOnly) {
-    const cutoff = Date.now() - RECENTLY_ACTIVE_MS;
-    result = result.filter(
-      (i) => new Date(i.updatedAt).getTime() > cutoff
-    );
-  }
   if (filters.excludeStale) {
     result = result.filter((i) => !i.isStale);
   }
-  if (filters.highReadinessOnly) {
-    result = result.filter((i) => i.readiness === "high");
-  }
 
-  const sort = filters.sort;
   const readinessOrder = { high: 3, medium: 2, low: 1 };
+  const statusOrder: Record<NormalizedIssue["status"], number> = {
+    likely_unclaimed: 3,
+    possible_wip: 2,
+    stale: 1,
+  };
   const unclaimedScore = (i: NormalizedIssue) =>
     i.status === "likely_unclaimed" ? 3 : i.status === "possible_wip" ? 1 : 0;
 
-  result.sort((a, b) => {
+  const sortColumn = filters.sortColumn;
+  const sortDesc = filters.sortDesc;
+
+  if (sortColumn) {
+    result.sort((a, b) => {
+      let cmp = 0;
+      switch (sortColumn) {
+        case "title":
+          cmp = (a.title ?? "").localeCompare(b.title ?? "");
+          break;
+        case "repo":
+          cmp = a.repo.localeCompare(b.repo);
+          break;
+        case "claim":
+          cmp = statusOrder[a.status] - statusOrder[b.status];
+          break;
+        case "beginner":
+          cmp = (a.isBeginnerFriendly ? 1 : 0) - (b.isBeginnerFriendly ? 1 : 0);
+          break;
+        case "readiness":
+          cmp = readinessOrder[a.readiness] - readinessOrder[b.readiness];
+          break;
+        case "comments":
+          cmp = a.comments - b.comments;
+          break;
+        default:
+          return 0;
+      }
+      return sortDesc ? -cmp : cmp;
+    });
+  } else {
+    const sort = filters.sort;
+    result.sort((a, b) => {
     switch (sort) {
       case "best_match": {
         const scoreA =
@@ -117,29 +148,17 @@ export function applyFiltersAndSort(
           unclaimedScore(b) - unclaimedScore(a) ||
           new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
         );
-      case "likely_unclaimed":
-        return (
-          unclaimedScore(b) - unclaimedScore(a) ||
-          readinessOrder[b.readiness] - readinessOrder[a.readiness] ||
-          new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-        );
       case "recently_updated":
         return (
           new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
         );
       case "most_comments":
         return b.comments - a.comments;
-      case "likely_easiest":
-        return (
-          (b.isBeginnerFriendly ? 1 : 0) - (a.isBeginnerFriendly ? 1 : 0) ||
-          (a.matchedOpenPrs === 0 ? 1 : 0) - (b.matchedOpenPrs === 0 ? 1 : 0)
-        );
-      case "highest_readiness":
-        return readinessOrder[b.readiness] - readinessOrder[a.readiness];
       default:
         return 0;
     }
   });
+  }
 
   return result;
 }

@@ -6,7 +6,8 @@ import { notFound } from "next/navigation";
 import { SummaryBar } from "@/components/SummaryBar";
 import { IssueFilters } from "@/components/IssueFilters";
 import { IssueCard } from "@/components/IssueCard";
-import { IssueRow } from "@/components/IssueRow";
+import { IssuesTable } from "@/components/issues-table/IssuesTable";
+import { Pagination } from "@/components/Pagination";
 import { ResultSummary } from "@/components/ResultSummary";
 import { formatUpdatedAgo } from "@/lib/utils";
 import { PROJECTS } from "@/lib/projects.config";
@@ -29,22 +30,49 @@ export default function ProjectPage() {
     }
     return base;
   });
-  const { data, loading, isRevalidating, loadingMore, error, retry, fetchData, loadMore, hasMore, lastUpdatedAt } =
+  const [page, setPage] = useState(() => {
+    const p = parseInt(searchParams.get("page") ?? "1", 10);
+    return Number.isFinite(p) && p >= 1 ? p : 1;
+  });
+  const { data, loading, isRevalidating, error, retry, fetchData, totalPages, total, limit, lastUpdatedAt } =
     useIssuesFetch(
-    projectConfig ? `/api/issues/${id}` : "",
-    filters
-  );
+      projectConfig ? `/api/issues/${id}` : "",
+      filters,
+      page
+    );
 
   const updateFilters = useCallback(
-    (newFilters: FilterState) => {
+    (newFilters: FilterState, resetPage = true) => {
       const merged = { ...newFilters, project: id ?? "" };
       setFilters(merged);
+      const newPage = resetPage ? 1 : page;
+      if (resetPage) setPage(1);
       const urlParams = filtersToParams(merged);
+      urlParams.set("page", String(newPage));
       const qs = urlParams.toString();
       const url = qs ? `${pathname}?${qs}` : pathname;
       window.history.replaceState(null, "", url);
     },
-    [id, pathname]
+    [id, pathname, page]
+  );
+
+  const handlePageChange = useCallback(
+    (newPage: number) => {
+      setPage(newPage);
+      const urlParams = filtersToParams({ ...filters, project: id ?? "" });
+      urlParams.set("page", String(newPage));
+      const qs = urlParams.toString();
+      const url = qs ? `${pathname}?${qs}` : pathname;
+      window.history.replaceState(null, "", url);
+    },
+    [id, pathname, filters]
+  );
+
+  const handleSortChange = useCallback(
+    (sortColumn: import("@/lib/filters").SortColumn, sortDesc: boolean) => {
+      updateFilters({ ...filters, sortColumn, sortDesc }, true);
+    },
+    [filters, updateFilters]
   );
 
   useEffect(() => {
@@ -57,11 +85,9 @@ export default function ProjectPage() {
     const onPopState = () => {
       const urlParams = new URLSearchParams(window.location.search);
       const base = { ...INITIAL_FILTERS, project: id ?? "" };
-      if (urlParams.toString()) {
-        setFilters({ ...base, ...paramsToFilters(urlParams), project: id ?? "" });
-      } else {
-        setFilters(base);
-      }
+      setFilters(urlParams.toString() ? { ...base, ...paramsToFilters(urlParams), project: id ?? "" } : base);
+      const p = parseInt(urlParams.get("page") ?? "1", 10);
+      setPage(Number.isFinite(p) && p >= 1 ? p : 1);
     };
     window.addEventListener("popstate", onPopState);
     return () => window.removeEventListener("popstate", onPopState);
@@ -72,6 +98,8 @@ export default function ProjectPage() {
     if (urlParams.toString()) {
       /* eslint-disable react-hooks/set-state-in-effect -- sync filters from URL on mount */
       setFilters((prev) => ({ ...prev, ...paramsToFilters(urlParams), project: id ?? "" }));
+      const p = parseInt(urlParams.get("page") ?? "1", 10);
+      setPage(Number.isFinite(p) && p >= 1 ? p : 1);
       /* eslint-enable react-hooks/set-state-in-effect */
     }
   }, [id]);
@@ -132,7 +160,7 @@ export default function ProjectPage() {
   }
 
   const initialFilters = { ...INITIAL_FILTERS, project: id };
-  const displayCount = data.filteredSummary?.total ?? data.issues.length;
+  const displayCount = data.filteredSummary?.total ?? total;
   const totalCount = data.summary.total;
 
   return (
@@ -181,15 +209,6 @@ export default function ProjectPage() {
         reposCovered={data.summary.reposCovered}
         failedRepos={data.summary.failedRepos}
         filteredSummary={data.filteredSummary}
-        onUnclaimedClick={() =>
-          updateFilters({ ...filters, status: "likely_unclaimed", excludeStale: true })
-        }
-        onBeginnerClick={() =>
-          updateFilters({ ...filters, beginnerOnly: !filters.beginnerOnly })
-        }
-        onStaleClick={() =>
-          updateFilters({ ...filters, excludeStale: !filters.excludeStale })
-        }
       />
 
       <div className="relative space-y-4">
@@ -212,47 +231,30 @@ export default function ProjectPage() {
                 ? "Unable to load issues from GitHub. Please try again later."
                 : "No issues match your filters."}
             </p>
-            {hasMore && (
-              <button
-                onClick={loadMore}
-                disabled={loadingMore}
-                className="px-6 py-3 rounded-lg bg-amber-600 hover:bg-amber-500 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer text-zinc-900 font-medium transition focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 focus:ring-offset-bg"
-              >
-                {loadingMore ? "Loading..." : "Load more issues"}
-              </button>
-            )}
           </div>
         ) : (
           <>
-            <div className="hidden md:grid grid-cols-[1fr_auto_auto_auto_auto_auto_auto_auto] gap-3 px-4 py-2 text-xs text-zinc-500 border-b border-zinc-700/50">
-              <span>Title</span>
-              <span>Repo</span>
-              <span>Claim</span>
-              <span>Beginner</span>
-              <span>Readiness</span>
-              <span>Updated</span>
-              <span>Comments</span>
-              <span />
+            <div className="hidden md:block">
+              <IssuesTable
+                issues={displayIssues}
+                sortColumn={filters.sortColumn}
+                sortDesc={filters.sortDesc}
+                onSortChange={handleSortChange}
+              />
             </div>
-            {displayIssues.map((issue) => (
-              <div key={issue.id}>
-                <IssueRow issue={issue} />
-                <div className="md:hidden">
-                  <IssueCard issue={issue} />
-                </div>
-              </div>
-            ))}
-            {hasMore && (
-              <div className="flex justify-center pt-4">
-                <button
-                  onClick={loadMore}
-                  disabled={loadingMore}
-                  className="px-6 py-3 rounded-lg bg-amber-600 hover:bg-amber-500 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer text-zinc-900 font-medium transition focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 focus:ring-offset-bg"
-                >
-                  {loadingMore ? "Loading..." : "Load more"}
-                </button>
-              </div>
-            )}
+            <div className="md:hidden space-y-4">
+              {displayIssues.map((issue) => (
+                <IssueCard key={issue.id} issue={issue} />
+              ))}
+            </div>
+            <Pagination
+              page={page}
+              totalPages={totalPages}
+              total={total}
+              limit={limit}
+              onPageChange={handlePageChange}
+              isLoading={isRevalidating}
+            />
           </>
         )}
       </div>

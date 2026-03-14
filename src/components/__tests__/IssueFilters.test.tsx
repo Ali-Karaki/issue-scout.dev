@@ -8,11 +8,11 @@ const mockFilters: FilterState = {
   repo: "",
   status: "",
   beginnerOnly: false,
-  recentlyActiveOnly: false,
   excludeStale: false,
-  highReadinessOnly: false,
   label: "",
   sort: "best_match",
+  sortColumn: null,
+  sortDesc: false,
   q: "",
 };
 

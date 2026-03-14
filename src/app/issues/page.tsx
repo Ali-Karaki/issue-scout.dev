@@ -5,7 +5,8 @@ import { useSearchParams, usePathname } from "next/navigation";
 import { SummaryBar } from "@/components/SummaryBar";
 import { IssueFilters } from "@/components/IssueFilters";
 import { IssueCard } from "@/components/IssueCard";
-import { IssueRow } from "@/components/IssueRow";
+import { IssuesTable } from "@/components/issues-table/IssuesTable";
+import { Pagination } from "@/components/Pagination";
 import { ResultSummary } from "@/components/ResultSummary";
 import { formatUpdatedAgo } from "@/lib/utils";
 import { INITIAL_FILTERS, type FilterState } from "@/lib/filters";
@@ -20,28 +21,52 @@ export default function IssuesPage() {
     if (params.toString()) return paramsToFilters(params);
     return INITIAL_FILTERS;
   });
-  const { data, loading, isRevalidating, loadingMore, error, retry, fetchData, loadMore, hasMore, lastUpdatedAt } =
-    useIssuesFetch("/api/issues", filters);
+  const [page, setPage] = useState(() => {
+    const p = parseInt(searchParams.get("page") ?? "1", 10);
+    return Number.isFinite(p) && p >= 1 ? p : 1;
+  });
+  const { data, loading, isRevalidating, error, retry, fetchData, totalPages, total, limit, lastUpdatedAt } =
+    useIssuesFetch("/api/issues", filters, page);
 
   const updateFilters = useCallback(
-    (newFilters: FilterState) => {
+    (newFilters: FilterState, resetPage = true) => {
       setFilters(newFilters);
+      const newPage = resetPage ? 1 : page;
+      if (resetPage) setPage(1);
       const params = filtersToParams(newFilters);
+      params.set("page", String(newPage));
       const qs = params.toString();
       const url = qs ? `${pathname}?${qs}` : pathname;
       window.history.replaceState(null, "", url);
     },
-    [pathname]
+    [pathname, page]
+  );
+
+  const handlePageChange = useCallback(
+    (newPage: number) => {
+      setPage(newPage);
+      const params = filtersToParams(filters);
+      params.set("page", String(newPage));
+      const qs = params.toString();
+      const url = qs ? `${pathname}?${qs}` : pathname;
+      window.history.replaceState(null, "", url);
+    },
+    [pathname, filters]
+  );
+
+  const handleSortChange = useCallback(
+    (sortColumn: import("@/lib/filters").SortColumn, sortDesc: boolean) => {
+      updateFilters({ ...filters, sortColumn, sortDesc }, true);
+    },
+    [filters, updateFilters]
   );
 
   useEffect(() => {
     const onPopState = () => {
       const params = new URLSearchParams(window.location.search);
-      if (params.toString()) {
-        setFilters(paramsToFilters(params));
-      } else {
-        setFilters(INITIAL_FILTERS);
-      }
+      setFilters(params.toString() ? paramsToFilters(params) : INITIAL_FILTERS);
+      const p = parseInt(params.get("page") ?? "1", 10);
+      setPage(Number.isFinite(p) && p >= 1 ? p : 1);
     };
     window.addEventListener("popstate", onPopState);
     return () => window.removeEventListener("popstate", onPopState);
@@ -52,6 +77,8 @@ export default function IssuesPage() {
     if (params.toString()) {
       /* eslint-disable react-hooks/set-state-in-effect -- sync filters from URL on mount */
       setFilters(paramsToFilters(params));
+      const p = parseInt(params.get("page") ?? "1", 10);
+      setPage(Number.isFinite(p) && p >= 1 ? p : 1);
       /* eslint-enable react-hooks/set-state-in-effect */
     }
   }, []);
@@ -111,7 +138,7 @@ export default function IssuesPage() {
     return null;
   }
 
-  const displayCount = data.filteredSummary?.total ?? data.issues.length;
+  const displayCount = data.filteredSummary?.total ?? total;
   const totalCount = data.summary.total;
 
   return (
@@ -155,15 +182,6 @@ export default function IssuesPage() {
         reposCovered={data.summary.reposCovered}
         failedRepos={data.summary.failedRepos}
         filteredSummary={data.filteredSummary}
-        onUnclaimedClick={() =>
-          updateFilters({ ...filters, status: "likely_unclaimed", excludeStale: true })
-        }
-        onBeginnerClick={() =>
-          updateFilters({ ...filters, beginnerOnly: !filters.beginnerOnly })
-        }
-        onStaleClick={() =>
-          updateFilters({ ...filters, excludeStale: !filters.excludeStale })
-        }
       />
 
       <div className="relative space-y-4">
@@ -186,47 +204,30 @@ export default function IssuesPage() {
                 ? "Unable to load issues from GitHub. Please try again later."
                 : "No issues match your filters."}
             </p>
-            {hasMore && (
-              <button
-                onClick={loadMore}
-                disabled={loadingMore}
-                className="px-6 py-3 rounded-lg bg-amber-600 hover:bg-amber-500 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer text-zinc-900 font-medium transition focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 focus:ring-offset-bg"
-              >
-                {loadingMore ? "Loading..." : "Load more issues"}
-              </button>
-            )}
           </div>
         ) : (
           <>
-            <div className="hidden md:grid grid-cols-[1fr_auto_auto_auto_auto_auto_auto_auto] gap-3 px-4 py-2 text-xs text-zinc-500 border-b border-zinc-700/50">
-              <span>Title</span>
-              <span>Repo</span>
-              <span>Claim</span>
-              <span>Beginner</span>
-              <span>Readiness</span>
-              <span>Updated</span>
-              <span>Comments</span>
-              <span />
+            <div className="hidden md:block">
+              <IssuesTable
+                issues={displayIssues}
+                sortColumn={filters.sortColumn}
+                sortDesc={filters.sortDesc}
+                onSortChange={handleSortChange}
+              />
             </div>
-            {displayIssues.map((issue) => (
-              <div key={issue.id}>
-                <IssueRow issue={issue} />
-                <div className="md:hidden">
-                  <IssueCard issue={issue} />
-                </div>
-              </div>
-            ))}
-            {hasMore && (
-              <div className="flex justify-center pt-4">
-                <button
-                  onClick={loadMore}
-                  disabled={loadingMore}
-                  className="px-6 py-3 rounded-lg bg-amber-600 hover:bg-amber-500 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer text-zinc-900 font-medium transition focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 focus:ring-offset-bg"
-                >
-                  {loadingMore ? "Loading..." : "Load more"}
-                </button>
-              </div>
-            )}
+            <div className="md:hidden space-y-4">
+              {displayIssues.map((issue) => (
+                <IssueCard key={issue.id} issue={issue} />
+              ))}
+            </div>
+            <Pagination
+              page={page}
+              totalPages={totalPages}
+              total={total}
+              limit={limit}
+              onPageChange={handlePageChange}
+              isLoading={isRevalidating}
+            />
           </>
         )}
       </div>

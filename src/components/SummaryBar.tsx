@@ -12,9 +12,6 @@ interface SummaryBarProps {
     stale: number;
     reposCovered: number;
   };
-  onUnclaimedClick?: () => void;
-  onBeginnerClick?: () => void;
-  onStaleClick?: () => void;
 }
 
 export function SummaryBar({
@@ -25,9 +22,6 @@ export function SummaryBar({
   reposCovered,
   failedRepos = [],
   filteredSummary,
-  onUnclaimedClick,
-  onBeginnerClick,
-  onStaleClick,
 }: SummaryBarProps) {
   const isFiltered = filteredSummary && filteredSummary.total !== total;
   const displayTotal = isFiltered ? filteredSummary.total : total;
@@ -59,48 +53,15 @@ export function SummaryBar({
         </span>
         <span className="text-sm text-zinc-500">
           Likely unclaimed:{" "}
-          {onUnclaimedClick ? (
-            <button
-              type="button"
-              onClick={onUnclaimedClick}
-              className="font-medium text-emerald-400 hover:text-emerald-300 hover:underline cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 focus:ring-offset-bg rounded"
-              aria-label="Filter to show only likely unclaimed issues"
-            >
-              {displayLikelyUnclaimed}
-            </button>
-          ) : (
-            <strong className="text-emerald-400 font-medium">{displayLikelyUnclaimed}</strong>
-          )}
+          <strong className="text-emerald-400 font-medium">{displayLikelyUnclaimed}</strong>
         </span>
         <span className="text-sm text-zinc-500">
           Beginner-friendly:{" "}
-          {onBeginnerClick ? (
-            <button
-              type="button"
-              onClick={onBeginnerClick}
-              className="font-medium text-amber-500 hover:text-amber-400 hover:underline cursor-pointer focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 focus:ring-offset-bg rounded"
-              aria-label="Filter to beginner-friendly issues"
-            >
-              {displayBeginnerFriendly}
-            </button>
-          ) : (
-            <strong className="text-amber-500 font-medium">{displayBeginnerFriendly}</strong>
-          )}
+          <strong className="text-amber-500 font-medium">{displayBeginnerFriendly}</strong>
         </span>
         <span className="text-sm text-zinc-500">
           Stale:{" "}
-          {onStaleClick ? (
-            <button
-              type="button"
-              onClick={onStaleClick}
-              className="font-medium text-zinc-400 hover:text-zinc-300 hover:underline cursor-pointer focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2 focus:ring-offset-bg rounded"
-              aria-label="Toggle exclude stale"
-            >
-              {displayStale}
-            </button>
-          ) : (
-            <strong className="text-zinc-400 font-medium">{displayStale}</strong>
-          )}
+          <strong className="text-zinc-400 font-medium">{displayStale}</strong>
         </span>
         <span className="text-sm text-zinc-500">
           Repos: <strong className="text-zinc-300 font-medium">{displayReposCovered}</strong>

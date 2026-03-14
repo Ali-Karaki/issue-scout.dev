@@ -8,12 +8,12 @@ describe("filtersToParams", () => {
     expect(params.toString()).toBe("");
   });
 
-  it("serializes ecosystem", () => {
+  it("serializes project", () => {
     const params = filtersToParams({
       ...INITIAL_FILTERS,
-      ecosystem: "tanstack",
+      project: "tanstack",
     });
-    expect(params.get("ecosystem")).toBe("tanstack");
+    expect(params.get("project")).toBe("tanstack");
   });
 
   it("serializes boolean filters", () => {
@@ -26,10 +26,10 @@ describe("filtersToParams", () => {
 });
 
 describe("paramsToFilters", () => {
-  it("parses ecosystem", () => {
-    const params = new URLSearchParams("ecosystem=tanstack");
+  it("parses project", () => {
+    const params = new URLSearchParams("project=tanstack");
     const filters = paramsToFilters(params);
-    expect(filters.ecosystem).toBe("tanstack");
+    expect(filters.project).toBe("tanstack");
   });
 
   it("parses boolean from 1", () => {
@@ -41,13 +41,13 @@ describe("paramsToFilters", () => {
   it("round-trips filters", () => {
     const original: typeof INITIAL_FILTERS = {
       ...INITIAL_FILTERS,
-      ecosystem: "vercel",
+      project: "vercel",
       status: "likely_unclaimed",
       beginnerOnly: true,
     };
     const params = filtersToParams(original);
     const parsed = paramsToFilters(params);
-    expect(parsed.ecosystem).toBe(original.ecosystem);
+    expect(parsed.project).toBe(original.project);
     expect(parsed.status).toBe(original.status);
     expect(parsed.beginnerOnly).toBe(original.beginnerOnly);
   });

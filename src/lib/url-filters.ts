@@ -1,5 +1,14 @@
-import type { FilterState, SortOption } from "./filters";
+import type { FilterState, SortColumn, SortOption } from "./filters";
 import { INITIAL_FILTERS } from "./filters";
+
+const SORT_COLUMNS: SortColumn[] = [
+  "title",
+  "repo",
+  "claim",
+  "beginner",
+  "readiness",
+  "comments",
+];
 
 export function filtersToParams(filters: FilterState): URLSearchParams {
   const params = new URLSearchParams();
@@ -9,11 +18,11 @@ export function filtersToParams(filters: FilterState): URLSearchParams {
   if (filters.status) params.set("status", filters.status);
   if (filters.label) params.set("label", filters.label);
   if (filters.beginnerOnly) params.set("beginnerOnly", "1");
-  if (filters.recentlyActiveOnly) params.set("recentlyActiveOnly", "1");
   if (filters.excludeStale) params.set("excludeStale", "1");
-  if (filters.highReadinessOnly) params.set("highReadinessOnly", "1");
   if (filters.sort && filters.sort !== "best_match")
     params.set("sort", filters.sort);
+  if (filters.sortColumn) params.set("sortColumn", filters.sortColumn);
+  if (filters.sortDesc) params.set("sortDesc", "1");
   return params;
 }
 
@@ -22,11 +31,8 @@ export function paramsToFilters(params: URLSearchParams): FilterState {
     "best_match",
     "best_for_beginners",
     "most_ready",
-    "likely_unclaimed",
     "recently_updated",
     "most_comments",
-    "likely_easiest",
-    "highest_readiness",
   ];
   const sort = params.get("sort");
   const filters: FilterState = { ...INITIAL_FILTERS };
@@ -47,10 +53,12 @@ export function paramsToFilters(params: URLSearchParams): FilterState {
   const label = params.get("label");
   if (label) filters.label = label;
   filters.beginnerOnly = params.get("beginnerOnly") === "1";
-  filters.recentlyActiveOnly = params.get("recentlyActiveOnly") === "1";
   filters.excludeStale = params.get("excludeStale") === "1";
-  filters.highReadinessOnly = params.get("highReadinessOnly") === "1";
   if (sort && sortOptions.includes(sort as SortOption))
     filters.sort = sort as SortOption;
+  const sortColumn = params.get("sortColumn");
+  if (sortColumn && SORT_COLUMNS.includes(sortColumn as SortColumn))
+    filters.sortColumn = sortColumn as SortColumn;
+  filters.sortDesc = params.get("sortDesc") === "1";
   return filters;
 }
