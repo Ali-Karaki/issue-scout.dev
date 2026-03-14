@@ -3,6 +3,7 @@
 import { Link } from "next-view-transitions";
 import { usePathname } from "next/navigation";
 import { motion } from "motion/react";
+import { SUGGEST_ISSUE_URL } from "@/lib/constants";
 
 export function Header() {
   const pathname = usePathname();
@@ -49,6 +50,16 @@ export function Header() {
               />
             )}
           </Link>
+          {SUGGEST_ISSUE_URL && (
+            <a
+              href={SUGGEST_ISSUE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-base text-zinc-400 hover:text-zinc-200 no-underline transition-colors duration-200 py-1"
+            >
+              Suggest
+            </a>
+          )}
         </div>
       </nav>
     </header>

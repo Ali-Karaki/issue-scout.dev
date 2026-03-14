@@ -1,5 +1,6 @@
 import { Link } from "next-view-transitions";
 import { PROJECTS } from "@/lib/projects.config";
+import { SUGGEST_ISSUE_URL } from "@/lib/constants";
 import { FeaturedIssues } from "@/components/FeaturedIssues";
 import { AnimatedSection, AnimatedItem } from "@/components/AnimatedSection";
 
@@ -35,6 +36,19 @@ export default function HomePage() {
               ))}
             </AnimatedSection>
           </div>
+          {SUGGEST_ISSUE_URL && (
+            <p className="mt-6 text-sm text-zinc-500">
+              Don&apos;t see your favorite project?{" "}
+              <a
+                href={SUGGEST_ISSUE_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-amber-500/90 hover:text-amber-400 underline underline-offset-2"
+              >
+                Suggest one
+              </a>
+            </p>
+          )}
         </section>
       </AnimatedSection>
 
