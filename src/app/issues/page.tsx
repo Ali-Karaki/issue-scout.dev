@@ -161,14 +161,6 @@ export default function IssuesPage() {
         </button>
       </div>
 
-      <ResultSummary
-        count={displayCount}
-        total={totalCount}
-        filters={filters}
-        initialFilters={INITIAL_FILTERS}
-        onRemoveFilter={(updates) => updateFilters({ ...filters, ...updates })}
-      />
-
       <IssueFilters
         filters={filters}
         onChange={updateFilters}
@@ -179,14 +171,12 @@ export default function IssuesPage() {
         showProject={true}
       />
 
-      <SummaryBar
-        total={data.summary.total}
-        likelyUnclaimed={data.summary.likelyUnclaimed}
-        beginnerFriendly={data.summary.beginnerFriendly}
-        stale={data.summary.stale}
-        reposCovered={data.summary.reposCovered}
-        failedRepos={data.summary.failedRepos}
-        filteredSummary={data.filteredSummary}
+      <ResultSummary
+        count={displayCount}
+        total={totalCount}
+        filters={filters}
+        initialFilters={INITIAL_FILTERS}
+        onRemoveFilter={(updates) => updateFilters({ ...filters, ...updates })}
       />
 
       <div className="relative space-y-4">
@@ -249,6 +239,16 @@ export default function IssuesPage() {
           </>
         )}
       </div>
+
+      <SummaryBar
+        total={data.summary.total}
+        likelyUnclaimed={data.summary.likelyUnclaimed}
+        beginnerFriendly={data.summary.beginnerFriendly}
+        stale={data.summary.stale}
+        reposCovered={data.summary.reposCovered}
+        failedRepos={data.summary.failedRepos}
+        filteredSummary={data.filteredSummary}
+      />
     </div>
   );
 }

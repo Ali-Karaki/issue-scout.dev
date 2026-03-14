@@ -78,7 +78,7 @@ export function IssueFilters({
   const chipActive = "border-transparent";
 
   return (
-    <div className="rounded-xl bg-zinc-800/30 border border-zinc-700 mb-4 overflow-hidden">
+    <div className="rounded-xl bg-zinc-800/20 border border-zinc-700 mb-4 overflow-hidden">
       <div className="flex flex-wrap items-center gap-3 p-3">
         <div className="flex-1 min-w-[160px]">
           <input
@@ -170,7 +170,7 @@ export function IssueFilters({
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
           >
-            <div className="flex flex-wrap items-center gap-x-6 gap-y-3 p-3">
+            <div className="flex flex-wrap items-end gap-x-6 gap-y-3 p-3">
           {showProject && (
             <div className="min-w-[140px]">
               <label
@@ -251,7 +251,7 @@ export function IssueFilters({
               </span>
             </div>
           </div>
-          <div className="flex items-center gap-4 mt-4 flex-wrap">
+          <div className="flex items-center gap-4 flex-wrap">
             <label className="flex items-center gap-2 text-sm text-zinc-400 cursor-pointer">
               <input
                 type="checkbox"

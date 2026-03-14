@@ -38,7 +38,7 @@ export function SummaryBar({
 
   return (
     <motion.div
-      className="flex flex-col gap-3"
+      className="flex flex-col gap-3 mt-6"
       variants={fadeIn}
       initial="hidden"
       animate="visible"
@@ -55,7 +55,7 @@ export function SummaryBar({
           {failedRepos.length > 5 && ` +${failedRepos.length - 5} more`}
         </div>
       )}
-      <div className="flex flex-wrap gap-6 p-3 rounded-xl bg-zinc-800/30 border border-zinc-700 mb-4">
+      <div className="flex flex-wrap gap-4 p-2 rounded-lg bg-zinc-800/10 border border-zinc-700/50 mb-4 text-xs">
         <span className="text-sm text-zinc-500">
           Total:{" "}
           <strong className="text-zinc-300 font-medium">
