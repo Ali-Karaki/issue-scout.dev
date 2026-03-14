@@ -1,12 +1,13 @@
 {
-  "name": "web",
+  "name": "issuescout",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint . --cache"
+    "lint": "eslint . --cache",
+    "test": "vitest run"
   },
   "dependencies": {
     "next": "16.0.10",
@@ -18,9 +19,12 @@
     "@types/node": "20.12.12",
     "@types/react": "19.2.9",
     "@types/react-dom": "19.2.3",
+    "eslint": "^9.39.4",
+    "eslint-config-next": "^16.1.6",
     "postcss": "^8.4.39",
     "tailwindcss": "^4.1.11",
-    "typescript": "5.4.5"
+    "typescript": "5.4.5",
+    "vitest": "^2.1.9"
   },
   "packageManager": "pnpm@10.9.0+sha512.0486e394640d3c1fb3c9d43d49cf92879ff74f8516959c235308f5a8f62e2e19528a65cdc2a3058f587cde71eba3d5b56327c8c33a97e4c4051ca48a10ca2d5f"
 }
