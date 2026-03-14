@@ -35,7 +35,11 @@ export default function GlobalError({
           <h2 style={{ margin: "0 0 0.5rem", fontSize: "1.125rem", fontWeight: 600 }}>
             Something went wrong
           </h2>
-          <p style={{ margin: "0 0 1rem", fontSize: "0.875rem" }}>{error.message}</p>
+          <p style={{ margin: "0 0 1rem", fontSize: "0.875rem" }}>
+            {process.env.NODE_ENV === "production"
+              ? "Something went wrong"
+              : error.message}
+          </p>
           <button
             onClick={reset}
             style={{

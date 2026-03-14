@@ -25,8 +25,9 @@ export function IssueFilters({
   return (
     <div className="flex flex-wrap gap-4 p-4 rounded-xl bg-zinc-800/30 border border-zinc-700 mb-6">
       <div>
-        <label className="block text-xs text-zinc-500 mb-1">Ecosystem</label>
+        <label htmlFor="filter-ecosystem" className="block text-xs text-zinc-500 mb-1">Ecosystem</label>
         <select
+          id="filter-ecosystem"
           value={filters.ecosystem}
           onChange={(e) => update("ecosystem", e.target.value)}
           className="px-3 py-2 rounded-lg bg-zinc-800 border border-zinc-600 text-zinc-200 text-sm focus:outline-none focus:border-amber-600"
@@ -40,8 +41,9 @@ export function IssueFilters({
         </select>
       </div>
       <div>
-        <label className="block text-xs text-zinc-500 mb-1">Repo</label>
+        <label htmlFor="filter-repo" className="block text-xs text-zinc-500 mb-1">Repo</label>
         <select
+          id="filter-repo"
           value={filters.repo}
           onChange={(e) => update("repo", e.target.value)}
           className="px-3 py-2 rounded-lg bg-zinc-800 border border-zinc-600 text-zinc-200 text-sm focus:outline-none focus:border-amber-600 min-w-[180px]"
@@ -55,8 +57,9 @@ export function IssueFilters({
         </select>
       </div>
       <div>
-        <label className="block text-xs text-zinc-500 mb-1">Status</label>
+        <label htmlFor="filter-status" className="block text-xs text-zinc-500 mb-1">Status</label>
         <select
+          id="filter-status"
           value={filters.status}
           onChange={(e) => update("status", e.target.value)}
           className="px-3 py-2 rounded-lg bg-zinc-800 border border-zinc-600 text-zinc-200 text-sm focus:outline-none focus:border-amber-600"
@@ -68,8 +71,9 @@ export function IssueFilters({
         </select>
       </div>
       <div>
-        <label className="block text-xs text-zinc-500 mb-1">Label</label>
+        <label htmlFor="filter-label" className="block text-xs text-zinc-500 mb-1">Label</label>
         <select
+          id="filter-label"
           value={filters.label}
           onChange={(e) => update("label", e.target.value)}
           className="px-3 py-2 rounded-lg bg-zinc-800 border border-zinc-600 text-zinc-200 text-sm focus:outline-none focus:border-amber-600 min-w-[140px]"
@@ -83,8 +87,9 @@ export function IssueFilters({
         </select>
       </div>
       <div>
-        <label className="block text-xs text-zinc-500 mb-1">Sort</label>
+        <label htmlFor="filter-sort" className="block text-xs text-zinc-500 mb-1">Sort</label>
         <select
+          id="filter-sort"
           value={filters.sort}
           onChange={(e) => update("sort", e.target.value)}
           className="px-3 py-2 rounded-lg bg-zinc-800 border border-zinc-600 text-zinc-200 text-sm focus:outline-none focus:border-amber-600"

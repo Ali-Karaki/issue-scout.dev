@@ -39,18 +39,18 @@ describe("extractFromBody", () => {
 
 describe("extractFromTitle", () => {
   it("extracts #123 from title", () => {
-    expect(extractFromTitle("#123", "owner/repo")).toEqual([123]);
+    expect(extractFromTitle("#123")).toEqual([123]);
   });
 
   it("extracts multiple # refs", () => {
-    expect(extractFromTitle("Fix #1 and #2", "owner/repo")).toEqual([1, 2]);
+    expect(extractFromTitle("Fix #1 and #2")).toEqual([1, 2]);
   });
 
   it("returns empty for null", () => {
-    expect(extractFromTitle(null, "owner/repo")).toEqual([]);
+    expect(extractFromTitle(null)).toEqual([]);
   });
 
   it("returns empty for undefined", () => {
-    expect(extractFromTitle(undefined, "owner/repo")).toEqual([]);
+    expect(extractFromTitle(undefined)).toEqual([]);
   });
 });

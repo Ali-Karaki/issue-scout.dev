@@ -64,7 +64,7 @@ export async function checkRateLimit(key: string): Promise<boolean> {
       const { success } = await ratelimit.limit(key);
       return success;
     } catch {
-      return true;
+      return checkRateLimitInMemory(key, LIMIT, WINDOW_MS);
     }
   }
   return checkRateLimitInMemory(key, LIMIT, WINDOW_MS);

@@ -9,11 +9,19 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ ecosystem: string }> }
 ) {
+  const { ecosystem } = await params;
+  if (!ECOSYSTEMS.some((e) => e.id === ecosystem)) {
+    return NextResponse.json(
+      { error: "Invalid ecosystem" },
+      { status: 400 }
+    );
+  }
+
   const ip = getClientIp(request);
   if (!(await checkRateLimit(ip))) {
     return NextResponse.json(
       { error: "Too many requests" },
-      { status: 429 }
+      { status: 429, headers: { "Retry-After": "60" } }
     );
   }
   const token = process.env.GITHUB_TOKEN || process.env.PAT || "";
@@ -32,7 +40,6 @@ export async function GET(
       { status: 503 }
     );
   }
-  const { ecosystem } = await params;
   const { searchParams } = new URL(request.url);
   const rawPage = parseInt(searchParams.get("page") ?? "1", 10);
   const rawLimit = parseInt(searchParams.get("limit") ?? "50", 10);
@@ -40,13 +47,6 @@ export async function GET(
   const limit = Number.isFinite(rawLimit)
     ? Math.min(100, Math.max(1, rawLimit))
     : 50;
-
-  if (!ECOSYSTEMS.some((e) => e.id === ecosystem)) {
-    return NextResponse.json(
-      { error: "Invalid ecosystem" },
-      { status: 400 }
-    );
-  }
 
   try {
     const data = await fetchIssues(ecosystem, token);
@@ -71,11 +71,12 @@ export async function GET(
       }
     );
   } catch (err) {
-    return NextResponse.json(
-      {
-        error: err instanceof Error ? err.message : "Unknown error",
-      },
-      { status: 500 }
-    );
+    const message =
+      process.env.NODE_ENV === "production"
+        ? "Internal server error"
+        : err instanceof Error
+          ? err.message
+          : "Unknown error";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

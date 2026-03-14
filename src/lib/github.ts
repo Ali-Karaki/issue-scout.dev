@@ -72,6 +72,9 @@ async function fetchPaginated(
           "GitHub API rate limit exceeded. Please try again later."
         );
       }
+      if (res.status === 401 || res.status === 403) {
+        throw new Error("Invalid or expired GitHub token");
+      }
       throw new Error(`GitHub API error ${res.status}`);
     }
     const data = await res.json();
@@ -115,8 +118,7 @@ export function extractFromBody(
 const TITLE_REGEX = /#(\d+)/g;
 
 export function extractFromTitle(
-  title: string | null | undefined,
-  _currentRepo: string
+  title: string | null | undefined
 ): number[] {
   if (!title || typeof title !== "string") return [];
   const nums = new Set<number>();
@@ -133,7 +135,7 @@ function getLinkedIssueNumbers(
   currentRepo: string
 ): Set<number> {
   const fromBody = extractFromBody(pr.body, currentRepo);
-  const fromTitle = extractFromTitle(pr.title, currentRepo);
+  const fromTitle = extractFromTitle(pr.title);
   return new Set([...fromBody, ...fromTitle]);
 }
 

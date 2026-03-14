@@ -3,13 +3,14 @@ import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import { hasKv } from "@/lib/kv";
 import { fetchIssues } from "@/lib/api/fetch-issues";
 import { CACHE_REVALIDATE_SECONDS } from "@/lib/constants";
+import { ECOSYSTEMS } from "@/lib/ecosystems.config";
 
 export async function GET(request: NextRequest) {
   const ip = getClientIp(request);
   if (!(await checkRateLimit(ip))) {
     return NextResponse.json(
       { error: "Too many requests" },
-      { status: 429 }
+      { status: 429, headers: { "Retry-After": "60" } }
     );
   }
   const token = process.env.GITHUB_TOKEN || process.env.PAT || "";
@@ -37,8 +38,17 @@ export async function GET(request: NextRequest) {
     ? Math.min(100, Math.max(1, rawLimit))
     : 50;
 
+  if (ecosystem !== null && ecosystem !== "") {
+    const valid = ECOSYSTEMS.some((e) => e.id === ecosystem);
+    if (!valid) {
+      return NextResponse.json({ error: "Invalid ecosystem" }, { status: 400 });
+    }
+  }
+
+  const ecosystemParam = ecosystem === "" ? null : ecosystem;
+
   try {
-    const data = await fetchIssues(ecosystem, token);
+    const data = await fetchIssues(ecosystemParam, token);
     const total = data.issues.length;
     const start = (page - 1) * limit;
     const paginatedIssues = data.issues.slice(start, start + limit);
@@ -60,11 +70,12 @@ export async function GET(request: NextRequest) {
       }
     );
   } catch (err) {
-    return NextResponse.json(
-      {
-        error: err instanceof Error ? err.message : "Unknown error",
-      },
-      { status: 500 }
-    );
+    const message =
+      process.env.NODE_ENV === "production"
+        ? "Internal server error"
+        : err instanceof Error
+          ? err.message
+          : "Unknown error";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

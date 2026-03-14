@@ -30,12 +30,12 @@ export async function GET() {
       read: value ? "ok" : "miss",
       sample: value,
     });
-  } catch (err) {
+  } catch {
     return NextResponse.json(
       {
         redis: "error",
         configured: true,
-        error: err instanceof Error ? err.message : "Unknown error",
+        error: "Redis operation failed",
       },
       { status: 500 }
     );

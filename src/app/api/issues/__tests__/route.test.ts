@@ -165,4 +165,31 @@ describe("GET /api/issues", () => {
     expect(body.pagination.page).toBe(1);
     expect(body.pagination.limit).toBe(50);
   });
+
+  it("returns 400 for invalid ecosystem", async () => {
+    const req = new NextRequest(
+      "http://localhost:3000/api/issues?ecosystem=invalid"
+    );
+    const res = await GET(req);
+    const body = await res.json();
+
+    expect(res.status).toBe(400);
+    expect(body.error).toBe("Invalid ecosystem");
+    expect(mockFetchIssues).not.toHaveBeenCalled();
+  });
+
+  it("treats empty ecosystem as all ecosystems", async () => {
+    const data = makeMockResponse(10);
+    mockFetchIssues.mockResolvedValue(data);
+
+    const req = new NextRequest(
+      "http://localhost:3000/api/issues?ecosystem="
+    );
+    const res = await GET(req);
+    const body = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(mockFetchIssues).toHaveBeenCalledWith(null, "valid-token");
+    expect(body.issues).toHaveLength(10);
+  });
 });

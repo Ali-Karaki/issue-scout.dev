@@ -6,8 +6,13 @@ import type { IssuesResponse } from "@/lib/api/fetch-issues";
 
 const DEFAULT_LIMIT = 50;
 
+const FETCH_TIMEOUT_MS = 30_000;
+
 async function fetcher(url: string): Promise<IssuesResponse> {
-  const res = await fetch(url);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+  const res = await fetch(url, { signal: controller.signal });
+  clearTimeout(timeout);
   if (!res.ok) {
     let message = `API error ${res.status}`;
     try {
@@ -57,6 +62,13 @@ export function useIssuesFetch(apiUrl: string) {
     revalidateOnFocus: true,
     dedupingInterval: 2000,
     errorRetryCount: 2,
+    onErrorRetry: (err, _key, _config, revalidate, { retryCount }) => {
+      if (err?.message?.includes("429") || err?.message?.includes("Too many requests")) {
+        setTimeout(() => revalidate(), 60_000);
+      } else if (retryCount < 2) {
+        setTimeout(() => revalidate(), 5000);
+      }
+    },
   });
 
   const mergedData: IssuesResponse | null = useMemo(() => {

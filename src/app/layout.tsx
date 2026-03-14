@@ -5,8 +5,10 @@ import { Header } from "@/components/Header";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://issuescout.dev";
+
 export const metadata: Metadata = {
-  metadataBase: new URL("https://issuescout.dev"),
+  metadataBase: new URL(siteUrl),
   title: {
     default: "IssueScout",
     template: "%s | IssueScout",
@@ -15,7 +17,7 @@ export const metadata: Metadata = {
     "Find OSS issues that don't appear to have an open PR referencing them",
   openGraph: {
     type: "website",
-    url: "https://issuescout.dev",
+    url: siteUrl,
     siteName: "IssueScout",
     title: "IssueScout",
     description:

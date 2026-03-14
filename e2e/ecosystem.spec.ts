@@ -11,4 +11,11 @@ test.describe("Ecosystem page", () => {
         .first()
     ).toBeVisible({ timeout: 60_000 });
   });
+
+  test("shows 404 for invalid ecosystem id", async ({ page }) => {
+    await page.goto("/ecosystem/invalid-id");
+    await expect(page.getByText(/Page not found|doesn't exist/i)).toBeVisible({
+      timeout: 5000,
+    });
+  });
 });

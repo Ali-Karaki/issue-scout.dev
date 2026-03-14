@@ -8,8 +8,16 @@ type Props = {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
   const ecosystem = ECOSYSTEMS.find((e) => e.id === id);
-  if (!ecosystem) return { title: "Ecosystem" };
-  return { title: `${ecosystem.name} Issues` };
+  if (!ecosystem)
+    return { title: "Ecosystem not found" };
+  return {
+    title: `${ecosystem.name} Issues`,
+    description: ecosystem.description,
+    openGraph: {
+      title: `${ecosystem.name} Issues`,
+      description: ecosystem.description,
+    },
+  };
 }
 
 export default function EcosystemLayout({

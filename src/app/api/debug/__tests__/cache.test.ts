@@ -57,6 +57,14 @@ describe("GET /api/debug/cache", () => {
     expect(res.status).toBe(500);
     expect(body.redis).toBe("error");
     expect(body.configured).toBe(true);
-    expect(body.error).toBe("Connection refused");
+    expect(body.error).toBe("Redis operation failed");
+  });
+
+  it("returns 404 in production", async () => {
+    const orig = process.env.NODE_ENV;
+    (process.env as Record<string, string>).NODE_ENV = "production";
+    const res = await GET();
+    (process.env as Record<string, string>).NODE_ENV = orig;
+    expect(res.status).toBe(404);
   });
 });

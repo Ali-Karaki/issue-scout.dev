@@ -30,7 +30,7 @@ Find OSS issues that don't appear to have an open PR referencing them. Live at [
 3. **Add Upstash Redis** for caching (required):
 
    - Vercel: [Integrations](https://vercel.com/dashboard) → **Browse Marketplace** → **Upstash** → **Upstash KV** → Install and link to your project
-   - Add env vars `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` (from Upstash Console, or map Vercel's `KV_*` vars when connecting)
+   - Add env vars `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` (from Upstash Console, or map Vercel's `KV_REDIS_REST_*` vars to `UPSTASH_REDIS_REST_*` when connecting)
 
 **Verifying KV cache:**
 
@@ -107,6 +107,16 @@ Edit [src/lib/ecosystems.config.ts](src/lib/ecosystems.config.ts) to add or modi
 
 ---
 
-## 7. Contributing
+## 7. Deploying to Vercel
+
+1. Connect your repo to Vercel.
+2. Set env vars: `GITHUB_TOKEN`, `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`. Optionally `NEXT_PUBLIC_SITE_URL` for preview deployments.
+3. The `vercel.json` `ignoreCommand` runs lint, typecheck, and unit tests before deploy. E2E runs in CI only; deploys are gated by CI (including E2E).
+4. For production, consider adding error tracking (e.g. Sentry) and monitoring `/api/health` for uptime checks.
+5. Rate limiting uses `x-forwarded-for`; the proxy (Vercel) must be trusted.
+
+---
+
+## 8. Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, scripts, and PR process.

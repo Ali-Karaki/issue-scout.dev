@@ -70,6 +70,10 @@ async function fetchEcosystemCached(
   return data;
 }
 
+/**
+ * Fetch issues from GitHub, optionally filtered by ecosystem.
+ * @param ecosystemId - Ecosystem id (e.g. "tanstack") or null for all ecosystems
+ */
 export async function fetchIssues(
   ecosystemId: string | null,
   token: string
