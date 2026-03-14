@@ -17,7 +17,7 @@ export default function Error({
   }, [error]);
 
   return (
-    <div className="max-w-4xl mx-auto px-6 py-12">
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-12">
       <motion.div
         className="p-6 rounded-xl border border-red-500/50 bg-red-500/10 text-red-400"
         variants={fadeIn}

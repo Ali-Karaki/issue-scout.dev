@@ -11,6 +11,11 @@ export default function GlobalError({
 }) {
   return (
     <html lang="en">
+      <style>{`
+        @media (max-width: 640px) {
+          body { padding: 1rem; }
+        }
+      `}</style>
       <body
         style={{
           margin: 0,
@@ -48,7 +53,8 @@ export default function GlobalError({
           <button
             onClick={reset}
             style={{
-              padding: "0.5rem 1rem",
+              padding: "0.75rem 1.25rem",
+              minHeight: "44px",
               borderRadius: "0.5rem",
               background: "#d97706",
               color: "#0d0d0f",

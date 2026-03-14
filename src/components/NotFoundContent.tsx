@@ -7,7 +7,7 @@ import { fadeIn, defaultTransition } from "@/lib/animations";
 export function NotFoundContent() {
   return (
     <motion.div
-      className="max-w-4xl mx-auto px-6 py-12"
+      className="max-w-4xl mx-auto px-4 sm:px-6 py-12"
       variants={fadeIn}
       initial="hidden"
       animate="visible"

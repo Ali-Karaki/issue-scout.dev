@@ -23,7 +23,7 @@ export function Pagination({
   const end = Math.min(page * limit, total);
 
   const btnClass =
-    "px-3 py-1.5 rounded-lg text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 focus:ring-offset-bg disabled:opacity-50 disabled:cursor-not-allowed";
+    "min-h-[44px] sm:min-h-0 px-3 py-1.5 rounded-lg text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 focus:ring-offset-bg disabled:opacity-50 disabled:cursor-not-allowed";
   const btnActive =
     "bg-amber-600 text-zinc-900 cursor-default";
   const btnInactive =
@@ -32,11 +32,11 @@ export function Pagination({
   if (totalPages <= 1 && total <= limit) return null;
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-4 py-4">
-      <span className="text-sm text-zinc-500">
+    <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center justify-between gap-4 py-4">
+      <span className="text-sm text-zinc-500 order-2 sm:order-1">
         Showing {start}–{end} of {total}
       </span>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center justify-center sm:justify-end gap-2 order-1 sm:order-2 flex-wrap">
         <motion.button
           type="button"
           onClick={() => onPageChange(page - 1)}
@@ -49,7 +49,7 @@ export function Pagination({
         >
           Previous
         </motion.button>
-        <div className="flex items-center gap-1">
+        <div className="hidden sm:flex items-center gap-1">
           {Array.from({ length: totalPages }, (_, i) => i + 1)
             .filter((p) => {
               if (totalPages <= 7) return true;
@@ -87,6 +87,9 @@ export function Pagination({
               )
             )}
         </div>
+        <span className="sm:hidden text-sm text-zinc-500 px-2">
+          {page}/{totalPages}
+        </span>
         <motion.button
           type="button"
           onClick={() => onPageChange(page + 1)}

@@ -103,7 +103,7 @@ export default function IssuesPage() {
   if (loading) {
     return (
       <div
-        className="max-w-7xl mx-auto px-6 py-12"
+        className="max-w-7xl mx-auto px-4 sm:px-6 py-12"
         aria-busy="true"
         aria-live="polite"
       >
@@ -115,7 +115,7 @@ export default function IssuesPage() {
   if (error) {
     return (
       <div
-        className="max-w-7xl mx-auto px-6 py-12"
+        className="max-w-7xl mx-auto px-4 sm:px-6 py-12"
         aria-live="polite"
       >
         <motion.div
@@ -143,8 +143,8 @@ export default function IssuesPage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-8">
-      <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+      <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center justify-between gap-4 mb-4">
         <h1 className="text-xl font-semibold text-zinc-100">Issues</h1>
         <button
           type="button"

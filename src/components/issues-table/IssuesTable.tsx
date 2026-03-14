@@ -40,7 +40,7 @@ export function IssuesTable({
   });
 
   return (
-    <div className="w-full min-w-0">
+    <div className="w-full min-w-0 overflow-x-auto">
       <table className="w-full min-w-0 table-fixed border-collapse text-sm">
         <colgroup>
           <col style={{ width: "24%" }} />

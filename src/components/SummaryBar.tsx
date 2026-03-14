@@ -55,33 +55,33 @@ export function SummaryBar({
           {failedRepos.length > 5 && ` +${failedRepos.length - 5} more`}
         </div>
       )}
-      <div className="flex flex-wrap gap-4 p-2 rounded-lg bg-zinc-800/10 border border-zinc-700/50 mb-4 text-xs">
-        <span className="text-sm text-zinc-500">
+      <div className="flex flex-wrap gap-2 sm:gap-4 p-2 rounded-lg bg-zinc-800/10 border border-zinc-700/50 mb-4">
+        <span className="text-xs sm:text-sm text-zinc-500">
           Total:{" "}
           <strong className="text-zinc-300 font-medium">
             <AnimatedNumber value={displayTotal} />
             {isFiltered && ` of ${total}`}
           </strong>
         </span>
-        <span className="text-sm text-zinc-500">
+        <span className="text-xs sm:text-sm text-zinc-500">
           Likely unclaimed:{" "}
           <strong className="text-emerald-400 font-medium">
             <AnimatedNumber value={displayLikelyUnclaimed} />
           </strong>
         </span>
-        <span className="text-sm text-zinc-500">
+        <span className="text-xs sm:text-sm text-zinc-500">
           Beginner-friendly:{" "}
           <strong className="text-amber-500 font-medium">
             <AnimatedNumber value={displayBeginnerFriendly} />
           </strong>
         </span>
-        <span className="text-sm text-zinc-500">
+        <span className="text-xs sm:text-sm text-zinc-500">
           Stale:{" "}
           <strong className="text-zinc-400 font-medium">
             <AnimatedNumber value={displayStale} />
           </strong>
         </span>
-        <span className="text-sm text-zinc-500">
+        <span className="text-xs sm:text-sm text-zinc-500">
           Repos:{" "}
           <strong className="text-zinc-300 font-medium">
             <AnimatedNumber value={displayReposCovered} />

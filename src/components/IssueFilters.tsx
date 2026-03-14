@@ -76,29 +76,29 @@ export function IssueFilters({
   const toggleBeginner = () => update("beginnerOnly", !filters.beginnerOnly);
 
   const selectClass =
-    "w-full min-w-0 px-3 py-1.5 pr-7 rounded-lg bg-zinc-800 border border-zinc-600 text-zinc-200 text-sm focus:outline-none focus:border-amber-600 appearance-none";
+    "w-full min-w-0 min-h-[44px] sm:min-h-0 px-3 py-1.5 pr-7 rounded-lg bg-zinc-800 border border-zinc-600 text-zinc-200 text-sm focus:outline-none focus:border-amber-600 appearance-none";
   const selectWrapperClass = "relative";
 
   const chipBase =
-    "px-3 py-1 rounded-lg text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 focus:ring-offset-bg cursor-pointer";
+    "min-h-[44px] sm:min-h-0 px-3 py-1 rounded-lg text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 focus:ring-offset-bg cursor-pointer";
   const chipInactive =
     "bg-zinc-800 border border-zinc-600 text-zinc-400 hover:text-zinc-200 hover:border-zinc-500";
   const chipActive = "border-transparent";
 
   return (
     <div className="rounded-xl bg-zinc-800/20 border border-zinc-700 mb-4 overflow-hidden">
-      <div className="flex flex-wrap items-center gap-3 p-3">
-        <div className="flex-1 min-w-[160px]">
+      <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3 p-3">
+        <div className="flex-1 min-w-0 sm:min-w-[160px] w-full">
           <input
             type="search"
             placeholder="Search issues..."
             value={filters.q}
             onChange={(e) => update("q", e.target.value)}
-            className="w-full px-3 py-1.5 rounded-lg bg-zinc-800 border border-zinc-600 text-zinc-200 text-sm placeholder-zinc-500 focus:outline-none focus:border-amber-600"
+            className="w-full min-h-[44px] sm:min-h-0 px-3 py-1.5 rounded-lg bg-zinc-800 border border-zinc-600 text-zinc-200 text-sm placeholder-zinc-500 focus:outline-none focus:border-amber-600"
             aria-label="Search issues by title or label"
           />
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex flex-wrap items-center gap-2 shrink-0">
           <div className={selectWrapperClass}>
             <select
               id="filter-sort"
@@ -146,7 +146,7 @@ export function IssueFilters({
           <motion.button
             type="button"
             onClick={() => setExpanded(!expanded)}
-            className="px-3 py-1.5 rounded-lg bg-zinc-800 border border-zinc-600 text-zinc-400 text-sm hover:text-zinc-200 hover:border-zinc-500 transition-colors duration-200 flex items-center gap-1"
+            className="min-h-[44px] sm:min-h-0 px-3 py-1.5 rounded-lg bg-zinc-800 border border-zinc-600 text-zinc-400 text-sm hover:text-zinc-200 hover:border-zinc-500 transition-colors duration-200 flex items-center gap-1"
             aria-expanded={expanded}
             whileTap={{ scale: 0.97 }}
             transition={{ duration: 0.1 }}
@@ -162,7 +162,7 @@ export function IssueFilters({
             <button
               type="button"
               onClick={onClear}
-              className="px-3 py-1.5 rounded-lg bg-zinc-800 border border-zinc-600 text-zinc-400 text-sm hover:text-zinc-200 hover:border-zinc-500 transition"
+              className="min-h-[44px] sm:min-h-0 px-3 py-1.5 rounded-lg bg-zinc-800 border border-zinc-600 text-zinc-400 text-sm hover:text-zinc-200 hover:border-zinc-500 transition"
             >
               Clear
             </button>
@@ -178,7 +178,7 @@ export function IssueFilters({
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
           >
-            <div className="flex flex-wrap items-end gap-x-6 gap-y-3 p-3">
+            <div className="flex flex-wrap items-end gap-x-4 sm:gap-x-6 gap-y-3 p-3">
           {showProject && (
             <MultiSelectFilter
               id="filter-project"
@@ -188,7 +188,7 @@ export function IssueFilters({
               onChange={(selected) => onChange({ ...filters, project: selected })}
               placeholder="All projects"
               optionLabels={Object.fromEntries(PROJECTS.map((e) => [e.id, e.name]))}
-              className="min-w-[140px]"
+              className="min-w-0 w-full sm:min-w-[140px] sm:w-auto"
             />
           )}
           <MultiSelectFilter
@@ -198,7 +198,7 @@ export function IssueFilters({
             selected={filters.repo}
             onChange={(selected) => onChange({ ...filters, repo: selected })}
             placeholder="All repos"
-            className="min-w-[180px]"
+            className="min-w-0 w-full sm:min-w-[180px] sm:w-auto"
           />
           <MultiSelectFilter
             id="filter-tech"
@@ -207,7 +207,7 @@ export function IssueFilters({
             selected={filters.tech}
             onChange={(selected) => onChange({ ...filters, tech: selected })}
             placeholder="All tech"
-            className="min-w-[140px]"
+            className="min-w-0 w-full sm:min-w-[140px] sm:w-auto"
           />
           <div className="flex items-center gap-4 flex-wrap">
             <label className="flex items-center gap-2 text-sm text-zinc-400 cursor-pointer">

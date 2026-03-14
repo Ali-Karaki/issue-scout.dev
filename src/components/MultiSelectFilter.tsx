@@ -48,10 +48,19 @@ export function MultiSelectFilter({
   useEffect(() => {
     if (open && containerRef.current && typeof window !== "undefined") {
       const rect = containerRef.current.getBoundingClientRect();
+      const width = Math.min(
+        window.innerWidth - 32,
+        Math.max(rect.width, 140)
+      );
+      let left = rect.left;
+      if (left + width > window.innerWidth - 16) {
+        left = Math.max(16, window.innerWidth - width - 16);
+      }
+      if (left < 16) left = 16;
       setPosition({
         top: rect.bottom + 4,
-        left: rect.left,
-        width: rect.width,
+        left,
+        width,
       });
     }
   }, [open]);
@@ -71,17 +80,17 @@ export function MultiSelectFilter({
         : `${selected.length} selected`;
 
   const buttonClass =
-    "w-full min-w-0 px-3 py-1.5 pr-7 rounded-lg bg-zinc-800 border border-zinc-600 text-zinc-200 text-sm text-left focus:outline-none focus:border-amber-600 appearance-none flex items-center justify-between gap-2";
+    "w-full min-w-0 min-h-[44px] sm:min-h-0 px-3 py-1.5 pr-7 rounded-lg bg-zinc-800 border border-zinc-600 text-zinc-200 text-sm text-left focus:outline-none focus:border-amber-600 appearance-none flex items-center justify-between gap-2";
 
   const dropdownContent = open && (
     <div
       ref={dropdownRef}
-      className="fixed z-[9999] min-w-[140px] max-h-48 overflow-y-auto rounded-lg bg-zinc-800 border border-zinc-600 shadow-lg py-1"
+      className="fixed z-[9999] min-w-[140px] max-h-[min(12rem,50vh)] overflow-y-auto rounded-lg bg-zinc-800 border border-zinc-600 shadow-lg py-1"
       role="listbox"
       style={{
         top: position.top,
         left: position.left,
-        width: Math.max(position.width, 140),
+        width: position.width,
       }}
     >
       {options.length === 0 ? (

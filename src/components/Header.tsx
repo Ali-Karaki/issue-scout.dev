@@ -12,17 +12,17 @@ export function Header() {
 
   return (
     <header className="border-b border-zinc-700 bg-zinc-900/50">
-      <nav className="max-w-4xl mx-auto px-6 py-5 flex items-center justify-between gap-4">
+      <nav className="max-w-7xl mx-auto px-4 sm:px-6 py-5 flex items-center justify-between gap-4 flex-wrap">
         <Link
           href="/"
-          className="text-xl font-semibold flex items-center no-underline text-inherit hover:text-amber-500 transition-colors duration-200"
+          className="text-lg sm:text-xl font-semibold flex items-center no-underline text-inherit hover:text-amber-500 transition-colors duration-200"
         >
           Issue<span className="text-amber-500">Scout</span>
         </Link>
-        <div className="flex gap-6">
+        <div className="flex gap-2 sm:gap-6 flex-wrap">
           <Link
             href="/"
-            className={`relative text-base no-underline transition-colors duration-200 py-1 ${
+            className={`relative text-base no-underline transition-colors duration-200 py-1 min-h-[44px] sm:min-h-0 flex items-center ${
               isHome ? "text-zinc-200" : "text-zinc-400 hover:text-zinc-200"
             }`}
           >
@@ -37,7 +37,7 @@ export function Header() {
           </Link>
           <Link
             href="/issues"
-            className={`relative text-base no-underline transition-colors duration-200 py-1 ${
+            className={`relative text-base no-underline transition-colors duration-200 py-1 min-h-[44px] sm:min-h-0 flex items-center ${
               isIssues ? "text-zinc-200" : "text-zinc-400 hover:text-zinc-200"
             }`}
           >
@@ -55,7 +55,7 @@ export function Header() {
               href={SUGGEST_ISSUE_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-base text-zinc-400 hover:text-zinc-200 no-underline transition-colors duration-200 py-1"
+              className="text-base text-zinc-400 hover:text-zinc-200 no-underline transition-colors duration-200 py-1 min-h-[44px] sm:min-h-0 flex items-center"
             >
               Suggest
             </a>
