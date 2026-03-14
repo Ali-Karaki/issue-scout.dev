@@ -33,6 +33,8 @@ Find OSS issues that don't appear to have an open PR referencing them. Live at [
 - `pnpm test` — Run tests
 - `pnpm test:watch` — Run tests in watch mode
 - `pnpm test:coverage` — Run tests with coverage
+- `pnpm test:e2e` — Run E2E tests (starts dev server automatically)
+- `pnpm test:e2e:ui` — Run E2E tests with Playwright UI
 
 ## Architecture
 
@@ -44,3 +46,7 @@ Find OSS issues that don't appear to have an open PR referencing them. Live at [
 ## Adding Ecosystems
 
 Edit [src/lib/ecosystems.config.ts](src/lib/ecosystems.config.ts) to add or modify ecosystems. Each ecosystem has an `id`, `name`, `description`, and list of `repos` (e.g. `"tanstack/query"`).
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, scripts, and PR process.
