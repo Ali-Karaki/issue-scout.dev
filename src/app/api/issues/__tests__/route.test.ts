@@ -18,8 +18,8 @@ vi.mock("@/lib/kv", () => ({
 }));
 
 vi.mock("@/lib/api/fetch-issues", () => ({
-  getIssuesFromCache: (ecosystem: string | null) =>
-    mockGetIssuesFromCache(ecosystem),
+  getIssuesFromCache: (project: string | null) =>
+    mockGetIssuesFromCache(project),
 }));
 
 function makeMockResponse(issueCount: number): IssuesResponse {
@@ -30,7 +30,7 @@ function makeMockResponse(issueCount: number): IssuesResponse {
       title: "Test",
       url: "https://github.com/owner/repo/issues/1",
       repo: "owner/repo",
-      ecosystem: "tanstack",
+      project: "tanstack",
       labels: ["bug"],
       state: "open",
       comments: 0,
@@ -154,24 +154,24 @@ describe("GET /api/issues", () => {
     expect(body.pagination.limit).toBe(50);
   });
 
-  it("returns 400 for invalid ecosystem", async () => {
+  it("returns 400 for invalid project", async () => {
     const req = new NextRequest(
-      "http://localhost:3000/api/issues?ecosystem=invalid"
+      "http://localhost:3000/api/issues?project=invalid"
     );
     const res = await GET(req);
     const body = await res.json();
 
     expect(res.status).toBe(400);
-    expect(body.error).toBe("Invalid ecosystem");
+    expect(body.error).toBe("Invalid project");
     expect(mockGetIssuesFromCache).not.toHaveBeenCalled();
   });
 
-  it("treats empty ecosystem as all ecosystems", async () => {
+  it("treats empty project as all projects", async () => {
     const data = makeMockResponse(10);
     mockGetIssuesFromCache.mockResolvedValue(data);
 
     const req = new NextRequest(
-      "http://localhost:3000/api/issues?ecosystem="
+      "http://localhost:3000/api/issues?project="
     );
     const res = await GET(req);
     const body = await res.json();

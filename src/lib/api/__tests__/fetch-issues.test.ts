@@ -1,7 +1,7 @@
 import { vi, describe, it, expect, beforeEach } from "vitest";
 import {
   getIssuesFromCache,
-  refreshAllEcosystems,
+  refreshAllProjects,
   type IssuesResponse,
 } from "../fetch-issues";
 import type { RawIssueWithPrCount } from "../../github";
@@ -22,7 +22,7 @@ vi.mock("../../kv", () => ({
     mockKvSet(key, value, ttl),
 }));
 
-function makeMockResponse(ecosystemId: string): IssuesResponse {
+function makeMockResponse(projectId: string): IssuesResponse {
   return {
     issues: [
       {
@@ -31,7 +31,7 @@ function makeMockResponse(ecosystemId: string): IssuesResponse {
         title: "Test",
         url: "https://github.com/owner/repo/issues/1",
         repo: "owner/repo",
-        ecosystem: ecosystemId,
+        project: projectId,
         labels: ["bug"],
         state: "open",
         comments: 0,
@@ -97,7 +97,7 @@ describe("getIssuesFromCache", () => {
     const combined = makeMockResponse("tanstack");
     combined.issues = [
       ...combined.issues,
-      { ...combined.issues[0], id: "owner/repo#2", ecosystem: "vercel" },
+      { ...combined.issues[0], id: "owner/repo#2", project: "vercel" },
     ];
     combined.summary = { ...combined.summary, total: 2 };
     mockHasKv.mockReturnValue(true);
@@ -140,11 +140,11 @@ describe("getIssuesFromCache", () => {
   });
 });
 
-describe("refreshAllEcosystems", () => {
+describe("refreshAllProjects", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockGetIssuesForRepos.mockImplementation(
-      async (_repos: string[], ecosystemId: string) => {
+      async (_repos: string[], projectId: string) => {
         const raw: RawIssueWithPrCount = {
           issue: {
             number: 1,
@@ -157,7 +157,7 @@ describe("refreshAllEcosystems", () => {
             labels: [{ name: "bug" }],
           },
           repo: "owner/repo",
-          ecosystem: ecosystemId,
+          project: projectId,
           matchedOpenPrs: 0,
         };
         return { raw: [raw], failedRepos: [] };
@@ -165,15 +165,15 @@ describe("refreshAllEcosystems", () => {
     );
   });
 
-  it("fetches and writes all ecosystems when KV configured", async () => {
+  it("fetches and writes all projects when KV configured", async () => {
     mockHasKv.mockReturnValue(true);
     mockKvSet.mockResolvedValue(true);
 
-    const result = await refreshAllEcosystems("token");
+    const result = await refreshAllProjects("token");
 
     expect(result.ok).toBe(true);
-    expect(result.ecosystems).toHaveLength(2);
-    expect(result.ecosystems.every((e) => e.ok)).toBe(true);
+    expect(result.projects).toHaveLength(2);
+    expect(result.projects.every((p) => p.ok)).toBe(true);
     expect(mockGetIssuesForRepos).toHaveBeenCalledTimes(2);
     expect(mockKvSet).toHaveBeenCalledTimes(3);
   });
@@ -181,26 +181,26 @@ describe("refreshAllEcosystems", () => {
   it("returns error when KV not configured", async () => {
     mockHasKv.mockReturnValue(false);
 
-    const result = await refreshAllEcosystems("token");
+    const result = await refreshAllProjects("token");
 
     expect(result.ok).toBe(false);
-    expect(result.ecosystems.every((e) => !e.ok && e.error === "Redis cache required")).toBe(true);
+    expect(result.projects.every((p) => !p.ok && p.error === "Redis cache required")).toBe(true);
     expect(mockGetIssuesForRepos).not.toHaveBeenCalled();
     expect(mockKvSet).not.toHaveBeenCalled();
   });
 
-  it("reports partial failure when one ecosystem fails", async () => {
+  it("reports partial failure when one project fails", async () => {
     mockHasKv.mockReturnValue(true);
     mockKvSet.mockResolvedValue(true);
     mockGetIssuesForRepos
       .mockResolvedValueOnce({ raw: [], failedRepos: [] })
       .mockRejectedValueOnce(new Error("GitHub API error"));
 
-    const result = await refreshAllEcosystems("token");
+    const result = await refreshAllProjects("token");
 
     expect(result.ok).toBe(false);
-    expect(result.ecosystems).toHaveLength(2);
-    const failed = result.ecosystems.find((e) => !e.ok);
+    expect(result.projects).toHaveLength(2);
+    const failed = result.projects.find((p) => !p.ok);
     expect(failed?.error).toBe("GitHub API error");
   });
 });

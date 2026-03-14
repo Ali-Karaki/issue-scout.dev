@@ -16,7 +16,7 @@ function makeRaw(overrides: Partial<RawIssueWithPrCount> = {}): RawIssueWithPrCo
       labels: [{ name: "bug" }],
     },
     repo: "owner/repo",
-    ecosystem: "tanstack",
+    project: "tanstack",
     matchedOpenPrs: 0,
     ...overrides,
   };
@@ -33,7 +33,7 @@ describe("normalizeIssue", () => {
       title: "Test issue",
       url: "https://github.com/owner/repo/issues/1",
       repo: "owner/repo",
-      ecosystem: "tanstack",
+      project: "tanstack",
       labels: ["bug"],
       state: "open",
       comments: 3,
