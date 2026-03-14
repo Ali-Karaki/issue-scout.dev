@@ -2,9 +2,11 @@
 
 import { flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { useMemo } from "react";
+import { motion } from "motion/react";
 import { createColumns } from "./columns";
 import type { NormalizedIssue } from "@/lib/types";
 import type { SortColumn } from "@/lib/filters";
+import { staggerContainer, staggerItemFade, defaultTransition } from "@/lib/animations";
 
 const SORTABLE_COLUMNS: SortColumn[] = [
   "title",
@@ -77,9 +79,15 @@ export function IssuesTable({
                           header.column.columnDef.header,
                           header.getContext()
                         )}
-                        <span className="text-amber-500 shrink-0">
+                        <motion.span
+                          className="text-amber-500 shrink-0 inline-block"
+                          key={isActive ? (sortDesc ? "desc" : "asc") : "none"}
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          transition={{ duration: 0.15 }}
+                        >
                           {isActive ? (sortDesc ? " ↓" : " ↑") : ""}
-                        </span>
+                        </motion.span>
                       </button>
                     ) : (
                       flexRender(
@@ -93,11 +101,17 @@ export function IssuesTable({
             </tr>
           ))}
         </thead>
-        <tbody>
+        <motion.tbody
+          variants={staggerContainer}
+          initial="hidden"
+          animate="visible"
+          transition={defaultTransition}
+        >
           {table.getRowModel().rows.map((row) => (
-            <tr
+            <motion.tr
               key={row.id}
-              className="border-b border-zinc-700/50 bg-zinc-800/20 hover:bg-zinc-800/40 transition"
+              variants={staggerItemFade}
+              className="border-b border-zinc-700/50 bg-zinc-800/20 hover:bg-zinc-800/40 transition-colors duration-200"
             >
               {row.getVisibleCells().map((cell) => (
                 <td
@@ -110,9 +124,9 @@ export function IssuesTable({
                   )}
                 </td>
               ))}
-            </tr>
+            </motion.tr>
           ))}
-        </tbody>
+        </motion.tbody>
       </table>
     </div>
   );

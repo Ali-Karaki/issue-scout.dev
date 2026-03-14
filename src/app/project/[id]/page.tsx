@@ -9,11 +9,14 @@ import { IssueCard } from "@/components/IssueCard";
 import { IssuesTable } from "@/components/issues-table/IssuesTable";
 import { Pagination } from "@/components/Pagination";
 import { ResultSummary } from "@/components/ResultSummary";
+import { AnimatePresence, motion } from "motion/react";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { formatUpdatedAgo } from "@/lib/utils";
 import { PROJECTS } from "@/lib/projects.config";
 import { INITIAL_FILTERS, type FilterState } from "@/lib/filters";
 import { filtersToParams, paramsToFilters } from "@/lib/url-filters";
 import { useIssuesFetch } from "@/hooks/use-issues-fetch";
+import { fadeIn, defaultTransition } from "@/lib/animations";
 
 export default function ProjectPage() {
   const params = useParams();
@@ -124,10 +127,7 @@ export default function ProjectPage() {
   if (loading) {
     return (
       <div className="max-w-4xl mx-auto px-6 py-12">
-        <div className="text-center py-16 text-zinc-500">
-          <div className="w-10 h-10 border-2 border-zinc-600 border-t-amber-500 rounded-full animate-spin mx-auto mb-4" />
-          <p>Loading issues...</p>
-        </div>
+        <LoadingSpinner />
       </div>
     );
   }
@@ -138,16 +138,22 @@ export default function ProjectPage() {
         className="max-w-4xl mx-auto px-6 py-12"
         aria-live="polite"
       >
-        <div className="p-4 rounded-xl border border-red-500/50 bg-red-500/10 text-red-400">
+        <motion.div
+          className="p-4 rounded-xl border border-red-500/50 bg-red-500/10 text-red-400"
+          variants={fadeIn}
+          initial="hidden"
+          animate="visible"
+          transition={defaultTransition}
+        >
           <p className="mb-3">{error}</p>
           <button
             onClick={retry}
             aria-label="Retry loading issues"
-            className="px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-500 text-zinc-900 font-medium transition focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 focus:ring-offset-bg"
+            className="px-4 py-2 rounded-lg bg-amber-600 hover:bg-amber-500 text-zinc-900 font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 focus:ring-offset-bg"
           >
             Retry
           </button>
-        </div>
+        </motion.div>
       </div>
     );
   }
@@ -209,26 +215,39 @@ export default function ProjectPage() {
       />
 
       <div className="relative space-y-4">
-        {isRevalidating && (
-          <div
-            className="absolute inset-0 z-10 flex items-start justify-center pt-8 bg-bg/60"
-            aria-live="polite"
-            aria-busy="true"
-          >
-            <div className="flex flex-col items-center gap-2 rounded-lg bg-zinc-800/90 px-4 py-3 border border-zinc-600">
-              <div className="w-6 h-6 border-2 border-zinc-600 border-t-amber-500 rounded-full animate-spin" />
-              <span className="text-sm text-zinc-400">Updating results…</span>
-            </div>
-          </div>
-        )}
+        <AnimatePresence>
+          {isRevalidating && (
+            <motion.div
+              className="absolute inset-0 z-10 flex items-start justify-center pt-8 bg-bg/60"
+              aria-live="polite"
+              aria-busy="true"
+              variants={fadeIn}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              transition={defaultTransition}
+            >
+              <div className="flex flex-col items-center gap-2 rounded-lg bg-zinc-800/90 px-4 py-3 border border-zinc-600">
+                <div className="w-6 h-6 border-2 border-zinc-600 border-t-amber-500 rounded-full animate-spin" />
+                <span className="text-sm text-zinc-400">Updating results…</span>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
         {displayIssues.length === 0 ? (
-          <div className="text-center py-16 text-zinc-500 rounded-xl border border-zinc-700 bg-zinc-800/30">
+          <motion.div
+            className="text-center py-16 text-zinc-500 rounded-xl border border-zinc-700 bg-zinc-800/30"
+            variants={fadeIn}
+            initial="hidden"
+            animate="visible"
+            transition={defaultTransition}
+          >
             <p className="mb-4">
               {data.summary.total === 0 && data.summary.failedRepos.length > 0
                 ? "Unable to load issues from GitHub. Please try again later."
                 : "No issues match your filters."}
             </p>
-          </div>
+          </motion.div>
         ) : (
           <>
             <div className="hidden md:block">

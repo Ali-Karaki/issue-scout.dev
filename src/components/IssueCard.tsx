@@ -1,3 +1,7 @@
+"use client";
+
+import { motion } from "motion/react";
+import { useReducedMotion } from "motion/react";
 import { formatDate } from "@/lib/utils";
 import { getClaimStatusLabel, getClaimStatusTooltip, getReadinessLabel, getReadinessTooltip } from "@/lib/terminology";
 import type { NormalizedIssue } from "@/lib/types";
@@ -21,9 +25,14 @@ const READINESS_STYLES: Record<NormalizedIssue["readiness"], string> = {
 
 export function IssueCard({ issue, compact = false }: IssueCardProps) {
   const title = issue.title ?? "";
+  const reduceMotion = useReducedMotion();
 
   return (
-    <div className="rounded-xl border border-zinc-700 bg-zinc-800/30 p-4 hover:bg-zinc-800/50 transition">
+    <motion.div
+      className="rounded-xl border border-zinc-700 bg-zinc-800/30 p-4 hover:bg-zinc-800/50 transition-colors duration-200"
+      whileHover={reduceMotion ? undefined : { y: -2.5 }}
+      transition={{ duration: 0.2, ease: "easeOut" }}
+    >
       <div className="flex flex-wrap items-start justify-between gap-2 mb-2">
         <a
           href={issue.url}
@@ -102,6 +111,6 @@ export function IssueCard({ issue, compact = false }: IssueCardProps) {
           </a>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }

@@ -2,8 +2,8 @@ import { vi, describe, it, expect, beforeEach, afterEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import { FeaturedIssues } from "../FeaturedIssues";
 
-vi.mock("next/link", () => ({
-  default: ({
+vi.mock("next-view-transitions", () => ({
+  Link: ({
     children,
     href,
   }: {

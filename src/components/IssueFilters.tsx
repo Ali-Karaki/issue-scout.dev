@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { AnimatePresence, motion } from "motion/react";
 import { PROJECTS } from "@/lib/projects.config";
 import type { FilterState, SortOption } from "@/lib/filters";
 import { CLAIM_STATUS, BEGINNER } from "@/lib/terminology";
@@ -114,35 +115,41 @@ export function IssueFilters({
               ▼
             </span>
           </div>
-          <button
+          <motion.button
             type="button"
             onClick={toggleUnclaimed}
             className={`${chipBase} ${unclaimedActive ? "bg-emerald-600 text-white " + chipActive : chipInactive}`}
             title={CLAIM_STATUS.likely_unclaimed.tooltip}
+            whileTap={{ scale: 0.97 }}
+            transition={{ duration: 0.1 }}
           >
             Unclaimed
-          </button>
-          <button
+          </motion.button>
+          <motion.button
             type="button"
             onClick={toggleBeginner}
             className={`${chipBase} ${filters.beginnerOnly ? "bg-amber-600/80 text-zinc-900 " + chipActive : chipInactive}`}
             title={BEGINNER.tooltip}
+            whileTap={{ scale: 0.97 }}
+            transition={{ duration: 0.1 }}
           >
             Beginner
-          </button>
-          <button
+          </motion.button>
+          <motion.button
             type="button"
             onClick={() => setExpanded(!expanded)}
-            className="px-3 py-1.5 rounded-lg bg-zinc-800 border border-zinc-600 text-zinc-400 text-sm hover:text-zinc-200 hover:border-zinc-500 transition flex items-center gap-1"
+            className="px-3 py-1.5 rounded-lg bg-zinc-800 border border-zinc-600 text-zinc-400 text-sm hover:text-zinc-200 hover:border-zinc-500 transition-colors duration-200 flex items-center gap-1"
             aria-expanded={expanded}
+            whileTap={{ scale: 0.97 }}
+            transition={{ duration: 0.1 }}
           >
             More filters
             <span
-              className={`inline-block text-zinc-400 text-xs transition-transform ${expanded ? "rotate-180" : ""}`}
+              className={`inline-block text-zinc-400 text-xs transition-transform duration-200 ${expanded ? "rotate-180" : ""}`}
             >
               ▼
             </span>
-          </button>
+          </motion.button>
           {hasActiveFilters && onClear && (
             <button
               type="button"
@@ -154,8 +161,16 @@ export function IssueFilters({
           )}
         </div>
       </div>
-      {expanded && (
-        <div className="flex flex-wrap items-center gap-x-6 gap-y-3 p-3 border-t border-zinc-700/50">
+      <AnimatePresence>
+        {expanded && (
+          <motion.div
+            className="overflow-hidden border-t border-zinc-700/50"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+          >
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-3 p-3">
           {showProject && (
             <div className="min-w-[140px]">
               <label
@@ -247,8 +262,10 @@ export function IssueFilters({
               Exclude stale
             </label>
           </div>
-        </div>
-      )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

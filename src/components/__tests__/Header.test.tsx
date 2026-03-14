@@ -2,15 +2,18 @@ import { vi, describe, it, expect } from "vitest";
 import { render, within } from "@testing-library/react";
 import { Header } from "../Header";
 
-// Mock next/link to avoid router context
-vi.mock("next/link", () => ({
-  default: ({
+vi.mock("next-view-transitions", () => ({
+  Link: ({
     children,
     href,
   }: {
     children: React.ReactNode;
     href: string;
   }) => <a href={href}>{children}</a>,
+}));
+
+vi.mock("next/navigation", () => ({
+  usePathname: () => "/",
 }));
 
 describe("Header", () => {

@@ -1,5 +1,7 @@
 "use client";
 
+import { motion } from "motion/react";
+
 interface PaginationProps {
   page: number;
   totalPages: number;
@@ -35,15 +37,18 @@ export function Pagination({
         Showing {start}–{end} of {total}
       </span>
       <div className="flex items-center gap-2">
-        <button
+        <motion.button
           type="button"
           onClick={() => onPageChange(page - 1)}
           disabled={page <= 1 || isLoading}
           className={`${btnClass} ${btnInactive}`}
           aria-label="Previous page"
+          whileHover={{ scale: page > 1 && !isLoading ? 1.02 : 1 }}
+          whileTap={{ scale: page > 1 && !isLoading ? 0.98 : 1 }}
+          transition={{ duration: 0.1 }}
         >
           Previous
-        </button>
+        </motion.button>
         <div className="flex items-center gap-1">
           {Array.from({ length: totalPages }, (_, i) => i + 1)
             .filter((p) => {
@@ -63,7 +68,7 @@ export function Pagination({
                   …
                 </span>
               ) : (
-                <button
+                <motion.button
                   key={p}
                   type="button"
                   onClick={() => onPageChange(p)}
@@ -73,21 +78,27 @@ export function Pagination({
                   }`}
                   aria-label={`Page ${p}`}
                   aria-current={p === page ? "page" : undefined}
+                  whileHover={p !== page && !isLoading ? { scale: 1.05 } : undefined}
+                  whileTap={p !== page && !isLoading ? { scale: 0.97 } : undefined}
+                  transition={{ duration: 0.1 }}
                 >
                   {p}
-                </button>
+                </motion.button>
               )
             )}
         </div>
-        <button
+        <motion.button
           type="button"
           onClick={() => onPageChange(page + 1)}
           disabled={page >= totalPages || isLoading}
           className={`${btnClass} ${btnInactive}`}
           aria-label="Next page"
+          whileHover={{ scale: page < totalPages && !isLoading ? 1.02 : 1 }}
+          whileTap={{ scale: page < totalPages && !isLoading ? 0.98 : 1 }}
+          transition={{ duration: 0.1 }}
         >
           Next
-        </button>
+        </motion.button>
       </div>
     </div>
   );

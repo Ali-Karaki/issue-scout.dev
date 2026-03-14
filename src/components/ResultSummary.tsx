@@ -1,5 +1,6 @@
 "use client";
 
+import { AnimatePresence, motion } from "motion/react";
 import type { FilterState } from "@/lib/filters";
 
 interface ResultSummaryProps {
@@ -70,18 +71,26 @@ export function ResultSummary({
         <>
           <span className="text-zinc-600">·</span>
           <div className="flex flex-wrap gap-1.5">
-            {chips.map(({ label, remove }) => (
-              <button
-                key={label}
-                type="button"
-                onClick={remove}
-                className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-zinc-700/80 text-zinc-300 text-xs hover:bg-zinc-600 hover:text-zinc-200 transition"
-                aria-label={`Remove ${label} filter`}
-              >
-                {label}
-                <span className="text-zinc-500">×</span>
-              </button>
-            ))}
+            <AnimatePresence mode="popLayout">
+              {chips.map(({ label, remove }) => (
+                <motion.button
+                  key={label}
+                  type="button"
+                  onClick={remove}
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-zinc-700/80 text-zinc-300 text-xs hover:bg-zinc-600 hover:text-zinc-200 transition-colors duration-200"
+                  aria-label={`Remove ${label} filter`}
+                  layout
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  transition={{ duration: 0.2 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  {label}
+                  <span className="text-zinc-500">×</span>
+                </motion.button>
+              ))}
+            </AnimatePresence>
           </div>
         </>
       )}

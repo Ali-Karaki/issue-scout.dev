@@ -1,3 +1,8 @@
+"use client";
+
+import { motion } from "motion/react";
+import { fadeIn, defaultTransition } from "@/lib/animations";
+
 interface SummaryBarProps {
   total: number;
   likelyUnclaimed: number;
@@ -31,7 +36,13 @@ export function SummaryBar({
   const displayReposCovered = isFiltered ? filteredSummary.reposCovered : reposCovered;
 
   return (
-    <div className="flex flex-col gap-3">
+    <motion.div
+      className="flex flex-col gap-3"
+      variants={fadeIn}
+      initial="hidden"
+      animate="visible"
+      transition={defaultTransition}
+    >
       {failedRepos.length > 0 && (
         <div
           className="p-3 rounded-lg border border-amber-600/50 bg-amber-900/20 text-amber-400 text-sm"
@@ -67,6 +78,6 @@ export function SummaryBar({
           Repos: <strong className="text-zinc-300 font-medium">{displayReposCovered}</strong>
         </span>
       </div>
-    </div>
+    </motion.div>
   );
 }

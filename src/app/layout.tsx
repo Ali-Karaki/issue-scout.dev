@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
+import { ViewTransitions } from "next-view-transitions";
 import "./globals.css";
 import { Header } from "@/components/Header";
 import { JsonLd } from "@/components/JsonLd";
@@ -46,7 +47,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={inter.variable}>
+    <ViewTransitions>
+      <html lang="en" className={inter.variable}>
       <body className="min-h-screen bg-bg text-zinc-200 text-[15px] leading-relaxed font-sans antialiased">
         <JsonLd />
         <a
@@ -59,5 +61,6 @@ export default function RootLayout({
         <main id="main" tabIndex={-1}>{children}</main>
       </body>
     </html>
+    </ViewTransitions>
   );
 }
