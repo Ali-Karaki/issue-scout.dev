@@ -37,7 +37,7 @@ function buildExplanation(
 }
 
 export function normalizeIssue(raw: RawIssueWithPrCount): NormalizedIssue {
-  const { issue, repo, ecosystem, matchedOpenPrs } = raw;
+  const { issue, repo, project, matchedOpenPrs } = raw;
   const labels = getLabelNames(issue.labels ?? []);
 
   const { status, isStale } = computeStatus(
@@ -66,7 +66,7 @@ export function normalizeIssue(raw: RawIssueWithPrCount): NormalizedIssue {
     title: issue.title ?? "Untitled",
     url: issue.html_url,
     repo,
-    ecosystem,
+    project,
     labels,
     state: issue.state,
     comments: issue.comments ?? 0,

@@ -3,7 +3,7 @@ import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import { hasKv } from "@/lib/kv";
 import { getIssuesFromCache } from "@/lib/api/fetch-issues";
 import { CACHE_REVALIDATE_SECONDS } from "@/lib/constants";
-import { ECOSYSTEMS } from "@/lib/ecosystems.config";
+import { PROJECTS } from "@/lib/projects.config";
 import { applyFiltersAndSort } from "@/lib/filters";
 import { paramsToFilters } from "@/lib/url-filters";
 
@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
     );
   }
   const { searchParams } = new URL(request.url);
-  const ecosystem = searchParams.get("ecosystem");
+  const project = searchParams.get("project");
   const rawPage = parseInt(searchParams.get("page") ?? "1", 10);
   const rawLimit = parseInt(searchParams.get("limit") ?? "50", 10);
   const page = Number.isFinite(rawPage) ? Math.max(1, rawPage) : 1;
@@ -33,17 +33,17 @@ export async function GET(request: NextRequest) {
     ? Math.min(100, Math.max(1, rawLimit))
     : 50;
 
-  if (ecosystem !== null && ecosystem !== "") {
-    const valid = ECOSYSTEMS.some((e) => e.id === ecosystem);
+  if (project !== null && project !== "") {
+    const valid = PROJECTS.some((e) => e.id === project);
     if (!valid) {
-      return NextResponse.json({ error: "Invalid ecosystem" }, { status: 400 });
+      return NextResponse.json({ error: "Invalid project" }, { status: 400 });
     }
   }
 
-  const ecosystemParam = ecosystem === "" ? null : ecosystem;
+  const projectParam = project === "" ? null : project;
 
   try {
-    const data = await getIssuesFromCache(ecosystemParam);
+    const data = await getIssuesFromCache(projectParam);
     if (!data) {
       return NextResponse.json(
         { error: "Data not yet available. Try again later." },

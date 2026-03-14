@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useParams, useSearchParams, useRouter, usePathname } from "next/navigation";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { SummaryBar } from "@/components/SummaryBar";
 import { IssueFilters } from "@/components/IssueFilters";
@@ -82,14 +81,10 @@ export default function EcosystemPage() {
 
   if (loading) {
     return (
-      <div
-        className="max-w-4xl mx-auto px-6 py-12"
-        aria-busy="true"
-        aria-live="polite"
-      >
-        <div className="text-center py-16 text-zinc-500" role="status" aria-label="Loading">
+      <div className="max-w-4xl mx-auto px-6 py-12">
+        <div className="text-center py-16 text-zinc-500">
           <div className="w-10 h-10 border-2 border-zinc-600 border-t-amber-500 rounded-full animate-spin mx-auto mb-4" />
-          <p>Fetching issues from {ecosystem.name}...</p>
+          <p>Fetching issues...</p>
         </div>
       </div>
     );
@@ -122,12 +117,6 @@ export default function EcosystemPage() {
   return (
     <div className="max-w-4xl mx-auto px-6 py-8">
       <div className="mb-6">
-        <Link
-          href="/"
-          className="text-sm text-zinc-500 hover:text-zinc-300 no-underline mb-2 inline-block"
-        >
-          ← All ecosystems
-        </Link>
         <div className="flex items-start justify-between gap-4">
           <div>
             <h1 className="text-xl font-semibold text-zinc-100">
@@ -174,7 +163,7 @@ export default function EcosystemPage() {
               <button
                 onClick={loadMore}
                 disabled={loadingMore}
-                className="px-6 py-3 rounded-lg bg-zinc-700 hover:bg-zinc-600 disabled:opacity-50 disabled:cursor-not-allowed text-zinc-200 font-medium transition focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 focus:ring-offset-bg"
+                className="px-6 py-3 rounded-lg bg-amber-600 hover:bg-amber-500 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer text-zinc-900 font-medium transition focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 focus:ring-offset-bg"
               >
                 {loadingMore ? "Loading..." : "Load more issues"}
               </button>
@@ -190,7 +179,7 @@ export default function EcosystemPage() {
                 <button
                   onClick={loadMore}
                   disabled={loadingMore}
-                  className="px-6 py-3 rounded-lg bg-zinc-700 hover:bg-zinc-600 disabled:opacity-50 disabled:cursor-not-allowed text-zinc-200 font-medium transition focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 focus:ring-offset-bg"
+                  className="px-6 py-3 rounded-lg bg-amber-600 hover:bg-amber-500 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer text-zinc-900 font-medium transition focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 focus:ring-offset-bg"
                 >
                   {loadingMore ? "Loading..." : "Load more"}
                 </button>

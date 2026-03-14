@@ -35,14 +35,15 @@ async function fetcher(url: string): Promise<IssuesResponse> {
 }
 
 function buildUrl(base: string, page: number, filters: FilterState): string {
-  const url = new URL(base, window.location.origin);
-  url.searchParams.set("page", String(page));
-  url.searchParams.set("limit", String(DEFAULT_LIMIT));
+  const params = new URLSearchParams();
+  params.set("page", String(page));
+  params.set("limit", String(DEFAULT_LIMIT));
   const filterParams = filtersToParams(filters);
   filterParams.forEach((value, key) => {
-    url.searchParams.set(key, value);
+    params.set(key, value);
   });
-  return url.pathname + url.search;
+  const sep = base.includes("?") ? "&" : "?";
+  return base + sep + params.toString();
 }
 
 export function useIssuesFetch(apiUrl: string, filters: FilterState) {

@@ -25,7 +25,7 @@ export function IssueFilters({
   return (
     <div className="flex flex-wrap gap-4 p-4 rounded-xl bg-zinc-800/30 border border-zinc-700 mb-6">
       <div>
-        <label htmlFor="filter-ecosystem" className="block text-xs text-zinc-500 mb-1">Ecosystem</label>
+        <label htmlFor="filter-ecosystem" className="block text-xs text-zinc-500 mb-1">Project</label>
         <select
           id="filter-ecosystem"
           value={filters.ecosystem}

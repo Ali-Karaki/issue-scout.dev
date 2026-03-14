@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { ECOSYSTEMS } from "@/lib/ecosystems.config";
+import { PROJECTS } from "@/lib/projects.config";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import { hasKv } from "@/lib/kv";
 import { getIssuesFromCache } from "@/lib/api/fetch-issues";
@@ -9,12 +9,12 @@ import { paramsToFilters } from "@/lib/url-filters";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ ecosystem: string }> }
+  { params }: { params: Promise<{ project: string }> }
 ) {
-  const { ecosystem } = await params;
-  if (!ECOSYSTEMS.some((e) => e.id === ecosystem)) {
+  const { project } = await params;
+  if (!PROJECTS.some((e) => e.id === project)) {
     return NextResponse.json(
-      { error: "Invalid ecosystem" },
+      { error: "Invalid project" },
       { status: 400 }
     );
   }
@@ -44,7 +44,7 @@ export async function GET(
     : 50;
 
   try {
-    const data = await getIssuesFromCache(ecosystem);
+    const data = await getIssuesFromCache(project);
     if (!data) {
       return NextResponse.json(
         { error: "Data not yet available. Try again later." },
@@ -52,9 +52,9 @@ export async function GET(
       );
     }
     const filters = paramsToFilters(searchParams);
-    filters.ecosystem = ecosystem;
+    filters.project = project;
     const filteredIssues = applyFiltersAndSort(data.issues, filters, {
-      skipEcosystemFilter: true,
+      skipProjectFilter: true,
     });
     const total = filteredIssues.length;
     const start = (page - 1) * limit;

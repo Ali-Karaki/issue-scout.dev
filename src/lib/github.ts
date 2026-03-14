@@ -24,7 +24,7 @@ export interface GitHubPullRequest extends GitHubIssue {
 export interface RawIssueWithPrCount {
   issue: GitHubIssue;
   repo: string;
-  ecosystem: string;
+  project: string;
   matchedOpenPrs: number;
 }
 
@@ -146,7 +146,7 @@ export interface GetIssuesForReposResult {
 
 async function fetchRepo(
   repo: string,
-  ecosystemId: string,
+  projectId: string,
   token: string
 ): Promise<{ results: RawIssueWithPrCount[]; failed: boolean }> {
   try {
@@ -176,7 +176,7 @@ async function fetchRepo(
       results.push({
         issue,
         repo,
-        ecosystem: ecosystemId,
+        project: projectId,
         matchedOpenPrs: linkedByPrs.get(issue.number) ?? 0,
       });
     }
@@ -189,11 +189,11 @@ async function fetchRepo(
 
 export async function getIssuesForRepos(
   repos: string[],
-  ecosystemId: string,
+  projectId: string,
   token: string
 ): Promise<GetIssuesForReposResult> {
   const settled = await Promise.allSettled(
-    repos.map((repo) => fetchRepo(repo, ecosystemId, token))
+    repos.map((repo) => fetchRepo(repo, projectId, token))
   );
 
   const results: RawIssueWithPrCount[] = [];

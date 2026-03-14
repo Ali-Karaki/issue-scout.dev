@@ -1,11 +1,11 @@
-export interface EcosystemConfig {
+export interface ProjectConfig {
   id: string;
   name: string;
   description: string;
   repos: string[];
 }
 
-export const ECOSYSTEMS: EcosystemConfig[] = [
+export const PROJECTS: ProjectConfig[] = [
   {
     id: "tanstack",
     name: "TanStack",
@@ -30,8 +30,8 @@ export const ECOSYSTEMS: EcosystemConfig[] = [
   },
   {
     id: "vercel",
-    name: "Vercel / Next.js",
-    description: "Next.js and Vercel ecosystem",
+    name: "Vercel",
+    description: "Vercel projects",
     repos: ["vercel/next.js", "vercel/ai", "vercel/turborepo"],
   },
 ];

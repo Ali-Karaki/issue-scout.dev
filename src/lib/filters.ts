@@ -9,7 +9,7 @@ export type SortOption =
   | "highest_readiness";
 
 export interface FilterState {
-  ecosystem: string;
+  project: string;
   repo: string;
   status: IssueStatus | "";
   beginnerOnly: boolean;
@@ -20,7 +20,7 @@ export interface FilterState {
 }
 
 export const INITIAL_FILTERS: FilterState = {
-  ecosystem: "",
+  project: "",
   repo: "",
   status: "",
   beginnerOnly: false,
@@ -33,12 +33,12 @@ export const INITIAL_FILTERS: FilterState = {
 export function applyFiltersAndSort(
   issues: NormalizedIssue[],
   filters: FilterState,
-  options?: { skipEcosystemFilter?: boolean }
+  options?: { skipProjectFilter?: boolean }
 ): NormalizedIssue[] {
   let result = [...issues];
 
-  if (!options?.skipEcosystemFilter && filters.ecosystem) {
-    result = result.filter((i) => i.ecosystem === filters.ecosystem);
+  if (!options?.skipProjectFilter && filters.project) {
+    result = result.filter((i) => i.project === filters.project);
   }
   if (filters.repo) {
     result = result.filter((i) => i.repo === filters.repo);

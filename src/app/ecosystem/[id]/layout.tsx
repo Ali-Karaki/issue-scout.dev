@@ -9,7 +9,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
   const ecosystem = ECOSYSTEMS.find((e) => e.id === id);
   if (!ecosystem)
-    return { title: "Ecosystem not found" };
+    return { title: "Project not found" };
   return {
     title: `${ecosystem.name} Issues`,
     description: ecosystem.description,

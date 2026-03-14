@@ -3,7 +3,7 @@ import { INITIAL_FILTERS } from "./filters";
 
 export function filtersToParams(filters: FilterState): URLSearchParams {
   const params = new URLSearchParams();
-  if (filters.ecosystem) params.set("ecosystem", filters.ecosystem);
+  if (filters.project) params.set("project", filters.project);
   if (filters.repo) params.set("repo", filters.repo);
   if (filters.status) params.set("status", filters.status);
   if (filters.label) params.set("label", filters.label);
@@ -24,8 +24,8 @@ export function paramsToFilters(params: URLSearchParams): FilterState {
   ];
   const sort = params.get("sort");
   const filters: FilterState = { ...INITIAL_FILTERS };
-  const ecosystem = params.get("ecosystem");
-  if (ecosystem) filters.ecosystem = ecosystem;
+  const project = params.get("project");
+  if (project) filters.project = project;
   const repo = params.get("repo");
   if (repo) filters.repo = repo;
   const status = params.get("status");

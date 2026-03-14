@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { refreshAllEcosystems } from "@/lib/api/fetch-issues";
+import { refreshAllProjects } from "@/lib/api/fetch-issues";
 
 function verifyCronSecret(request: NextRequest): boolean {
   const secret = process.env.CRON_SECRET;
@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
     );
   }
   try {
-    const result = await refreshAllEcosystems(token);
+    const result = await refreshAllProjects(token);
     return NextResponse.json(result, {
       status: result.ok ? 200 : 207,
     });

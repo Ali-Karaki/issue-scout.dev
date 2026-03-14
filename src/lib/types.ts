@@ -8,7 +8,7 @@ export interface NormalizedIssue {
   title: string;
   url: string;
   repo: string;
-  ecosystem: string;
+  project: string;
   labels: string[];
   state: string;
   comments: number;
