@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { PROJECTS } from "@/lib/projects.config";
+import { SITE_URL } from "@/lib/constants";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -16,6 +17,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     openGraph: {
       title: `${project.name} Issues`,
       description: project.description,
+    },
+    alternates: {
+      canonical: `${SITE_URL}/project/${id}`,
     },
   };
 }
