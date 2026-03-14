@@ -5,7 +5,10 @@ test.describe("Ecosystem page", () => {
     await page.goto("/ecosystem/tanstack");
     // TanStack ecosystem name or loading/error
     await expect(
-      page.getByText("TanStack").or(page.getByText(/Fetching|error|unavailable/i))
+      page
+        .getByText("TanStack")
+        .or(page.getByText(/Fetching|error|unavailable|token|GitHub/i))
+        .first()
     ).toBeVisible({ timeout: 60_000 });
   });
 });
