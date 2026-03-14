@@ -75,12 +75,11 @@ export default function IssuesPage() {
   useEffect(() => {
     const params = new URLSearchParams(searchParams.toString());
     if (params.toString()) {
-      /* eslint-disable react-hooks/set-state-in-effect -- sync filters from URL on mount */
       setFilters(paramsToFilters(params));
       const p = parseInt(params.get("page") ?? "1", 10);
       setPage(Number.isFinite(p) && p >= 1 ? p : 1);
-      /* eslint-enable react-hooks/set-state-in-effect */
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- sync from URL on mount only; searchParams causes re-run loops
   }, []);
 
   const repos = useMemo(() => {

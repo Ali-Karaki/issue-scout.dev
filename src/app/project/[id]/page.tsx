@@ -76,9 +76,7 @@ export default function ProjectPage() {
   );
 
   useEffect(() => {
-    /* eslint-disable react-hooks/set-state-in-effect -- sync filter with route */
     setFilters((prev) => ({ ...prev, project: id ?? "" }));
-    /* eslint-enable react-hooks/set-state-in-effect */
   }, [id]);
 
   useEffect(() => {
@@ -96,12 +94,11 @@ export default function ProjectPage() {
   useEffect(() => {
     const urlParams = new URLSearchParams(searchParams.toString());
     if (urlParams.toString()) {
-      /* eslint-disable react-hooks/set-state-in-effect -- sync filters from URL on mount */
       setFilters((prev) => ({ ...prev, ...paramsToFilters(urlParams), project: id ?? "" }));
       const p = parseInt(urlParams.get("page") ?? "1", 10);
       setPage(Number.isFinite(p) && p >= 1 ? p : 1);
-      /* eslint-enable react-hooks/set-state-in-effect */
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- sync from URL on mount; searchParams causes re-run loops
   }, [id]);
 
   const repos = useMemo(() => {

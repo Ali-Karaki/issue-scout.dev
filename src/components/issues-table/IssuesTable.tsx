@@ -30,6 +30,7 @@ export function IssuesTable({
 }: IssuesTableProps) {
   const columns = useMemo(() => createColumns(), []);
 
+  // eslint-disable-next-line react-hooks/incompatible-library -- TanStack Table returns functions
   const table = useReactTable({
     data: issues,
     columns,
