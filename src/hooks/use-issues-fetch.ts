@@ -1,24 +1,19 @@
 "use client";
 
-/* eslint-disable react-hooks/set-state-in-effect -- data fetch in effect */
-import { useState, useEffect, useCallback } from "react";
+import { useCallback, useMemo } from "react";
+import useSWRInfinite from "swr/infinite";
 import type { IssuesResponse } from "@/lib/api/fetch-issues";
 
 const DEFAULT_LIMIT = 50;
 
-async function fetchWithErrorHandling(
-  url: string
-): Promise<IssuesResponse> {
+async function fetcher(url: string): Promise<IssuesResponse> {
   const res = await fetch(url);
   if (!res.ok) {
     let message = `API error ${res.status}`;
     try {
       const data = await res.json();
       if (data && typeof data.error === "string") {
-        message =
-          res.status === 503
-            ? data.error
-            : data.error;
+        message = data.error;
       } else if (res.status === 503) {
         message = "Service temporarily unavailable. Check configuration.";
       }
@@ -40,70 +35,61 @@ function buildUrl(base: string, page: number): string {
 }
 
 export function useIssuesFetch(apiUrl: string) {
-  const [data, setData] = useState<IssuesResponse | null>(null);
-  const [loading, setLoading] = useState(!!apiUrl);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const fetchData = useCallback(() => {
-    if (!apiUrl) return;
-    setLoading(true);
-    setError(null);
-    fetchWithErrorHandling(buildUrl(apiUrl, 1))
-      .then((json) => {
-        setData(json);
-      })
-      .catch((err) =>
-        setError(err instanceof Error ? err.message : "Unknown error")
-      )
-      .finally(() => setLoading(false));
-  }, [apiUrl]);
+  const getKey = useCallback(
+    (pageIndex: number, previousPageData: IssuesResponse | null) => {
+      if (!apiUrl) return null;
+      if (pageIndex === 0) return buildUrl(apiUrl, 1);
+      if (!previousPageData?.pagination?.hasMore) return null;
+      return buildUrl(apiUrl, pageIndex + 1);
+    },
+    [apiUrl]
+  );
+
+  const {
+    data,
+    error,
+    isLoading,
+    isValidating,
+    size,
+    setSize,
+    mutate,
+  } = useSWRInfinite(getKey, fetcher, {
+    revalidateOnFocus: true,
+    dedupingInterval: 2000,
+    errorRetryCount: 2,
+  });
+
+  const mergedData: IssuesResponse | null = useMemo(() => {
+    if (!data || data.length === 0) return null;
+    const allIssues = data.flatMap((d) => d.issues);
+    const last = data[data.length - 1];
+    return {
+      issues: allIssues,
+      summary: data[0].summary,
+      pagination: last.pagination,
+    };
+  }, [data]);
+
+  const loading =
+    isLoading || (isValidating && !!mergedData && size === 1);
+  const loadingMore = isValidating && size > 1;
+  const hasMore = mergedData?.pagination?.hasMore ?? false;
 
   const loadMore = useCallback(() => {
-    if (!apiUrl || !data?.pagination?.hasMore || loadingMore) return;
-    const nextPage = (data.pagination.page ?? 1) + 1;
-    setLoadingMore(true);
-    fetchWithErrorHandling(buildUrl(apiUrl, nextPage))
-      .then((json) => {
-        setData((prev) => {
-          if (!prev) return json;
-          return {
-            ...json,
-            issues: [...prev.issues, ...json.issues],
-            pagination: json.pagination ?? prev.pagination,
-          };
-        });
-      })
-      .catch((err) =>
-        setError(err instanceof Error ? err.message : "Unknown error")
-      )
-      .finally(() => setLoadingMore(false));
-  }, [apiUrl, data, loadingMore]);
+    if (!apiUrl || !hasMore || loadingMore) return;
+    setSize(size + 1);
+  }, [apiUrl, hasMore, loadingMore, size, setSize]);
 
-  useEffect(() => {
-    if (!apiUrl) {
-      setLoading(false);
-      return;
-    }
-    let cancelled = false;
-    setLoading(true);
-    setError(null);
-    fetchWithErrorHandling(buildUrl(apiUrl, 1))
-      .then((json) => {
-        if (!cancelled) setData(json);
-      })
-      .catch((err) => {
-        if (!cancelled)
-          setError(err instanceof Error ? err.message : "Unknown error");
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [apiUrl]);
+  const fetchData = useCallback(() => mutate(), [mutate]);
 
-  const hasMore = data?.pagination?.hasMore ?? false;
-
-  return { data, loading, loadingMore, error, retry: fetchData, fetchData, loadMore, hasMore };
+  return {
+    data: mergedData,
+    loading,
+    loadingMore,
+    error: error?.message ?? null,
+    retry: fetchData,
+    fetchData,
+    loadMore,
+    hasMore,
+  };
 }

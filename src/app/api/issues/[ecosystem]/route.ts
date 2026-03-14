@@ -3,6 +3,7 @@ import { ECOSYSTEMS } from "@/lib/ecosystems.config";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import { hasKv } from "@/lib/kv";
 import { fetchIssues } from "@/lib/api/fetch-issues";
+import { CACHE_REVALIDATE_SECONDS } from "@/lib/constants";
 
 export async function GET(
   request: NextRequest,
@@ -52,16 +53,23 @@ export async function GET(
     const total = data.issues.length;
     const start = (page - 1) * limit;
     const paginatedIssues = data.issues.slice(start, start + limit);
-    return NextResponse.json({
-      ...data,
-      issues: paginatedIssues,
-      pagination: {
-        page,
-        limit,
-        total,
-        hasMore: start + paginatedIssues.length < total,
+    return NextResponse.json(
+      {
+        ...data,
+        issues: paginatedIssues,
+        pagination: {
+          page,
+          limit,
+          total,
+          hasMore: start + paginatedIssues.length < total,
+        },
       },
-    });
+      {
+        headers: {
+          "Cache-Control": `public, s-maxage=${CACHE_REVALIDATE_SECONDS}, stale-while-revalidate=${CACHE_REVALIDATE_SECONDS}`,
+        },
+      }
+    );
   } catch (err) {
     return NextResponse.json(
       {
