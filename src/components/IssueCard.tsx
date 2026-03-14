@@ -5,6 +5,7 @@ import { useReducedMotion } from "motion/react";
 import { formatDate } from "@/lib/utils";
 import { getClaimStatusLabel, getClaimStatusTooltip, getReadinessLabel, getReadinessTooltip } from "@/lib/terminology";
 import type { NormalizedIssue } from "@/lib/types";
+import { Tooltip } from "@/components/ui/Tooltip";
 
 interface IssueCardProps {
   issue: NormalizedIssue;
@@ -43,19 +44,20 @@ export function IssueCard({ issue, compact = false }: IssueCardProps) {
           {title}
         </a>
         <div className="flex items-center gap-2 shrink-0">
-          <span
-            className={`text-xs px-2 py-0.5 rounded border font-medium ${issue.status === "possible_wip" ? "inline-flex flex-col items-center" : ""} ${STATUS_STYLES[issue.status]}`}
-            title={getClaimStatusTooltip(issue.status)}
-          >
-            {issue.status === "possible_wip" ? (
-              <>
-                <span>Possibly</span>
-                <span>active</span>
-              </>
-            ) : (
-              getClaimStatusLabel(issue.status)
-            )}
-          </span>
+          <Tooltip content={getClaimStatusTooltip(issue.status)}>
+            <span
+              className={`text-xs px-2 py-0.5 rounded border font-medium ${issue.status === "possible_wip" ? "inline-flex flex-col items-center" : ""} ${STATUS_STYLES[issue.status]}`}
+            >
+              {issue.status === "possible_wip" ? (
+                <>
+                  <span>Possibly</span>
+                  <span>active</span>
+                </>
+              ) : (
+                getClaimStatusLabel(issue.status)
+              )}
+            </span>
+          </Tooltip>
           {issue.isBeginnerFriendly && (
             <span className="text-xs px-2 py-0.5 rounded bg-amber-900/50 text-amber-400 border border-amber-700">
               Beginner
@@ -76,9 +78,11 @@ export function IssueCard({ issue, compact = false }: IssueCardProps) {
         )}
       </div>
       {!compact && issue.explanation && (
-        <p className="text-xs text-zinc-300 mt-2" title={issue.explanation}>
-          {issue.explanation}
-        </p>
+        <Tooltip content={issue.explanation}>
+          <p className="text-xs text-zinc-300 mt-2">
+            {issue.explanation}
+          </p>
+        </Tooltip>
       )}
       {!compact && issue.labels.length > 0 && (
         <div className="flex flex-wrap gap-1.5 mt-2">
@@ -99,12 +103,13 @@ export function IssueCard({ issue, compact = false }: IssueCardProps) {
       )}
       {!compact && (
         <div className="flex flex-wrap items-center justify-between gap-2 mt-3">
-          <span
-            className={`text-xs ${READINESS_STYLES[issue.readiness]}`}
-            title={getReadinessTooltip(issue.readiness)}
-          >
-            {getReadinessLabel(issue.readiness)} readiness
-          </span>
+          <Tooltip content={getReadinessTooltip(issue.readiness)}>
+            <span
+              className={`text-xs ${READINESS_STYLES[issue.readiness]}`}
+            >
+              {getReadinessLabel(issue.readiness)} readiness
+            </span>
+          </Tooltip>
           <a
             href={issue.url}
             target="_blank"

@@ -4,6 +4,7 @@ import { ViewTransitions } from "next-view-transitions";
 import "./globals.css";
 import { Header } from "@/components/Header";
 import { JsonLd } from "@/components/JsonLd";
+import { TooltipProvider } from "@/components/ui/Tooltip";
 import { SITE_URL } from "@/lib/constants";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
@@ -58,7 +59,9 @@ export default function RootLayout({
           Skip to content
         </a>
         <Header />
-        <main id="main" tabIndex={-1}>{children}</main>
+        <TooltipProvider>
+          <main id="main" tabIndex={-1}>{children}</main>
+        </TooltipProvider>
       </body>
     </html>
     </ViewTransitions>

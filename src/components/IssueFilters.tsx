@@ -6,6 +6,7 @@ import { PROJECTS } from "@/lib/projects.config";
 import type { FilterState, SortOption } from "@/lib/filters";
 import { CLAIM_STATUS, BEGINNER } from "@/lib/terminology";
 import { MultiSelectFilter } from "@/components/MultiSelectFilter";
+import { Tooltip } from "@/components/ui/Tooltip";
 
 function arraysEqual(a: string[], b: string[]): boolean {
   if (a.length !== b.length) return false;
@@ -123,26 +124,28 @@ export function IssueFilters({
               ▼
             </span>
           </div>
-          <motion.button
-            type="button"
-            onClick={toggleUnclaimed}
-            className={`${chipBase} ${unclaimedActive ? "bg-emerald-600 text-white " + chipActive : chipInactive}`}
-            title={CLAIM_STATUS.likely_unclaimed.tooltip}
-            whileTap={{ scale: 0.97 }}
-            transition={{ duration: 0.1 }}
-          >
-            Unclaimed
-          </motion.button>
-          <motion.button
-            type="button"
-            onClick={toggleBeginner}
-            className={`${chipBase} ${filters.beginnerOnly ? "bg-amber-600/80 text-zinc-900 " + chipActive : chipInactive}`}
-            title={BEGINNER.tooltip}
-            whileTap={{ scale: 0.97 }}
-            transition={{ duration: 0.1 }}
-          >
-            Beginner
-          </motion.button>
+          <Tooltip content={CLAIM_STATUS.likely_unclaimed.tooltip}>
+            <motion.button
+              type="button"
+              onClick={toggleUnclaimed}
+              className={`${chipBase} ${unclaimedActive ? "bg-emerald-600 text-white " + chipActive : chipInactive}`}
+              whileTap={{ scale: 0.97 }}
+              transition={{ duration: 0.1 }}
+            >
+              Unclaimed
+            </motion.button>
+          </Tooltip>
+          <Tooltip content={BEGINNER.tooltip}>
+            <motion.button
+              type="button"
+              onClick={toggleBeginner}
+              className={`${chipBase} ${filters.beginnerOnly ? "bg-amber-600/80 text-zinc-900 " + chipActive : chipInactive}`}
+              whileTap={{ scale: 0.97 }}
+              transition={{ duration: 0.1 }}
+            >
+              Beginner
+            </motion.button>
+          </Tooltip>
           <motion.button
             type="button"
             onClick={() => setExpanded(!expanded)}

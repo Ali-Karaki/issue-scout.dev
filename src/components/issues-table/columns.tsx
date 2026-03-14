@@ -6,6 +6,7 @@ import {
   getReadinessTooltip,
 } from "@/lib/terminology";
 import type { NormalizedIssue } from "@/lib/types";
+import { Tooltip } from "@/components/ui/Tooltip";
 
 const STATUS_STYLES: Record<NormalizedIssue["status"], string> = {
   likely_unclaimed: "bg-emerald-900/50 text-emerald-400 border-emerald-700",
@@ -72,9 +73,11 @@ export function createColumns(): ColumnDef<NormalizedIssue>[] {
           return <span className="text-zinc-600">—</span>;
         }
         return (
-          <div className="text-zinc-400 text-xs min-w-0 max-w-[120px] truncate" title={langs.join(", ")}>
-            {langs.join(", ")}
-          </div>
+          <Tooltip content={langs.join(", ")}>
+            <div className="text-zinc-400 text-xs min-w-0 max-w-[120px] truncate">
+              {langs.join(", ")}
+            </div>
+          </Tooltip>
         );
       },
     },
@@ -85,19 +88,20 @@ export function createColumns(): ColumnDef<NormalizedIssue>[] {
       cell: ({ row }) => {
         const { status } = row.original;
         return (
-          <span
-            className={`text-xs px-2 py-0.5 rounded border font-medium w-fit ${status === "possible_wip" ? "inline-flex flex-col items-center" : ""} ${STATUS_STYLES[status]}`}
-            title={getClaimStatusTooltip(status)}
-          >
-            {status === "possible_wip" ? (
-              <>
-                <span>Possibly</span>
-                <span>active</span>
-              </>
-            ) : (
-              getClaimStatusLabel(status)
-            )}
-          </span>
+          <Tooltip content={getClaimStatusTooltip(status)}>
+            <span
+              className={`text-xs px-2 py-0.5 rounded border font-medium w-fit ${status === "possible_wip" ? "inline-flex flex-col items-center" : ""} ${STATUS_STYLES[status]}`}
+            >
+              {status === "possible_wip" ? (
+                <>
+                  <span>Possibly</span>
+                  <span>active</span>
+                </>
+              ) : (
+                getClaimStatusLabel(status)
+              )}
+            </span>
+          </Tooltip>
         );
       },
     },
@@ -123,12 +127,13 @@ export function createColumns(): ColumnDef<NormalizedIssue>[] {
       cell: ({ row }) => {
         const { readiness } = row.original;
         return (
-          <span
-            className={`text-xs ${READINESS_STYLES[readiness]}`}
-            title={getReadinessTooltip(readiness)}
-          >
-            {getReadinessLabel(readiness)}
-          </span>
+          <Tooltip content={getReadinessTooltip(readiness)}>
+            <span
+              className={`text-xs ${READINESS_STYLES[readiness]}`}
+            >
+              {getReadinessLabel(readiness)}
+            </span>
+          </Tooltip>
         );
       },
     },
