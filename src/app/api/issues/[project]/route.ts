@@ -3,7 +3,7 @@ import { PROJECTS } from "@/lib/projects.config";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import { hasKv, kvSet } from "@/lib/kv";
 import {
-  getIssuesFromCache,
+  getCachedIssues,
   fetchIssuesFromGitHub,
 } from "@/lib/api/fetch-issues";
 import { CACHE_REVALIDATE_SECONDS } from "@/lib/constants";
@@ -48,7 +48,7 @@ export async function GET(
     : 50;
 
   try {
-    let data = hasKv() ? await getIssuesFromCache(project) : null;
+    let data = hasKv() ? await getCachedIssues(project) : null;
     if (!data && token) {
       data = await fetchIssuesFromGitHub(project, token);
       if (data && hasKv()) {

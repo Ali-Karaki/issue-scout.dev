@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import { hasKv, kvSet } from "@/lib/kv";
 import {
-  getIssuesFromCache,
+  getCachedIssues,
   fetchIssuesFromGitHub,
 } from "@/lib/api/fetch-issues";
 import { CACHE_REVALIDATE_SECONDS } from "@/lib/constants";
@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
     projectParams.length === 1 ? projectParams[0] : null;
 
   try {
-    let data = hasKv() ? await getIssuesFromCache(projectParam) : null;
+    let data = hasKv() ? await getCachedIssues(projectParam) : null;
     if (!data && token) {
       data = await fetchIssuesFromGitHub(projectParam, token);
       if (data && hasKv()) {

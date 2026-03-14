@@ -62,7 +62,7 @@ export function useIssuesFetch(
   } = useSWR(key, fetcher, {
     keepPreviousData: true,
     revalidateOnFocus: false,
-    dedupingInterval: 2000,
+    dedupingInterval: 5000,
     errorRetryCount: 2,
     onErrorRetry: (err, _key, _config, revalidate, { retryCount }) => {
       if (err?.message?.includes("429") || err?.message?.includes("Too many requests")) {

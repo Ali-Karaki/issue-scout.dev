@@ -1,6 +1,7 @@
 import { vi, describe, it, expect, beforeEach } from "vitest";
 import {
   getIssuesFromCache,
+  getCachedIssues,
   refreshAllProjects,
   type IssuesResponse,
 } from "../fetch-issues";
@@ -20,6 +21,10 @@ vi.mock("../../kv", () => ({
   kvGet: (key: string) => mockKvGet(key),
   kvSet: (key: string, value: unknown, ttl: number) =>
     mockKvSet(key, value, ttl),
+}));
+
+vi.mock("next/cache", () => ({
+  unstable_cache: (fn: () => Promise<unknown>) => () => fn(),
 }));
 
 function makeMockResponse(projectId: string): IssuesResponse {
@@ -138,6 +143,41 @@ describe("getIssuesFromCache", () => {
     const result = await getIssuesFromCache(null);
 
     expect(result).toBeNull();
+  });
+});
+
+describe("getCachedIssues", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("returns cached data when KV configured", async () => {
+    const cached = makeMockResponse("tanstack");
+    mockHasKv.mockReturnValue(true);
+    mockKvGet.mockResolvedValue(cached);
+
+    const result = await getCachedIssues("tanstack");
+
+    expect(result).toEqual(cached);
+    expect(mockKvGet).toHaveBeenCalledWith("issues:tanstack");
+  });
+
+  it("returns null when KV configured and cache miss", async () => {
+    mockHasKv.mockReturnValue(true);
+    mockKvGet.mockResolvedValue(null);
+
+    const result = await getCachedIssues("tanstack");
+
+    expect(result).toBeNull();
+  });
+
+  it("falls back to getIssuesFromCache when KV not configured", async () => {
+    mockHasKv.mockReturnValue(false);
+
+    const result = await getCachedIssues("tanstack");
+
+    expect(result).toBeNull();
+    expect(mockKvGet).not.toHaveBeenCalled();
   });
 });
 

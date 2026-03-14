@@ -6,7 +6,7 @@ import type { IssuesResponse } from "@/lib/api/fetch-issues";
 const mockCheckRateLimit = vi.fn();
 const mockGetClientIp = vi.fn();
 const mockHasKv = vi.fn();
-const mockGetIssuesFromCache = vi.fn();
+const mockGetCachedIssues = vi.fn();
 const mockFetchIssuesFromGitHub = vi.fn();
 const mockKvSet = vi.fn();
 
@@ -21,8 +21,7 @@ vi.mock("@/lib/kv", () => ({
 }));
 
 vi.mock("@/lib/api/fetch-issues", () => ({
-  getIssuesFromCache: (project: string | null) =>
-    mockGetIssuesFromCache(project),
+  getCachedIssues: (project: string | null) => mockGetCachedIssues(project),
   fetchIssuesFromGitHub: (project: string | null, _token: string) =>
     mockFetchIssuesFromGitHub(project, _token),
 }));
@@ -85,7 +84,7 @@ describe("GET /api/issues", () => {
 
     expect(res.status).toBe(429);
     expect(body.error).toBe("Too many requests");
-    expect(mockGetIssuesFromCache).not.toHaveBeenCalled();
+    expect(mockGetCachedIssues).not.toHaveBeenCalled();
   });
 
   it("returns 503 when Redis not configured and no GITHUB_TOKEN", async () => {
@@ -98,11 +97,11 @@ describe("GET /api/issues", () => {
 
     expect(res.status).toBe(503);
     expect(body.error).toContain("Redis cache required");
-    expect(mockGetIssuesFromCache).not.toHaveBeenCalled();
+    expect(mockGetCachedIssues).not.toHaveBeenCalled();
   });
 
   it("returns 503 when cache is empty and no GITHUB_TOKEN", async () => {
-    mockGetIssuesFromCache.mockResolvedValue(null);
+    mockGetCachedIssues.mockResolvedValue(null);
     delete process.env.GITHUB_TOKEN;
 
     const req = new NextRequest("http://localhost:3000/api/issues");
@@ -116,7 +115,7 @@ describe("GET /api/issues", () => {
   });
 
   it("returns 200 from GitHub fallback when cache empty and GITHUB_TOKEN set", async () => {
-    mockGetIssuesFromCache.mockResolvedValue(null);
+    mockGetCachedIssues.mockResolvedValue(null);
     process.env.GITHUB_TOKEN = "test-token";
     const data = makeMockResponse(5);
     mockFetchIssuesFromGitHub.mockResolvedValue(data);
@@ -131,7 +130,7 @@ describe("GET /api/issues", () => {
   });
 
   it("writes to cache when falling back to GitHub", async () => {
-    mockGetIssuesFromCache.mockResolvedValue(null);
+    mockGetCachedIssues.mockResolvedValue(null);
     process.env.GITHUB_TOKEN = "test-token";
     const data = makeMockResponse(3);
     mockFetchIssuesFromGitHub.mockResolvedValue(data);
@@ -163,7 +162,7 @@ describe("GET /api/issues", () => {
   });
 
   it("returns 500 when getIssuesFromCache throws", async () => {
-    mockGetIssuesFromCache.mockRejectedValue(new Error("Cache error"));
+    mockGetCachedIssues.mockRejectedValue(new Error("Cache error"));
 
     const req = new NextRequest("http://localhost:3000/api/issues");
     const res = await GET(req);
@@ -175,7 +174,7 @@ describe("GET /api/issues", () => {
 
   it("returns success with pagination and Cache-Control", async () => {
     const data = makeMockResponse(100);
-    mockGetIssuesFromCache.mockResolvedValue(data);
+    mockGetCachedIssues.mockResolvedValue(data);
 
     const req = new NextRequest(
       "http://localhost:3000/api/issues?page=1&limit=10"
@@ -193,12 +192,12 @@ describe("GET /api/issues", () => {
     });
     expect(body.summary).toEqual(data.summary);
     expect(res.headers.get("Cache-Control")).toContain("s-maxage=604800");
-    expect(mockGetIssuesFromCache).toHaveBeenCalledWith(null);
+    expect(mockGetCachedIssues).toHaveBeenCalledWith(null);
   });
 
   it("sanitizes invalid page and limit to defaults", async () => {
     const data = makeMockResponse(5);
-    mockGetIssuesFromCache.mockResolvedValue(data);
+    mockGetCachedIssues.mockResolvedValue(data);
 
     const req = new NextRequest(
       "http://localhost:3000/api/issues?page=abc&limit=xyz"
@@ -220,12 +219,12 @@ describe("GET /api/issues", () => {
 
     expect(res.status).toBe(400);
     expect(body.error).toBe("Invalid project");
-    expect(mockGetIssuesFromCache).not.toHaveBeenCalled();
+    expect(mockGetCachedIssues).not.toHaveBeenCalled();
   });
 
   it("treats empty project as all projects", async () => {
     const data = makeMockResponse(10);
-    mockGetIssuesFromCache.mockResolvedValue(data);
+    mockGetCachedIssues.mockResolvedValue(data);
 
     const req = new NextRequest(
       "http://localhost:3000/api/issues?project="
@@ -234,7 +233,7 @@ describe("GET /api/issues", () => {
     const body = await res.json();
 
     expect(res.status).toBe(200);
-    expect(mockGetIssuesFromCache).toHaveBeenCalledWith(null);
+    expect(mockGetCachedIssues).toHaveBeenCalledWith(null);
     expect(body.issues).toHaveLength(10);
   });
 
@@ -244,7 +243,7 @@ describe("GET /api/issues", () => {
       ...issue,
       status: i < 5 ? "likely_unclaimed" : "possible_wip",
     }));
-    mockGetIssuesFromCache.mockResolvedValue(data);
+    mockGetCachedIssues.mockResolvedValue(data);
 
     const req = new NextRequest(
       "http://localhost:3000/api/issues?status=likely_unclaimed&page=1&limit=50"
@@ -265,7 +264,7 @@ describe("GET /api/issues", () => {
       id: `owner/repo#${i + 1}`,
       languages: i < 3 ? ["TypeScript", "JavaScript"] : ["Python"],
     }));
-    mockGetIssuesFromCache.mockResolvedValue(data);
+    mockGetCachedIssues.mockResolvedValue(data);
 
     const req = new NextRequest(
       "http://localhost:3000/api/issues?tech=TypeScript&page=1&limit=50"
@@ -286,7 +285,7 @@ describe("GET /api/issues", () => {
       id: `owner/repo#${i + 1}`,
       languages: i < 3 ? ["TypeScript"] : i < 6 ? ["Python"] : ["Rust"],
     }));
-    mockGetIssuesFromCache.mockResolvedValue(data);
+    mockGetCachedIssues.mockResolvedValue(data);
 
     const req = new NextRequest(
       "http://localhost:3000/api/issues?tech=TypeScript&tech=Python&page=1&limit=50"
@@ -306,7 +305,7 @@ describe("GET /api/issues", () => {
       id: `repo-${i}#1`,
       repo: i < 2 ? "a/b" : i < 4 ? "c/d" : "e/f",
     }));
-    mockGetIssuesFromCache.mockResolvedValue(data);
+    mockGetCachedIssues.mockResolvedValue(data);
 
     const req = new NextRequest(
       "http://localhost:3000/api/issues?repo=a%2Fb&repo=e%2Ff&page=1&limit=50"

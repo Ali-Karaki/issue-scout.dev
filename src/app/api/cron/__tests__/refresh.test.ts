@@ -3,9 +3,15 @@ import { NextRequest } from "next/server";
 import { POST } from "../refresh/route";
 
 const mockRefreshAllProjects = vi.fn();
+const mockRevalidateTag = vi.fn();
 
 vi.mock("@/lib/api/fetch-issues", () => ({
   refreshAllProjects: (token: string) => mockRefreshAllProjects(token),
+}));
+
+vi.mock("next/cache", () => ({
+  revalidateTag: (tag: string, profile?: string) =>
+    mockRevalidateTag(tag, profile),
 }));
 
 describe("POST /api/cron/refresh", () => {
@@ -86,6 +92,7 @@ describe("POST /api/cron/refresh", () => {
     expect(res.status).toBe(200);
     expect(body.ok).toBe(true);
     expect(mockRefreshAllProjects).toHaveBeenCalledWith("gh_token");
+    expect(mockRevalidateTag).toHaveBeenCalledWith("issues", "max");
   });
 
   it("accepts x-cron-secret header", async () => {
@@ -103,5 +110,40 @@ describe("POST /api/cron/refresh", () => {
 
     expect(res.status).toBe(200);
     expect(mockRefreshAllProjects).toHaveBeenCalled();
+  });
+
+  it("calls revalidateTag when refresh succeeds", async () => {
+    process.env.CRON_SECRET = "secret123";
+    process.env.GITHUB_TOKEN = "gh_token";
+
+    mockRefreshAllProjects.mockResolvedValue({ ok: true, projects: [] });
+
+    const req = new NextRequest("http://localhost:3000/api/cron/refresh", {
+      method: "POST",
+      headers: { Authorization: "Bearer secret123" },
+    });
+
+    await POST(req);
+
+    expect(mockRevalidateTag).toHaveBeenCalledWith("issues", "max");
+  });
+
+  it("does not call revalidateTag when refresh fails", async () => {
+    process.env.CRON_SECRET = "secret123";
+    process.env.GITHUB_TOKEN = "gh_token";
+
+    mockRefreshAllProjects.mockResolvedValue({
+      ok: false,
+      projects: [{ id: "tanstack", ok: false, error: "GitHub API error" }],
+    });
+
+    const req = new NextRequest("http://localhost:3000/api/cron/refresh", {
+      method: "POST",
+      headers: { Authorization: "Bearer secret123" },
+    });
+
+    await POST(req);
+
+    expect(mockRevalidateTag).not.toHaveBeenCalled();
   });
 });

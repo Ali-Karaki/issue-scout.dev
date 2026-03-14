@@ -1,3 +1,4 @@
+import { revalidateTag } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { refreshAllProjects } from "@/lib/api/fetch-issues";
 
@@ -25,6 +26,9 @@ export async function POST(request: NextRequest) {
   }
   try {
     const result = await refreshAllProjects(token);
+    if (result.ok) {
+      revalidateTag("issues", "max");
+    }
     return NextResponse.json(result, {
       status: result.ok ? 200 : 207,
     });
