@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
-import { hasKv } from "@/lib/kv";
+import { hasKv, kvSet } from "@/lib/kv";
 import {
   getIssuesFromCache,
   fetchIssuesFromGitHub,
@@ -10,11 +10,6 @@ import { PROJECTS } from "@/lib/projects.config";
 import { applyFiltersAndSort } from "@/lib/filters";
 import { paramsToFilters } from "@/lib/url-filters";
 
-// Dev-only: bypass cache when empty for local dev without running refresh job
-function canUseDevFallback(): boolean {
-  return process.env.NODE_ENV !== "production";
-}
-
 export async function GET(request: NextRequest) {
   const ip = getClientIp(request);
   if (!(await checkRateLimit(ip))) {
@@ -23,7 +18,8 @@ export async function GET(request: NextRequest) {
       { status: 429, headers: { "Retry-After": "60" } }
     );
   }
-  if (!hasKv() && !canUseDevFallback()) {
+  const token = process.env.GITHUB_TOKEN ?? "";
+  if (!hasKv() && !token) {
     return NextResponse.json(
       {
         error:
@@ -52,9 +48,13 @@ export async function GET(request: NextRequest) {
 
   try {
     let data = hasKv() ? await getIssuesFromCache(projectParam) : null;
-    if (!data && canUseDevFallback()) {
-      const token = process.env.GITHUB_TOKEN ?? "";
+    if (!data && token) {
       data = await fetchIssuesFromGitHub(projectParam, token);
+      if (data && hasKv()) {
+        const cacheKey =
+          projectParam === null ? "issues:all" : `issues:${projectParam}`;
+        await kvSet(cacheKey, data, CACHE_REVALIDATE_SECONDS);
+      }
     }
     if (!data) {
       return NextResponse.json(

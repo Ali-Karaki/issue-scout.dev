@@ -7,6 +7,8 @@ const mockCheckRateLimit = vi.fn();
 const mockGetClientIp = vi.fn();
 const mockHasKv = vi.fn();
 const mockGetIssuesFromCache = vi.fn();
+const mockFetchIssuesFromGitHub = vi.fn();
+const mockKvSet = vi.fn();
 
 vi.mock("@/lib/rate-limit", () => ({
   checkRateLimit: (ip: string) => mockCheckRateLimit(ip),
@@ -15,11 +17,14 @@ vi.mock("@/lib/rate-limit", () => ({
 
 vi.mock("@/lib/kv", () => ({
   hasKv: () => mockHasKv(),
+  kvSet: (...args: unknown[]) => mockKvSet(...args),
 }));
 
 vi.mock("@/lib/api/fetch-issues", () => ({
   getIssuesFromCache: (project: string | null) =>
     mockGetIssuesFromCache(project),
+  fetchIssuesFromGitHub: (project: string | null, _token: string) =>
+    mockFetchIssuesFromGitHub(project, _token),
 }));
 
 function makeMockResponse(issueCount: number): IssuesResponse {
@@ -63,6 +68,7 @@ describe("GET /api/issues", () => {
     mockCheckRateLimit.mockResolvedValue(true);
     mockGetClientIp.mockReturnValue("127.0.0.1");
     mockHasKv.mockReturnValue(true);
+    mockKvSet.mockResolvedValue(true);
   });
 
   afterEach(() => {
@@ -81,8 +87,9 @@ describe("GET /api/issues", () => {
     expect(mockGetIssuesFromCache).not.toHaveBeenCalled();
   });
 
-  it("returns 503 when Redis not configured", async () => {
+  it("returns 503 when Redis not configured and no GITHUB_TOKEN", async () => {
     mockHasKv.mockReturnValue(false);
+    delete process.env.GITHUB_TOKEN;
 
     const req = new NextRequest("http://localhost:3000/api/issues");
     const res = await GET(req);
@@ -93,8 +100,9 @@ describe("GET /api/issues", () => {
     expect(mockGetIssuesFromCache).not.toHaveBeenCalled();
   });
 
-  it("returns 503 when cache is empty", async () => {
+  it("returns 503 when cache is empty and no GITHUB_TOKEN", async () => {
     mockGetIssuesFromCache.mockResolvedValue(null);
+    delete process.env.GITHUB_TOKEN;
 
     const req = new NextRequest("http://localhost:3000/api/issues");
     const res = await GET(req);
@@ -103,6 +111,54 @@ describe("GET /api/issues", () => {
     expect(res.status).toBe(503);
     expect(body.error).toBe("Data not yet available. Try again later.");
     expect(res.headers.get("Retry-After")).toBe("300");
+    expect(mockFetchIssuesFromGitHub).not.toHaveBeenCalled();
+  });
+
+  it("returns 200 from GitHub fallback when cache empty and GITHUB_TOKEN set", async () => {
+    mockGetIssuesFromCache.mockResolvedValue(null);
+    process.env.GITHUB_TOKEN = "test-token";
+    const data = makeMockResponse(5);
+    mockFetchIssuesFromGitHub.mockResolvedValue(data);
+
+    const req = new NextRequest("http://localhost:3000/api/issues");
+    const res = await GET(req);
+    const body = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(body.issues).toHaveLength(5);
+    expect(mockFetchIssuesFromGitHub).toHaveBeenCalledWith(null, "test-token");
+  });
+
+  it("writes to cache when falling back to GitHub", async () => {
+    mockGetIssuesFromCache.mockResolvedValue(null);
+    process.env.GITHUB_TOKEN = "test-token";
+    const data = makeMockResponse(3);
+    mockFetchIssuesFromGitHub.mockResolvedValue(data);
+
+    const req = new NextRequest("http://localhost:3000/api/issues");
+    await GET(req);
+
+    expect(mockKvSet).toHaveBeenCalledWith(
+      "issues:all",
+      data,
+      604800
+    );
+  });
+
+  it("allows GitHub fallback when Redis not configured but GITHUB_TOKEN set", async () => {
+    mockHasKv.mockReturnValue(false);
+    process.env.GITHUB_TOKEN = "test-token";
+    const data = makeMockResponse(2);
+    mockFetchIssuesFromGitHub.mockResolvedValue(data);
+
+    const req = new NextRequest("http://localhost:3000/api/issues");
+    const res = await GET(req);
+    const body = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(body.issues).toHaveLength(2);
+    expect(mockFetchIssuesFromGitHub).toHaveBeenCalledWith(null, "test-token");
+    expect(mockKvSet).not.toHaveBeenCalled();
   });
 
   it("returns 500 when getIssuesFromCache throws", async () => {
@@ -135,7 +191,7 @@ describe("GET /api/issues", () => {
       hasMore: true,
     });
     expect(body.summary).toEqual(data.summary);
-    expect(res.headers.get("Cache-Control")).toContain("s-maxage=3600");
+    expect(res.headers.get("Cache-Control")).toContain("s-maxage=604800");
     expect(mockGetIssuesFromCache).toHaveBeenCalledWith(null);
   });
 

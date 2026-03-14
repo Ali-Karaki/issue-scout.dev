@@ -89,7 +89,7 @@ Returns issues for the specified project. Valid project IDs: `tanstack`, `vercel
 | 400 | Invalid project |
 | 429 | Rate limit exceeded |
 | 500 | Server error |
-| 503 | Missing configuration (Redis) or cache empty (run refresh workflow) |
+| 503 | Missing configuration (Redis) or cache empty without GITHUB_TOKEN (run refresh workflow or set GITHUB_TOKEN for fallback) |
 
 ---
 
@@ -98,7 +98,7 @@ Returns issues for the specified project. Valid project IDs: `tanstack`, `vercel
 ![Architecture diagram](public/architecture.png)
 
 - **Config:** [src/lib/projects.config.ts](src/lib/projects.config.ts) defines projects and their repos.
-- **API:** `GET /api/issues` and `GET /api/issues/[project]` read from the Upstash cache only. In development, when cache is empty or Redis is not configured, the API may fetch directly from GitHub for convenience. Production always uses cache only. A GitHub Actions workflow runs every 6 hours to refresh the cache via `POST /api/cron/refresh`, which fetches from the GitHub API and writes to Upstash.
+- **API:** `GET /api/issues` and `GET /api/issues/[project]` read from the Upstash cache. When the cache is empty and `GITHUB_TOKEN` is set, the API falls back to fetching directly from GitHub and repopulates the cache. A GitHub Actions workflow runs every 6 hours to refresh the cache via `POST /api/cron/refresh`, which fetches from the GitHub API and writes to Upstash.
 - **Analysis:** Raw issues are normalized in [src/lib/analysis/normalize.ts](src/lib/analysis/normalize.ts), which uses [status.ts](src/lib/analysis/status.ts) (likely_unclaimed, possible_wip, stale) and [readiness.ts](src/lib/analysis/readiness.ts) (high/medium/low scoring).
 - **Client:** [src/app/issues/page.tsx](src/app/issues/page.tsx) and [src/app/project/[id]/page.tsx](src/app/project/[id]/page.tsx) fetch from the API, apply filters from [src/lib/filters.ts](src/lib/filters.ts), and render issue cards. Filters are persisted in the URL.
 

@@ -8,7 +8,8 @@ export const SITE_URL =
 export const STALE_THRESHOLD_DAYS = 90;
 export const RECENTLY_ACTIVE_DAYS = 30;
 export const RECENT_DAYS = 30;
-export const CACHE_REVALIDATE_SECONDS = 3600;
+// 7 days = 7 * 24 * 60 * 60
+export const CACHE_REVALIDATE_SECONDS = 604800;
 
 export const STALE_THRESHOLD_MS =
   STALE_THRESHOLD_DAYS * 24 * 60 * 60 * 1000;

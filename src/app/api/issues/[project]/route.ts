@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PROJECTS } from "@/lib/projects.config";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
-import { hasKv } from "@/lib/kv";
+import { hasKv, kvSet } from "@/lib/kv";
 import {
   getIssuesFromCache,
   fetchIssuesFromGitHub,
@@ -9,10 +9,6 @@ import {
 import { CACHE_REVALIDATE_SECONDS } from "@/lib/constants";
 import { applyFiltersAndSort } from "@/lib/filters";
 import { paramsToFilters } from "@/lib/url-filters";
-
-function canUseDevFallback(): boolean {
-  return process.env.NODE_ENV !== "production";
-}
 
 export async function GET(
   request: NextRequest,
@@ -33,7 +29,8 @@ export async function GET(
       { status: 429, headers: { "Retry-After": "60" } }
     );
   }
-  if (!hasKv() && !canUseDevFallback()) {
+  const token = process.env.GITHUB_TOKEN ?? "";
+  if (!hasKv() && !token) {
     return NextResponse.json(
       {
         error:
@@ -52,9 +49,11 @@ export async function GET(
 
   try {
     let data = hasKv() ? await getIssuesFromCache(project) : null;
-    if (!data && canUseDevFallback()) {
-      const token = process.env.GITHUB_TOKEN ?? "";
+    if (!data && token) {
       data = await fetchIssuesFromGitHub(project, token);
+      if (data && hasKv()) {
+        await kvSet(`issues:${project}`, data, CACHE_REVALIDATE_SECONDS);
+      }
     }
     if (!data) {
       return NextResponse.json(
