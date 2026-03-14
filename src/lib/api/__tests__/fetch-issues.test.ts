@@ -93,11 +93,29 @@ describe("getIssuesFromCache", () => {
     expect(mockKvGet).not.toHaveBeenCalled();
   });
 
-  it('"all" ecosystems merges results when all cached', async () => {
+  it('"all" ecosystems returns issues:all when present', async () => {
+    const combined = makeMockResponse("tanstack");
+    combined.issues = [
+      ...combined.issues,
+      { ...combined.issues[0], id: "owner/repo#2", ecosystem: "vercel" },
+    ];
+    combined.summary = { ...combined.summary, total: 2 };
+    mockHasKv.mockReturnValue(true);
+    mockKvGet.mockResolvedValueOnce(combined);
+
+    const result = await getIssuesFromCache(null);
+
+    expect(result).toEqual(combined);
+    expect(mockKvGet).toHaveBeenCalledTimes(1);
+    expect(mockKvGet).toHaveBeenCalledWith("issues:all");
+  });
+
+  it('"all" ecosystems merges per-ecosystem results when issues:all miss', async () => {
     const tanstack = makeMockResponse("tanstack");
     const vercel = makeMockResponse("vercel");
     mockHasKv.mockReturnValue(true);
     mockKvGet
+      .mockResolvedValueOnce(null)
       .mockResolvedValueOnce(tanstack)
       .mockResolvedValueOnce(vercel);
 
@@ -106,12 +124,13 @@ describe("getIssuesFromCache", () => {
     expect(result).not.toBeNull();
     expect(result!.issues).toHaveLength(2);
     expect(result!.summary.total).toBe(2);
-    expect(mockKvGet).toHaveBeenCalledTimes(2);
+    expect(mockKvGet).toHaveBeenCalledWith("issues:all");
   });
 
   it('"all" ecosystems returns null when any cache miss', async () => {
     mockHasKv.mockReturnValue(true);
     mockKvGet
+      .mockResolvedValueOnce(null)
       .mockResolvedValueOnce(makeMockResponse("tanstack"))
       .mockResolvedValueOnce(null);
 
@@ -156,7 +175,7 @@ describe("refreshAllEcosystems", () => {
     expect(result.ecosystems).toHaveLength(2);
     expect(result.ecosystems.every((e) => e.ok)).toBe(true);
     expect(mockGetIssuesForRepos).toHaveBeenCalledTimes(2);
-    expect(mockKvSet).toHaveBeenCalledTimes(2);
+    expect(mockKvSet).toHaveBeenCalledTimes(3);
   });
 
   it("returns error when KV not configured", async () => {

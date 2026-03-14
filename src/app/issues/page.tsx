@@ -5,11 +5,7 @@ import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { SummaryBar } from "@/components/SummaryBar";
 import { IssueFilters } from "@/components/IssueFilters";
 import { IssueCard } from "@/components/IssueCard";
-import {
-  applyFiltersAndSort,
-  INITIAL_FILTERS,
-  type FilterState,
-} from "@/lib/filters";
+import { INITIAL_FILTERS, type FilterState } from "@/lib/filters";
 import { filtersToParams, paramsToFilters } from "@/lib/url-filters";
 import { useIssuesFetch } from "@/hooks/use-issues-fetch";
 
@@ -17,13 +13,12 @@ export default function IssuesPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
-  const { data, loading, loadingMore, error, retry, fetchData, loadMore, hasMore } = useIssuesFetch("/api/issues");
-
   const [filters, setFilters] = useState<FilterState>(() => {
     const params = new URLSearchParams(searchParams.toString());
     if (params.toString()) return paramsToFilters(params);
     return INITIAL_FILTERS;
   });
+  const { data, loading, loadingMore, error, retry, fetchData, loadMore, hasMore } = useIssuesFetch("/api/issues", filters);
 
   const updateFilters = useCallback(
     (newFilters: FilterState) => {
@@ -58,10 +53,7 @@ export default function IssuesPage() {
     return [...set].sort();
   }, [data]);
 
-  const filteredIssues = useMemo(() => {
-    if (!data) return [];
-    return applyFiltersAndSort(data.issues, filters);
-  }, [data, filters]);
+  const displayIssues = data?.issues ?? [];
 
   if (loading) {
     return (
@@ -135,7 +127,7 @@ export default function IssuesPage() {
       />
 
       <div className="space-y-4">
-        {filteredIssues.length === 0 ? (
+        {displayIssues.length === 0 ? (
           <div className="text-center py-16 text-zinc-500 rounded-xl border border-zinc-700 bg-zinc-800/30">
             <p className="mb-4">
               {data.summary.total === 0 && data.summary.failedRepos.length > 0
@@ -154,7 +146,7 @@ export default function IssuesPage() {
           </div>
         ) : (
           <>
-            {filteredIssues.map((issue) => (
+            {displayIssues.map((issue) => (
               <IssueCard key={issue.id} issue={issue} />
             ))}
             {hasMore && (

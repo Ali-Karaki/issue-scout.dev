@@ -177,4 +177,27 @@ describe("GET /api/issues/[ecosystem]", () => {
     expect(body.pagination.page).toBe(1);
     expect(body.pagination.limit).toBe(100);
   });
+
+  it("applies sort param server-side", async () => {
+    const data = makeMockResponse("tanstack", 10);
+    data.issues = data.issues.map((issue, i) => ({
+      ...issue,
+      comments: 10 - i,
+      updatedAt: new Date(Date.now() - i * 86400000).toISOString(),
+    }));
+    mockGetIssuesFromCache.mockResolvedValue(data);
+
+    const req = new NextRequest(
+      "http://localhost:3000/api/issues/tanstack?sort=most_comments&page=1&limit=5"
+    );
+    const res = await GET(req, {
+      params: Promise.resolve({ ecosystem: "tanstack" }),
+    });
+    const body = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(body.issues).toHaveLength(5);
+    expect(body.issues[0].comments).toBe(10);
+    expect(body.issues[4].comments).toBe(6);
+  });
 });

@@ -3,6 +3,7 @@ import { renderHook } from "@testing-library/react";
 import useSWRInfinite from "swr/infinite";
 import { useIssuesFetch } from "../use-issues-fetch";
 import type { IssuesResponse } from "@/lib/api/fetch-issues";
+import { INITIAL_FILTERS } from "@/lib/filters";
 
 vi.mock("swr/infinite");
 
@@ -69,7 +70,7 @@ describe("useIssuesFetch", () => {
       mutate: mockMutate,
     });
 
-    const { result } = renderHook(() => useIssuesFetch(""));
+    const { result } = renderHook(() => useIssuesFetch("", INITIAL_FILTERS));
 
     expect(result.current.data).toBeNull();
     expect(result.current.loading).toBe(false);
@@ -80,7 +81,7 @@ describe("useIssuesFetch", () => {
       expect.any(Function),
       expect.any(Function),
       expect.objectContaining({
-        revalidateOnFocus: true,
+        revalidateOnFocus: false,
         dedupingInterval: 2000,
         errorRetryCount: 2,
       })
@@ -100,7 +101,9 @@ describe("useIssuesFetch", () => {
       mutate: mockMutate,
     });
 
-    const { result } = renderHook(() => useIssuesFetch("/api/issues/tanstack"));
+    const { result } = renderHook(() =>
+      useIssuesFetch("/api/issues/tanstack", INITIAL_FILTERS)
+    );
 
     expect(result.current.data).not.toBeNull();
     expect(result.current.data?.issues).toHaveLength(2);
@@ -122,7 +125,9 @@ describe("useIssuesFetch", () => {
       mutate: mockMutate,
     });
 
-    const { result } = renderHook(() => useIssuesFetch("/api/issues/tanstack"));
+    const { result } = renderHook(() =>
+      useIssuesFetch("/api/issues/tanstack", INITIAL_FILTERS)
+    );
 
     expect(result.current.hasMore).toBe(true);
   });
@@ -139,7 +144,9 @@ describe("useIssuesFetch", () => {
       mutate: mockMutate,
     });
 
-    const { result } = renderHook(() => useIssuesFetch("/api/issues/tanstack"));
+    const { result } = renderHook(() =>
+      useIssuesFetch("/api/issues/tanstack", INITIAL_FILTERS)
+    );
 
     result.current.loadMore();
 
@@ -157,7 +164,9 @@ describe("useIssuesFetch", () => {
       mutate: mockMutate,
     });
 
-    const { result } = renderHook(() => useIssuesFetch("/api/issues/tanstack"));
+    const { result } = renderHook(() =>
+      useIssuesFetch("/api/issues/tanstack", INITIAL_FILTERS)
+    );
 
     result.current.fetchData();
     expect(mockMutate).toHaveBeenCalledTimes(1);
@@ -177,7 +186,9 @@ describe("useIssuesFetch", () => {
       mutate: mockMutate,
     });
 
-    const { result } = renderHook(() => useIssuesFetch("/api/issues/tanstack"));
+    const { result } = renderHook(() =>
+      useIssuesFetch("/api/issues/tanstack", INITIAL_FILTERS)
+    );
 
     expect(result.current.error).toBe("API error 503");
   });

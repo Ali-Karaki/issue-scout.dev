@@ -180,4 +180,24 @@ describe("GET /api/issues", () => {
     expect(mockGetIssuesFromCache).toHaveBeenCalledWith(null);
     expect(body.issues).toHaveLength(10);
   });
+
+  it("applies status filter server-side", async () => {
+    const data = makeMockResponse(20);
+    data.issues = data.issues.map((issue, i) => ({
+      ...issue,
+      status: i < 5 ? "likely_unclaimed" : "possible_wip",
+    }));
+    mockGetIssuesFromCache.mockResolvedValue(data);
+
+    const req = new NextRequest(
+      "http://localhost:3000/api/issues?status=likely_unclaimed&page=1&limit=50"
+    );
+    const res = await GET(req);
+    const body = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(body.issues).toHaveLength(5);
+    expect(body.pagination.total).toBe(5);
+    expect(body.issues.every((i: { status: string }) => i.status === "likely_unclaimed")).toBe(true);
+  });
 });

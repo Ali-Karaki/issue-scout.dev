@@ -56,6 +56,11 @@ function getRatelimit(): Ratelimit | null {
 /**
  * Check rate limit. Uses Upstash when Redis is configured, else in-memory.
  * Returns true if allowed, false if rate limited.
+ *
+ * Note: The in-memory fallback is per-instance only. In serverless environments
+ * (e.g. Vercel), each function instance has its own memory; rate limits do not
+ * persist across instances. For strict rate limiting, ensure Upstash Redis is
+ * configured.
  */
 export async function checkRateLimit(key: string): Promise<boolean> {
   const ratelimit = getRatelimit();
@@ -70,6 +75,11 @@ export async function checkRateLimit(key: string): Promise<boolean> {
   return checkRateLimitInMemory(key, LIMIT, WINDOW_MS);
 }
 
+/**
+ * Extracts client IP for rate limiting. Relies on x-forwarded-for from the
+ * reverse proxy (e.g. Vercel). When self-hosting, ensure your reverse proxy
+ * sets this header; otherwise clients could spoof it.
+ */
 export function getClientIp(request: Request): string {
   return (
     request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??

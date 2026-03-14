@@ -8,11 +8,7 @@ import { SummaryBar } from "@/components/SummaryBar";
 import { IssueFilters } from "@/components/IssueFilters";
 import { IssueCard } from "@/components/IssueCard";
 import { ECOSYSTEMS } from "@/lib/ecosystems.config";
-import {
-  applyFiltersAndSort,
-  INITIAL_FILTERS,
-  type FilterState,
-} from "@/lib/filters";
+import { INITIAL_FILTERS, type FilterState } from "@/lib/filters";
 import { filtersToParams, paramsToFilters } from "@/lib/url-filters";
 import { useIssuesFetch } from "@/hooks/use-issues-fetch";
 
@@ -23,10 +19,6 @@ export default function EcosystemPage() {
   const router = useRouter();
   const pathname = usePathname();
   const ecosystem = ECOSYSTEMS.find((e) => e.id === id);
-  const { data, loading, loadingMore, error, retry, fetchData, loadMore, hasMore } = useIssuesFetch(
-    ecosystem ? `/api/issues/${id}` : ""
-  );
-
   const [filters, setFilters] = useState<FilterState>(() => {
     const urlParams = new URLSearchParams(searchParams.toString());
     const base = { ...INITIAL_FILTERS, ecosystem: id ?? "" };
@@ -36,6 +28,10 @@ export default function EcosystemPage() {
     }
     return base;
   });
+  const { data, loading, loadingMore, error, retry, fetchData, loadMore, hasMore } = useIssuesFetch(
+    ecosystem ? `/api/issues/${id}` : "",
+    filters
+  );
 
   const updateFilters = useCallback(
     (newFilters: FilterState) => {
@@ -78,12 +74,7 @@ export default function EcosystemPage() {
     return [...set].sort();
   }, [data]);
 
-  const filteredIssues = useMemo(() => {
-    if (!data) return [];
-    return applyFiltersAndSort(data.issues, filters, {
-      skipEcosystemFilter: true,
-    });
-  }, [data, filters]);
+  const displayIssues = data?.issues ?? [];
 
   if (!ecosystem) {
     notFound();
@@ -172,7 +163,7 @@ export default function EcosystemPage() {
       />
 
       <div className="space-y-4">
-        {filteredIssues.length === 0 ? (
+        {displayIssues.length === 0 ? (
           <div className="text-center py-16 text-zinc-500 rounded-xl border border-zinc-700 bg-zinc-800/30">
             <p className="mb-4">
               {data.summary.total === 0 && data.summary.failedRepos.length > 0
@@ -191,7 +182,7 @@ export default function EcosystemPage() {
           </div>
         ) : (
           <>
-            {filteredIssues.map((issue) => (
+            {displayIssues.map((issue) => (
               <IssueCard key={issue.id} issue={issue} />
             ))}
             {hasMore && (

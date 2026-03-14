@@ -75,11 +75,14 @@ export async function refreshAllEcosystems(
     };
   }
   const results: { id: string; ok: boolean; error?: string }[] = [];
+  const allData: IssuesResponse[] = [];
+
   for (const eco of ECOSYSTEMS) {
     try {
       const data = await fetchSingleEcosystemUncached(eco.id, token);
       await kvSet(`issues:${eco.id}`, data, CACHE_REVALIDATE_SECONDS);
       results.push({ id: eco.id, ok: true });
+      allData.push(data);
     } catch (err) {
       results.push({
         id: eco.id,
@@ -88,6 +91,26 @@ export async function refreshAllEcosystems(
       });
     }
   }
+
+  if (allData.length > 0) {
+    const allIssues = allData.flatMap((d) => d.issues);
+    const allFailedRepos = allData.flatMap((d) => d.summary.failedRepos);
+    const combined: IssuesResponse = {
+      issues: allIssues,
+      summary: {
+        total: allIssues.length,
+        likelyUnclaimed: allIssues.filter(
+          (i) => i.status === "likely_unclaimed"
+        ).length,
+        beginnerFriendly: allIssues.filter((i) => i.isBeginnerFriendly).length,
+        stale: allIssues.filter((i) => i.isStale).length,
+        reposCovered: new Set(allIssues.map((i) => i.repo)).size,
+        failedRepos: allFailedRepos,
+      },
+    };
+    await kvSet("issues:all", combined, CACHE_REVALIDATE_SECONDS);
+  }
+
   return {
     ok: results.every((r) => r.ok),
     ecosystems: results,
@@ -105,6 +128,8 @@ export async function getIssuesFromCache(
   if (ecosystemId) {
     return kvGet<IssuesResponse>(`issues:${ecosystemId}`);
   }
+  const combined = await kvGet<IssuesResponse>("issues:all");
+  if (combined) return combined;
   const results = await Promise.all(
     ECOSYSTEMS.map((eco) => kvGet<IssuesResponse>(`issues:${eco.id}`))
   );

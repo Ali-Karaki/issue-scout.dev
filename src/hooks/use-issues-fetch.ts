@@ -3,6 +3,8 @@
 import { useCallback, useMemo } from "react";
 import useSWRInfinite from "swr/infinite";
 import type { IssuesResponse } from "@/lib/api/fetch-issues";
+import type { FilterState } from "@/lib/filters";
+import { filtersToParams } from "@/lib/url-filters";
 
 const DEFAULT_LIMIT = 50;
 
@@ -32,22 +34,26 @@ async function fetcher(url: string): Promise<IssuesResponse> {
   return res.json();
 }
 
-function buildUrl(base: string, page: number): string {
+function buildUrl(base: string, page: number, filters: FilterState): string {
   const url = new URL(base, window.location.origin);
   url.searchParams.set("page", String(page));
   url.searchParams.set("limit", String(DEFAULT_LIMIT));
+  const filterParams = filtersToParams(filters);
+  filterParams.forEach((value, key) => {
+    url.searchParams.set(key, value);
+  });
   return url.pathname + url.search;
 }
 
-export function useIssuesFetch(apiUrl: string) {
+export function useIssuesFetch(apiUrl: string, filters: FilterState) {
   const getKey = useCallback(
     (pageIndex: number, previousPageData: IssuesResponse | null) => {
       if (!apiUrl) return null;
-      if (pageIndex === 0) return buildUrl(apiUrl, 1);
+      if (pageIndex === 0) return buildUrl(apiUrl, 1, filters);
       if (!previousPageData?.pagination?.hasMore) return null;
-      return buildUrl(apiUrl, pageIndex + 1);
+      return buildUrl(apiUrl, pageIndex + 1, filters);
     },
-    [apiUrl]
+    [apiUrl, filters]
   );
 
   const {
@@ -59,7 +65,7 @@ export function useIssuesFetch(apiUrl: string) {
     setSize,
     mutate,
   } = useSWRInfinite(getKey, fetcher, {
-    revalidateOnFocus: true,
+    revalidateOnFocus: false,
     dedupingInterval: 2000,
     errorRetryCount: 2,
     onErrorRetry: (err, _key, _config, revalidate, { retryCount }) => {

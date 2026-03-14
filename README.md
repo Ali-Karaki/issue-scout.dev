@@ -39,7 +39,7 @@ Find OSS issues that don't appear to have an open PR referencing them. Live at [
 
 1. Run `pnpm dev` with `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` in `.env.local`.
 2. `curl http://localhost:3000/api/debug/cache` — Expect `redis: "ok"` when configured.
-3. To populate the cache locally: `curl -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/cron/refresh` (requires `GITHUB_TOKEN` and `CRON_SECRET`).
+3. To populate the cache locally: `curl -X POST -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/cron/refresh` (requires `GITHUB_TOKEN` and `CRON_SECRET`).
 4. [Upstash Console](https://console.upstash.com) → your database → **Data Browser** — After a refresh, you should see keys like `issues:tanstack`, `issues:vercel`.
 
 ---
@@ -118,7 +118,7 @@ Edit [src/lib/ecosystems.config.ts](src/lib/ecosystems.config.ts) to add or modi
 4. After first deploy, run the **Refresh cache** workflow manually (Actions → Refresh cache → Run workflow) to populate the cache.
 5. The `vercel.json` `ignoreCommand` runs lint, typecheck, and unit tests before deploy. E2E runs in CI only; deploys are gated by CI (including E2E).
 6. For production, consider adding error tracking (e.g. Sentry) and monitoring `/api/health` for uptime checks.
-7. Rate limiting uses `x-forwarded-for`; the proxy (Vercel) must be trusted.
+7. Rate limiting uses `x-forwarded-for` from the reverse proxy. When deploying to Vercel, the proxy sets this header correctly. If self-hosting, ensure your reverse proxy sets `x-forwarded-for`; otherwise clients could spoof it and bypass rate limits.
 
 ---
 

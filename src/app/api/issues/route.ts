@@ -4,6 +4,8 @@ import { hasKv } from "@/lib/kv";
 import { getIssuesFromCache } from "@/lib/api/fetch-issues";
 import { CACHE_REVALIDATE_SECONDS } from "@/lib/constants";
 import { ECOSYSTEMS } from "@/lib/ecosystems.config";
+import { applyFiltersAndSort } from "@/lib/filters";
+import { paramsToFilters } from "@/lib/url-filters";
 
 export async function GET(request: NextRequest) {
   const ip = getClientIp(request);
@@ -48,13 +50,15 @@ export async function GET(request: NextRequest) {
         { status: 503, headers: { "Retry-After": "300" } }
       );
     }
-    const total = data.issues.length;
+    const filters = paramsToFilters(searchParams);
+    const filteredIssues = applyFiltersAndSort(data.issues, filters);
+    const total = filteredIssues.length;
     const start = (page - 1) * limit;
-    const paginatedIssues = data.issues.slice(start, start + limit);
+    const paginatedIssues = filteredIssues.slice(start, start + limit);
     return NextResponse.json(
       {
-        ...data,
         issues: paginatedIssues,
+        summary: data.summary,
         pagination: {
           page,
           limit,

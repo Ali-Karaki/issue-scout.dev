@@ -22,4 +22,16 @@ test.describe("Issues page", () => {
         .first()
     ).toBeVisible({ timeout: 90_000 });
   });
+
+  test("filter changes update URL and trigger refetch", async ({ page }) => {
+    await page.goto("/issues");
+    await expect(
+      page.getByLabel(/Ecosystem/i).or(page.getByLabel(/Status/i)).first()
+    ).toBeVisible({ timeout: 90_000 });
+
+    const statusFilter = page.getByLabel(/Status/i).first();
+    await statusFilter.selectOption("likely_unclaimed");
+
+    await expect(page).toHaveURL(/status=likely_unclaimed/, { timeout: 5000 });
+  });
 });

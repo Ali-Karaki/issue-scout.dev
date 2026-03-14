@@ -12,12 +12,11 @@ function verifyCronSecret(request: NextRequest): boolean {
   return header === secret;
 }
 
-export async function GET(request: NextRequest) {
+export async function POST(request: NextRequest) {
   if (!verifyCronSecret(request)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  const token =
-    process.env.GITHUB_TOKEN || process.env.PAT || "";
+  const token = process.env.GITHUB_TOKEN ?? "";
   if (!token || token === "your_github_token_here") {
     return NextResponse.json(
       { error: "GitHub token required for refresh" },
@@ -38,8 +37,4 @@ export async function GET(request: NextRequest) {
           : "Unknown error";
     return NextResponse.json({ error: message }, { status: 500 });
   }
-}
-
-export async function POST(request: NextRequest) {
-  return GET(request);
 }
