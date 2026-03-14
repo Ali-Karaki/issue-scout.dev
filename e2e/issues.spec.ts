@@ -1,6 +1,8 @@
 import { test, expect } from "@playwright/test";
 
 test.describe("Issues page", () => {
+  test.setTimeout(180_000);
+
   test("shows summary bar and filters when loaded", async ({ page }) => {
     await page.goto("/issues");
     // Wait for content: summary bar, filters, error state, or loading
@@ -17,7 +19,8 @@ test.describe("Issues page", () => {
     await page.goto("/issues");
     await expect(
       page
-        .getByLabel(/Project/i)
+        .getByText("Total:")
+        .or(page.getByRole("button", { name: "Unclaimed" }))
         .or(page.getByRole("button", { name: /retry|refresh/i }))
         .first()
     ).toBeVisible({ timeout: 180_000 });
@@ -25,12 +28,11 @@ test.describe("Issues page", () => {
 
   test("filter changes update URL and trigger refetch", async ({ page }) => {
     await page.goto("/issues");
-    await expect(
-      page.getByLabel(/Project/i).or(page.getByLabel(/Status/i)).first()
-    ).toBeVisible({ timeout: 180_000 });
+    // Wait for data to load (Total: from SummaryBar)
+    await expect(page.getByText("Total:")).toBeVisible({ timeout: 180_000 });
 
-    const statusFilter = page.getByLabel(/Status/i).first();
-    await statusFilter.selectOption("likely_unclaimed");
+    // Click Unclaimed button (sets status=likely_unclaimed)
+    await page.getByRole("button", { name: "Unclaimed" }).click();
 
     await expect(page).toHaveURL(/status=likely_unclaimed/, { timeout: 5000 });
   });
