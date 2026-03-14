@@ -6,7 +6,7 @@ import { CACHE_REVALIDATE_SECONDS } from "@/lib/constants";
 
 export async function GET(request: NextRequest) {
   const ip = getClientIp(request);
-  if (!checkRateLimit(ip)) {
+  if (!(await checkRateLimit(ip))) {
     return NextResponse.json(
       { error: "Too many requests" },
       { status: 429 }
