@@ -6,7 +6,7 @@ export function Header() {
       <nav className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
         <Link
           href="/"
-          className="text-lg font-semibold flex items-center gap-2 no-underline text-inherit hover:text-amber-500 transition"
+          className="text-lg font-semibold flex items-center no-underline text-inherit hover:text-amber-500 transition"
         >
           Issue<span className="text-amber-500">Scout</span>
         </Link>
