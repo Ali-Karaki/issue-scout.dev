@@ -28,6 +28,35 @@ export interface RawIssueWithPrCount {
   matchedOpenPrs: number;
 }
 
+async function fetchWithRetry(
+  url: string,
+  token: string,
+  maxRetries = 2
+): Promise<Response> {
+  let res = await fetch(url, {
+    headers: {
+      Accept: "application/vnd.github.v3+json",
+      ...(token && { Authorization: `Bearer ${token}` }),
+    },
+  });
+  let attempts = 0;
+  while (res.status === 429 && attempts < maxRetries) {
+    const retryAfter = res.headers.get("retry-after");
+    const delay = retryAfter
+      ? parseInt(retryAfter, 10) * 1000
+      : 2000 * Math.pow(2, attempts);
+    await new Promise((r) => setTimeout(r, delay));
+    attempts += 1;
+    res = await fetch(url, {
+      headers: {
+        Accept: "application/vnd.github.v3+json",
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+    });
+  }
+  return res;
+}
+
 async function fetchPaginated(
   url: string,
   token: string
@@ -36,13 +65,15 @@ async function fetchPaginated(
   let next: string | null = url;
 
   while (next) {
-    const res: Response = await fetch(next, {
-      headers: {
-        Accept: "application/vnd.github.v3+json",
-        ...(token && { Authorization: `Bearer ${token}` }),
-      },
-    });
-    if (!res.ok) throw new Error(`GitHub API error ${res.status}`);
+    const res = await fetchWithRetry(next, token);
+    if (!res.ok) {
+      if (res.status === 429) {
+        throw new Error(
+          "GitHub API rate limit exceeded. Please try again later."
+        );
+      }
+      throw new Error(`GitHub API error ${res.status}`);
+    }
     const data = await res.json();
     if (!Array.isArray(data)) {
       if (data && typeof data.message === "string") {
@@ -59,9 +90,9 @@ async function fetchPaginated(
 }
 
 const BODY_REGEX =
-  /(?:fix(?:es|ed)?|close(?:s|d)?|resolve(?:s|d)?|references?|refs?)\s*(?:([\w.-]+\/[\w.-]+)#)?(\d+)/gi;
+  /(?:fix(?:es|ed)?|close(?:s|d)?|resolve(?:s|d)?|references?|refs?)\s*(?::\s*)?(?:([\w.-]+\/[\w.-]+)#)?#?(\d+)/gi;
 
-function extractFromBody(
+export function extractFromBody(
   text: string | null | undefined,
   currentRepo: string
 ): number[] {
@@ -83,7 +114,7 @@ function extractFromBody(
 
 const TITLE_REGEX = /#(\d+)/g;
 
-function extractFromTitle(
+export function extractFromTitle(
   title: string | null | undefined,
   _currentRepo: string
 ): number[] {

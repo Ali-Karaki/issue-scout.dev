@@ -15,6 +15,12 @@ export interface IssuesResponse {
     reposCovered: number;
     failedRepos: string[];
   };
+  pagination?: {
+    page: number;
+    limit: number;
+    total: number;
+    hasMore: boolean;
+  };
 }
 
 async function fetchIssuesUncached(

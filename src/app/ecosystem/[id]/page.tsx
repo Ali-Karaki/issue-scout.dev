@@ -1,42 +1,51 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
-import { useParams } from "next/navigation";
+import { useState, useEffect, useMemo, useCallback } from "react";
+import { useParams, useSearchParams, useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { SummaryBar } from "@/components/SummaryBar";
 import { IssueFilters } from "@/components/IssueFilters";
 import { IssueCard } from "@/components/IssueCard";
-import type { NormalizedIssue } from "@/lib/types";
 import { ECOSYSTEMS } from "@/lib/ecosystems.config";
 import {
   applyFiltersAndSort,
   INITIAL_FILTERS,
   type FilterState,
 } from "@/lib/filters";
+import { filtersToParams, paramsToFilters } from "@/lib/url-filters";
+import { useIssuesFetch } from "@/hooks/use-issues-fetch";
 
 export default function EcosystemPage() {
   const params = useParams();
   const id = params.id as string;
-
-  const [data, setData] = useState<{
-    issues: NormalizedIssue[];
-    summary: {
-      total: number;
-      likelyUnclaimed: number;
-      beginnerFriendly: number;
-      stale: number;
-      reposCovered: number;
-      failedRepos: string[];
-    };
-  } | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+  const { data, loading, loadingMore, error, retry, fetchData, loadMore, hasMore } = useIssuesFetch(
+    id ? `/api/issues/${id}` : ""
+  );
   const ecosystem = ECOSYSTEMS.find((e) => e.id === id);
 
-  const [filters, setFilters] = useState<FilterState>(() => ({
-    ...INITIAL_FILTERS,
-    ecosystem: id ?? "",
-  }));
+  const [filters, setFilters] = useState<FilterState>(() => {
+    const urlParams = new URLSearchParams(searchParams.toString());
+    const base = { ...INITIAL_FILTERS, ecosystem: id ?? "" };
+    if (urlParams.toString()) {
+      const fromUrl = paramsToFilters(urlParams);
+      return { ...base, ...fromUrl, ecosystem: id ?? "" };
+    }
+    return base;
+  });
+
+  const updateFilters = useCallback(
+    (newFilters: FilterState) => {
+      const merged = { ...newFilters, ecosystem: id ?? "" };
+      setFilters(merged);
+      const urlParams = filtersToParams(merged);
+      const qs = urlParams.toString();
+      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+    },
+    [id, pathname, router]
+  );
 
   useEffect(() => {
     /* eslint-disable react-hooks/set-state-in-effect -- sync filter with route */
@@ -44,49 +53,15 @@ export default function EcosystemPage() {
     /* eslint-enable react-hooks/set-state-in-effect */
   }, [id]);
 
-  const fetchData = () => {
-    if (!id) return;
-    setLoading(true);
-    setError(null);
-    fetch(`/api/issues/${id}`)
-      .then((res) => {
-        if (!res.ok) throw new Error(`API error ${res.status}`);
-        return res.json();
-      })
-      .then(setData)
-      .catch((err) =>
-        setError(err instanceof Error ? err.message : "Unknown error")
-      )
-      .finally(() => setLoading(false));
-  };
-
   useEffect(() => {
-    if (!id) return;
-    let cancelled = false;
-    /* eslint-disable react-hooks/set-state-in-effect -- data fetch pattern */
-    setLoading(true);
-    setError(null);
-    fetch(`/api/issues/${id}`)
-      .then((res) => {
-        if (!res.ok) throw new Error(`API error ${res.status}`);
-        return res.json();
-      })
-      .then((json) => {
-        if (!cancelled) setData(json);
-      })
-      .catch((err) => {
-        if (!cancelled) setError(err instanceof Error ? err.message : "Unknown error");
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-    /* eslint-enable react-hooks/set-state-in-effect */
-  }, [id]);
-
-  const retry = fetchData;
+    const urlParams = new URLSearchParams(searchParams.toString());
+    if (urlParams.toString()) {
+      const fromUrl = paramsToFilters(urlParams);
+      /* eslint-disable react-hooks/set-state-in-effect -- sync filters from URL */
+      setFilters((prev) => ({ ...prev, ...fromUrl, ecosystem: id ?? "" }));
+      /* eslint-enable react-hooks/set-state-in-effect */
+    }
+  }, [searchParams, id]);
 
   const repos = useMemo(() => {
     if (!data) return [];
@@ -167,10 +142,20 @@ export default function EcosystemPage() {
         >
           ← All ecosystems
         </Link>
-        <h1 className="text-xl font-semibold text-zinc-100">
-          {ecosystem.name}
-        </h1>
-        <p className="text-zinc-500 text-sm mt-1">{ecosystem.description}</p>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-xl font-semibold text-zinc-100">
+              {ecosystem.name}
+            </h1>
+            <p className="text-zinc-500 text-sm mt-1">{ecosystem.description}</p>
+          </div>
+          <button
+            onClick={fetchData}
+            className="px-4 py-2 rounded-lg bg-zinc-700 hover:bg-zinc-600 text-zinc-200 text-sm font-medium transition shrink-0 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 focus:ring-offset-bg"
+          >
+            Refresh
+          </button>
+        </div>
       </div>
 
       <SummaryBar
@@ -184,7 +169,7 @@ export default function EcosystemPage() {
 
       <IssueFilters
         filters={filters}
-        onChange={setFilters}
+        onChange={updateFilters}
         repos={repos}
         labels={labels}
       />
@@ -195,9 +180,22 @@ export default function EcosystemPage() {
             No issues match your filters.
           </div>
         ) : (
-          filteredIssues.map((issue) => (
-            <IssueCard key={issue.id} issue={issue} />
-          ))
+          <>
+            {filteredIssues.map((issue) => (
+              <IssueCard key={issue.id} issue={issue} />
+            ))}
+            {hasMore && (
+              <div className="flex justify-center pt-4">
+                <button
+                  onClick={loadMore}
+                  disabled={loadingMore}
+                  className="px-6 py-3 rounded-lg bg-zinc-700 hover:bg-zinc-600 disabled:opacity-50 disabled:cursor-not-allowed text-zinc-200 font-medium transition focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 focus:ring-offset-bg"
+                >
+                  {loadingMore ? "Loading..." : "Load more"}
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

@@ -1,71 +1,48 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { SummaryBar } from "@/components/SummaryBar";
 import { IssueFilters } from "@/components/IssueFilters";
 import { IssueCard } from "@/components/IssueCard";
-import type { NormalizedIssue } from "@/lib/types";
 import {
   applyFiltersAndSort,
   INITIAL_FILTERS,
   type FilterState,
 } from "@/lib/filters";
+import { filtersToParams, paramsToFilters } from "@/lib/url-filters";
+import { useIssuesFetch } from "@/hooks/use-issues-fetch";
 
 export default function IssuesPage() {
-  const [data, setData] = useState<{
-    issues: NormalizedIssue[];
-    summary: {
-      total: number;
-      likelyUnclaimed: number;
-      beginnerFriendly: number;
-      stale: number;
-      reposCovered: number;
-      failedRepos: string[];
-    };
-  } | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [filters, setFilters] = useState<FilterState>(INITIAL_FILTERS);
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+  const { data, loading, loadingMore, error, retry, fetchData, loadMore, hasMore } = useIssuesFetch("/api/issues");
 
-  const fetchData = () => {
-    setLoading(true);
-    setError(null);
-    fetch("/api/issues")
-      .then((res) => {
-        if (!res.ok) throw new Error(`API error ${res.status}`);
-        return res.json();
-      })
-      .then(setData)
-      .catch((err) => setError(err instanceof Error ? err.message : "Unknown error"))
-      .finally(() => setLoading(false));
-  };
+  const [filters, setFilters] = useState<FilterState>(() => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (params.toString()) return paramsToFilters(params);
+    return INITIAL_FILTERS;
+  });
+
+  const updateFilters = useCallback(
+    (newFilters: FilterState) => {
+      setFilters(newFilters);
+      const params = filtersToParams(newFilters);
+      const qs = params.toString();
+      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+    },
+    [pathname, router]
+  );
 
   useEffect(() => {
-    let cancelled = false;
-    /* eslint-disable react-hooks/set-state-in-effect -- data fetch pattern */
-    setLoading(true);
-    setError(null);
-    fetch("/api/issues")
-      .then((res) => {
-        if (!res.ok) throw new Error(`API error ${res.status}`);
-        return res.json();
-      })
-      .then((json) => {
-        if (!cancelled) setData(json);
-      })
-      .catch((err) => {
-        if (!cancelled) setError(err instanceof Error ? err.message : "Unknown error");
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-    /* eslint-enable react-hooks/set-state-in-effect */
-  }, []);
-
-  const retry = fetchData;
+    const params = new URLSearchParams(searchParams.toString());
+    if (params.toString()) {
+      /* eslint-disable react-hooks/set-state-in-effect -- sync filters from URL */
+      setFilters(paramsToFilters(params));
+      /* eslint-enable react-hooks/set-state-in-effect */
+    }
+  }, [searchParams]);
 
   const repos = useMemo(() => {
     if (!data) return [];
@@ -126,9 +103,18 @@ export default function IssuesPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-8">
-      <h1 className="text-xl font-semibold text-zinc-100 mb-6">
-        Issues
-      </h1>
+      <div className="flex items-center justify-between gap-4 mb-6">
+        <h1 className="text-xl font-semibold text-zinc-100">
+          Issues
+        </h1>
+        <button
+          onClick={fetchData}
+          disabled={loading}
+          className="px-4 py-2 rounded-lg bg-zinc-700 hover:bg-zinc-600 text-zinc-200 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 focus:ring-offset-bg"
+        >
+          Refresh
+        </button>
+      </div>
 
       <SummaryBar
         total={data.summary.total}
@@ -141,7 +127,7 @@ export default function IssuesPage() {
 
       <IssueFilters
         filters={filters}
-        onChange={setFilters}
+        onChange={updateFilters}
         repos={repos}
         labels={labels}
       />
@@ -152,9 +138,22 @@ export default function IssuesPage() {
             No issues match your filters.
           </div>
         ) : (
-          filteredIssues.map((issue) => (
-            <IssueCard key={issue.id} issue={issue} />
-          ))
+          <>
+            {filteredIssues.map((issue) => (
+              <IssueCard key={issue.id} issue={issue} />
+            ))}
+            {hasMore && (
+              <div className="flex justify-center pt-4">
+                <button
+                  onClick={loadMore}
+                  disabled={loadingMore}
+                  className="px-6 py-3 rounded-lg bg-zinc-700 hover:bg-zinc-600 disabled:opacity-50 disabled:cursor-not-allowed text-zinc-200 font-medium transition focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 focus:ring-offset-bg"
+                >
+                  {loadingMore ? "Loading..." : "Load more"}
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

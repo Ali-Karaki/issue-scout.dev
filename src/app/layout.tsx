@@ -6,8 +6,27 @@ import { Header } from "@/components/Header";
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 export const metadata: Metadata = {
-  title: "IssueScout",
-  description: "Find OSS issues that don't appear to have an open PR referencing them",
+  metadataBase: new URL("https://issuescout.dev"),
+  title: {
+    default: "IssueScout",
+    template: "%s | IssueScout",
+  },
+  description:
+    "Find OSS issues that don't appear to have an open PR referencing them",
+  openGraph: {
+    type: "website",
+    url: "https://issuescout.dev",
+    siteName: "IssueScout",
+    title: "IssueScout",
+    description:
+      "Find OSS issues that don't appear to have an open PR referencing them",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "IssueScout",
+    description:
+      "Find OSS issues that don't appear to have an open PR referencing them",
+  },
 };
 
 export default function RootLayout({

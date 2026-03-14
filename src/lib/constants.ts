@@ -1,5 +1,8 @@
 export const GITHUB_API = "https://api.github.com";
 
+export const SITE_URL =
+  process.env.NEXT_PUBLIC_SITE_URL ?? "https://issuescout.dev";
+
 export const STALE_THRESHOLD_DAYS = 90;
 export const RECENTLY_ACTIVE_DAYS = 30;
 export const RECENT_DAYS = 30;

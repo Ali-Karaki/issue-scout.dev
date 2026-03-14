@@ -3,3 +3,14 @@
 .env*.local
 node_modules
 .next
+out
+build
+
+# Tooling
+.eslintcache
+tsconfig.tsbuildinfo
+
+# Test output
+coverage/
+playwright-report/
+test-results/
