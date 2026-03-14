@@ -4,18 +4,20 @@ import { IssueFilters } from "../IssueFilters";
 import type { FilterState } from "@/lib/filters";
 
 const mockFilters: FilterState = {
-  ecosystem: "",
+  project: "",
   repo: "",
   status: "",
   beginnerOnly: false,
   recentlyActiveOnly: false,
   excludeStale: false,
+  highReadinessOnly: false,
   label: "",
-  sort: "recently_updated",
+  sort: "best_match",
+  q: "",
 };
 
 describe("IssueFilters", () => {
-  it("renders ecosystem select", () => {
+  it("renders sort select and search input", () => {
     const onChange = vi.fn();
     const { container } = render(
       <IssueFilters
@@ -26,10 +28,11 @@ describe("IssueFilters", () => {
       />
     );
     const firstRoot = container.firstElementChild;
-    expect(firstRoot?.querySelector('select')).toBeInTheDocument();
+    expect(firstRoot?.querySelector("select")).toBeInTheDocument();
+    expect(firstRoot?.querySelector('input[type="search"]')).toBeInTheDocument();
   });
 
-  it("calls onChange when ecosystem is changed", () => {
+  it("calls onChange when project is changed", () => {
     const onChange = vi.fn();
     const { container } = render(
       <IssueFilters
@@ -37,17 +40,22 @@ describe("IssueFilters", () => {
         onChange={onChange}
         repos={["owner/repo"]}
         labels={["bug"]}
+        showProject={true}
       />
     );
+    const moreFiltersBtn = Array.from(container.querySelectorAll("button")).find(
+      (b) => b.textContent?.trim().startsWith("More filters")
+    );
+    fireEvent.click(moreFiltersBtn!);
     const selects = container.querySelectorAll("select");
-    const ecosystemSelect = selects[0];
-    fireEvent.change(ecosystemSelect, { target: { value: "tanstack" } });
+    const projectSelect = selects[1];
+    fireEvent.change(projectSelect, { target: { value: "tanstack" } });
     expect(onChange).toHaveBeenCalledWith(
-      expect.objectContaining({ ecosystem: "tanstack" })
+      expect.objectContaining({ project: "tanstack" })
     );
   });
 
-  it("calls onChange when status is changed", () => {
+  it("calls onChange when Unclaimed chip is clicked", () => {
     const onChange = vi.fn();
     const { container } = render(
       <IssueFilters
@@ -57,15 +65,17 @@ describe("IssueFilters", () => {
         labels={[]}
       />
     );
-    const selects = container.querySelectorAll("select");
-    const statusSelect = selects[2];
-    fireEvent.change(statusSelect, { target: { value: "likely_unclaimed" } });
+    const unclaimedBtn = Array.from(container.querySelectorAll("button")).find(
+      (b) => b.textContent?.trim() === "Unclaimed"
+    );
+    expect(unclaimedBtn).toBeTruthy();
+    fireEvent.click(unclaimedBtn!);
     expect(onChange).toHaveBeenCalledWith(
-      expect.objectContaining({ status: "likely_unclaimed" })
+      expect.objectContaining({ status: "likely_unclaimed", excludeStale: true })
     );
   });
 
-  it("calls onChange when beginner only checkbox is toggled", () => {
+  it("calls onChange when Beginner chip is clicked", () => {
     const onChange = vi.fn();
     const { container } = render(
       <IssueFilters
@@ -75,9 +85,11 @@ describe("IssueFilters", () => {
         labels={[]}
       />
     );
-    const checkboxes = container.querySelectorAll('input[type="checkbox"]');
-    const beginnerCheckbox = checkboxes[0];
-    fireEvent.click(beginnerCheckbox);
+    const beginnerBtn = Array.from(container.querySelectorAll("button")).find(
+      (b) => b.textContent?.trim() === "Beginner"
+    );
+    expect(beginnerBtn).toBeTruthy();
+    fireEvent.click(beginnerBtn!);
     expect(onChange).toHaveBeenCalledWith(
       expect.objectContaining({ beginnerOnly: true })
     );

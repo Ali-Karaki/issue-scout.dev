@@ -59,10 +59,19 @@ export async function GET(
     const total = filteredIssues.length;
     const start = (page - 1) * limit;
     const paginatedIssues = filteredIssues.slice(start, start + limit);
+    const filteredSummary = {
+      total,
+      likelyUnclaimed: filteredIssues.filter((i) => i.status === "likely_unclaimed").length,
+      beginnerFriendly: filteredIssues.filter((i) => i.isBeginnerFriendly).length,
+      stale: filteredIssues.filter((i) => i.isStale).length,
+      reposCovered: new Set(filteredIssues.map((i) => i.repo)).size,
+      failedRepos: data.summary.failedRepos,
+    };
     return NextResponse.json(
       {
         issues: paginatedIssues,
         summary: data.summary,
+        filteredSummary,
         pagination: {
           page,
           limit,

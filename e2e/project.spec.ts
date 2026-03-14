@@ -1,9 +1,9 @@
 import { test, expect } from "@playwright/test";
 
-test.describe("Ecosystem page", () => {
-  test("shows ecosystem name for TanStack", async ({ page }) => {
-    await page.goto("/ecosystem/tanstack");
-    // TanStack ecosystem name or loading/error
+test.describe("Project page", () => {
+  test("shows project name for TanStack", async ({ page }) => {
+    await page.goto("/project/tanstack");
+    // TanStack project name or loading/error
     await expect(
       page
         .getByText("TanStack")
@@ -12,8 +12,8 @@ test.describe("Ecosystem page", () => {
     ).toBeVisible({ timeout: 60_000 });
   });
 
-  test("shows 404 for invalid ecosystem id", async ({ page }) => {
-    await page.goto("/ecosystem/invalid-id");
+  test("shows 404 for invalid project id", async ({ page }) => {
+    await page.goto("/project/invalid-id");
     await expect(page.getByText(/Page not found|doesn't exist/i)).toBeVisible({
       timeout: 5000,
     });

@@ -1,4 +1,4 @@
-export default function EcosystemLoading() {
+export default function ProjectLoading() {
   return (
     <div className="max-w-4xl mx-auto px-6 py-12">
       <div className="text-center py-16 text-zinc-500">

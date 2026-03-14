@@ -1,60 +1,80 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { useSearchParams, usePathname } from "next/navigation";
+import { useParams, useSearchParams, usePathname } from "next/navigation";
+import { notFound } from "next/navigation";
 import { SummaryBar } from "@/components/SummaryBar";
 import { IssueFilters } from "@/components/IssueFilters";
 import { IssueCard } from "@/components/IssueCard";
 import { IssueRow } from "@/components/IssueRow";
 import { ResultSummary } from "@/components/ResultSummary";
 import { formatUpdatedAgo } from "@/lib/utils";
+import { PROJECTS } from "@/lib/projects.config";
 import { INITIAL_FILTERS, type FilterState } from "@/lib/filters";
 import { filtersToParams, paramsToFilters } from "@/lib/url-filters";
 import { useIssuesFetch } from "@/hooks/use-issues-fetch";
 
-export default function IssuesPage() {
+export default function ProjectPage() {
+  const params = useParams();
+  const id = params.id as string;
   const searchParams = useSearchParams();
   const pathname = usePathname();
+  const projectConfig = PROJECTS.find((e) => e.id === id);
   const [filters, setFilters] = useState<FilterState>(() => {
-    const params = new URLSearchParams(searchParams.toString());
-    if (params.toString()) return paramsToFilters(params);
-    return INITIAL_FILTERS;
+    const urlParams = new URLSearchParams(searchParams.toString());
+    const base = { ...INITIAL_FILTERS, project: id ?? "" };
+    if (urlParams.toString()) {
+      const fromUrl = paramsToFilters(urlParams);
+      return { ...base, ...fromUrl, project: id ?? "" };
+    }
+    return base;
   });
   const { data, loading, isRevalidating, loadingMore, error, retry, fetchData, loadMore, hasMore, lastUpdatedAt } =
-    useIssuesFetch("/api/issues", filters);
+    useIssuesFetch(
+    projectConfig ? `/api/issues/${id}` : "",
+    filters
+  );
 
   const updateFilters = useCallback(
     (newFilters: FilterState) => {
-      setFilters(newFilters);
-      const params = filtersToParams(newFilters);
-      const qs = params.toString();
+      const merged = { ...newFilters, project: id ?? "" };
+      setFilters(merged);
+      const urlParams = filtersToParams(merged);
+      const qs = urlParams.toString();
       const url = qs ? `${pathname}?${qs}` : pathname;
       window.history.replaceState(null, "", url);
     },
-    [pathname]
+    [id, pathname]
   );
 
   useEffect(() => {
+    /* eslint-disable react-hooks/set-state-in-effect -- sync filter with route */
+    setFilters((prev) => ({ ...prev, project: id ?? "" }));
+    /* eslint-enable react-hooks/set-state-in-effect */
+  }, [id]);
+
+  useEffect(() => {
     const onPopState = () => {
-      const params = new URLSearchParams(window.location.search);
-      if (params.toString()) {
-        setFilters(paramsToFilters(params));
+      const urlParams = new URLSearchParams(window.location.search);
+      const base = { ...INITIAL_FILTERS, project: id ?? "" };
+      if (urlParams.toString()) {
+        setFilters({ ...base, ...paramsToFilters(urlParams), project: id ?? "" });
       } else {
-        setFilters(INITIAL_FILTERS);
+        setFilters(base);
       }
     };
     window.addEventListener("popstate", onPopState);
     return () => window.removeEventListener("popstate", onPopState);
-  }, []);
+  }, [id]);
 
   useEffect(() => {
-    const params = new URLSearchParams(searchParams.toString());
-    if (params.toString()) {
+    const urlParams = new URLSearchParams(searchParams.toString());
+    if (urlParams.toString()) {
       /* eslint-disable react-hooks/set-state-in-effect -- sync filters from URL on mount */
-      setFilters(paramsToFilters(params));
+      setFilters((prev) => ({ ...prev, ...paramsToFilters(urlParams), project: id ?? "" }));
       /* eslint-enable react-hooks/set-state-in-effect */
     }
-  }, []);
+  }, [id]);
 
   const repos = useMemo(() => {
     if (!data) return [];
@@ -72,16 +92,16 @@ export default function IssuesPage() {
 
   const displayIssues = data?.issues ?? [];
 
+  if (!projectConfig) {
+    notFound();
+  }
+
   if (loading) {
     return (
-      <div
-        className="max-w-4xl mx-auto px-6 py-12"
-        aria-busy="true"
-        aria-live="polite"
-      >
-        <div className="text-center py-16 text-zinc-500" role="status" aria-label="Loading">
+      <div className="max-w-4xl mx-auto px-6 py-12">
+        <div className="text-center py-16 text-zinc-500">
           <div className="w-10 h-10 border-2 border-zinc-600 border-t-amber-500 rounded-full animate-spin mx-auto mb-4" />
-          <p>Fetching issues from GitHub...</p>
+          <p>Fetching issues...</p>
         </div>
       </div>
     );
@@ -111,13 +131,19 @@ export default function IssuesPage() {
     return null;
   }
 
+  const initialFilters = { ...INITIAL_FILTERS, project: id };
   const displayCount = data.filteredSummary?.total ?? data.issues.length;
   const totalCount = data.summary.total;
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-8">
       <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
-        <h1 className="text-xl font-semibold text-zinc-100">Issues</h1>
+        <div>
+          <h1 className="text-xl font-semibold text-zinc-100">
+            {projectConfig.name}
+          </h1>
+          <p className="text-zinc-500 text-sm mt-1">{projectConfig.description}</p>
+        </div>
         <button
           type="button"
           onClick={fetchData}
@@ -133,7 +159,7 @@ export default function IssuesPage() {
         count={displayCount}
         total={totalCount}
         filters={filters}
-        initialFilters={INITIAL_FILTERS}
+        initialFilters={initialFilters}
         onRemoveFilter={(updates) => updateFilters({ ...filters, ...updates })}
       />
 
@@ -142,9 +168,9 @@ export default function IssuesPage() {
         onChange={updateFilters}
         repos={repos}
         labels={labels}
-        initialFilters={INITIAL_FILTERS}
-        onClear={() => updateFilters(INITIAL_FILTERS)}
-        showProject={true}
+        initialFilters={initialFilters}
+        onClear={() => updateFilters(initialFilters)}
+        showProject={false}
       />
 
       <SummaryBar

@@ -1,15 +1,31 @@
 "use client";
 
-import { ECOSYSTEMS } from "@/lib/ecosystems.config";
+import { useState, useCallback } from "react";
+import { PROJECTS } from "@/lib/projects.config";
 import type { FilterState, SortOption } from "@/lib/filters";
+import { CLAIM_STATUS, BEGINNER, READINESS } from "@/lib/terminology";
 
 export type { FilterState, SortOption };
+
+const SORT_LABELS: Record<SortOption, string> = {
+  best_match: "Best match",
+  best_for_beginners: "Best for beginners",
+  most_ready: "Most ready to start",
+  likely_unclaimed: "Likely unclaimed",
+  recently_updated: "Recently updated",
+  most_comments: "Most comments",
+  likely_easiest: "Likely easiest",
+  highest_readiness: "Highest readiness",
+};
 
 interface IssueFiltersProps {
   filters: FilterState;
   onChange: (filters: FilterState) => void;
   repos: string[];
   labels: string[];
+  initialFilters?: FilterState;
+  onClear?: () => void;
+  showProject?: boolean;
 }
 
 export function IssueFilters({
@@ -17,118 +33,237 @@ export function IssueFilters({
   onChange,
   repos,
   labels,
+  initialFilters,
+  onClear,
+  showProject = true,
 }: IssueFiltersProps) {
-  const update = (key: keyof FilterState, value: string | boolean) => {
-    onChange({ ...filters, [key]: value });
+  const [expanded, setExpanded] = useState(false);
+  const update = useCallback(
+    (key: keyof FilterState, value: string | boolean) => {
+      onChange({ ...filters, [key]: value });
+    },
+    [filters, onChange]
+  );
+
+  const hasActiveFilters = initialFilters && (
+    filters.q !== initialFilters.q ||
+    filters.repo !== initialFilters.repo ||
+    filters.status !== initialFilters.status ||
+    filters.label !== initialFilters.label ||
+    filters.sort !== initialFilters.sort ||
+    filters.beginnerOnly !== initialFilters.beginnerOnly ||
+    filters.recentlyActiveOnly !== initialFilters.recentlyActiveOnly ||
+    filters.excludeStale !== initialFilters.excludeStale ||
+    filters.highReadinessOnly !== initialFilters.highReadinessOnly
+  );
+
+  const unclaimedActive =
+    filters.status === "likely_unclaimed" && filters.excludeStale;
+  const toggleUnclaimed = () => {
+    if (unclaimedActive) {
+      onChange({ ...filters, status: "", excludeStale: false });
+    } else {
+      onChange({ ...filters, status: "likely_unclaimed", excludeStale: true });
+    }
   };
+  const toggleBeginner = () => update("beginnerOnly", !filters.beginnerOnly);
+  const toggleHighReadiness = () =>
+    update("highReadinessOnly", !filters.highReadinessOnly);
+
+  const selectClass =
+    "w-full min-w-0 px-3 py-1.5 pr-7 rounded-lg bg-zinc-800 border border-zinc-600 text-zinc-200 text-sm focus:outline-none focus:border-amber-600 appearance-none";
+  const selectWrapperClass = "relative";
+
+  const chipBase =
+    "px-3 py-1 rounded-lg text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 focus:ring-offset-bg cursor-pointer";
+  const chipInactive =
+    "bg-zinc-800 border border-zinc-600 text-zinc-400 hover:text-zinc-200 hover:border-zinc-500";
+  const chipActive = "border-transparent";
 
   return (
-    <div className="flex flex-wrap gap-4 p-4 rounded-xl bg-zinc-800/30 border border-zinc-700 mb-6">
-      <div>
-        <label htmlFor="filter-ecosystem" className="block text-xs text-zinc-500 mb-1">Project</label>
-        <select
-          id="filter-ecosystem"
-          value={filters.ecosystem}
-          onChange={(e) => update("ecosystem", e.target.value)}
-          className="px-3 py-2 rounded-lg bg-zinc-800 border border-zinc-600 text-zinc-200 text-sm focus:outline-none focus:border-amber-600"
-        >
-          <option value="">All</option>
-          {ECOSYSTEMS.map((e) => (
-            <option key={e.id} value={e.id}>
-              {e.name}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div>
-        <label htmlFor="filter-repo" className="block text-xs text-zinc-500 mb-1">Repo</label>
-        <select
-          id="filter-repo"
-          value={filters.repo}
-          onChange={(e) => update("repo", e.target.value)}
-          className="px-3 py-2 rounded-lg bg-zinc-800 border border-zinc-600 text-zinc-200 text-sm focus:outline-none focus:border-amber-600 min-w-[180px]"
-        >
-          <option value="">All</option>
-          {repos.map((r) => (
-            <option key={r} value={r}>
-              {r}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div>
-        <label htmlFor="filter-status" className="block text-xs text-zinc-500 mb-1">Status</label>
-        <select
-          id="filter-status"
-          value={filters.status}
-          onChange={(e) => update("status", e.target.value)}
-          className="px-3 py-2 rounded-lg bg-zinc-800 border border-zinc-600 text-zinc-200 text-sm focus:outline-none focus:border-amber-600"
-        >
-          <option value="">All</option>
-          <option value="likely_unclaimed">Likely unclaimed</option>
-          <option value="possible_wip">Possible WIP</option>
-          <option value="stale">Stale</option>
-        </select>
-      </div>
-      <div>
-        <label htmlFor="filter-label" className="block text-xs text-zinc-500 mb-1">Label</label>
-        <select
-          id="filter-label"
-          value={filters.label}
-          onChange={(e) => update("label", e.target.value)}
-          className="px-3 py-2 rounded-lg bg-zinc-800 border border-zinc-600 text-zinc-200 text-sm focus:outline-none focus:border-amber-600 min-w-[140px]"
-        >
-          <option value="">All</option>
-          {labels.map((l) => (
-            <option key={l} value={l}>
-              {l}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div>
-        <label htmlFor="filter-sort" className="block text-xs text-zinc-500 mb-1">Sort</label>
-        <select
-          id="filter-sort"
-          value={filters.sort}
-          onChange={(e) => update("sort", e.target.value)}
-          className="px-3 py-2 rounded-lg bg-zinc-800 border border-zinc-600 text-zinc-200 text-sm focus:outline-none focus:border-amber-600"
-        >
-          <option value="recently_updated">Recently updated</option>
-          <option value="most_comments">Most comments</option>
-          <option value="likely_easiest">Likely easiest</option>
-          <option value="highest_readiness">Highest readiness</option>
-        </select>
-      </div>
-      <div className="flex items-end gap-4">
-        <label className="flex items-center gap-2 text-sm text-zinc-400 cursor-pointer">
+    <div className="rounded-xl bg-zinc-800/30 border border-zinc-700 mb-4 overflow-hidden">
+      <div className="flex flex-wrap items-center gap-3 p-3">
+        <div className="flex-1 min-w-[160px]">
           <input
-            type="checkbox"
-            checked={filters.beginnerOnly}
-            onChange={(e) => update("beginnerOnly", e.target.checked)}
-            className="rounded border-zinc-600 bg-zinc-800 text-amber-500 focus:ring-amber-500"
+            type="search"
+            placeholder="Search issues..."
+            value={filters.q}
+            onChange={(e) => update("q", e.target.value)}
+            className="w-full px-3 py-1.5 rounded-lg bg-zinc-800 border border-zinc-600 text-zinc-200 text-sm placeholder-zinc-500 focus:outline-none focus:border-amber-600"
+            aria-label="Search issues by title or label"
           />
-          Beginner only
-        </label>
-        <label className="flex items-center gap-2 text-sm text-zinc-400 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={filters.recentlyActiveOnly}
-            onChange={(e) => update("recentlyActiveOnly", e.target.checked)}
-            className="rounded border-zinc-600 bg-zinc-800 text-amber-500 focus:ring-amber-500"
-          />
-          Recently active
-        </label>
-        <label className="flex items-center gap-2 text-sm text-zinc-400 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={filters.excludeStale}
-            onChange={(e) => update("excludeStale", e.target.checked)}
-            className="rounded border-zinc-600 bg-zinc-800 text-amber-500 focus:ring-amber-500"
-          />
-          Exclude stale
-        </label>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <div className={selectWrapperClass}>
+            <select
+              id="filter-sort"
+              value={filters.sort}
+              onChange={(e) => update("sort", e.target.value)}
+              className={selectClass}
+              aria-label="Sort issues"
+            >
+              {(Object.keys(SORT_LABELS) as SortOption[]).map((s) => (
+                <option key={s} value={s}>
+                  {SORT_LABELS[s]}
+                </option>
+              ))}
+            </select>
+            <span className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-400 text-xs">
+              ▼
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={toggleUnclaimed}
+            className={`${chipBase} ${unclaimedActive ? "bg-emerald-600 text-white " + chipActive : chipInactive}`}
+            title={CLAIM_STATUS.likely_unclaimed.tooltip}
+          >
+            Unclaimed
+          </button>
+          <button
+            type="button"
+            onClick={toggleBeginner}
+            className={`${chipBase} ${filters.beginnerOnly ? "bg-amber-600/80 text-zinc-900 " + chipActive : chipInactive}`}
+            title={BEGINNER.tooltip}
+          >
+            Beginner
+          </button>
+          <button
+            type="button"
+            onClick={toggleHighReadiness}
+            className={`${chipBase} ${filters.highReadinessOnly ? "bg-emerald-600/50 text-emerald-200 " + chipActive : chipInactive}`}
+            title={READINESS.high.tooltip}
+          >
+            High readiness
+          </button>
+          <button
+            type="button"
+            onClick={() => setExpanded(!expanded)}
+            className="px-3 py-1.5 rounded-lg bg-zinc-800 border border-zinc-600 text-zinc-400 text-sm hover:text-zinc-200 hover:border-zinc-500 transition flex items-center gap-1"
+            aria-expanded={expanded}
+          >
+            More filters
+            <span
+              className={`inline-block text-zinc-400 text-xs transition-transform ${expanded ? "rotate-180" : ""}`}
+            >
+              ▼
+            </span>
+          </button>
+          {hasActiveFilters && onClear && (
+            <button
+              type="button"
+              onClick={onClear}
+              className="px-3 py-1.5 rounded-lg bg-zinc-800 border border-zinc-600 text-zinc-400 text-sm hover:text-zinc-200 hover:border-zinc-500 transition"
+            >
+              Clear
+            </button>
+          )}
+        </div>
       </div>
+      {expanded && (
+        <div className="flex flex-wrap gap-x-6 gap-y-3 p-3 pt-0 border-t border-zinc-700/50">
+          {showProject && (
+            <div className="min-w-[140px]">
+              <label
+                htmlFor="filter-project"
+                className="block text-xs text-zinc-500 mb-1"
+              >
+                Project
+              </label>
+              <div className={selectWrapperClass}>
+                <select
+                  id="filter-project"
+                  value={filters.project}
+                  onChange={(e) => update("project", e.target.value)}
+                  className={selectClass}
+                >
+                  <option value="">All</option>
+                  {PROJECTS.map((e) => (
+                    <option key={e.id} value={e.id}>
+                      {e.name}
+                    </option>
+                  ))}
+                </select>
+                <span className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-400 text-xs">
+                  ▼
+                </span>
+              </div>
+            </div>
+          )}
+          <div className="min-w-[180px]">
+            <label
+              htmlFor="filter-repo"
+              className="block text-xs text-zinc-500 mb-1"
+            >
+              Repo
+            </label>
+            <div className={selectWrapperClass}>
+              <select
+                id="filter-repo"
+                value={filters.repo}
+                onChange={(e) => update("repo", e.target.value)}
+                className={`${selectClass} min-w-[180px]`}
+              >
+                <option value="">All</option>
+                {repos.map((r) => (
+                  <option key={r} value={r}>
+                    {r}
+                  </option>
+                ))}
+              </select>
+              <span className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-400 text-xs">
+                ▼
+              </span>
+            </div>
+          </div>
+          <div className="min-w-[140px]">
+            <label
+              htmlFor="filter-label"
+              className="block text-xs text-zinc-500 mb-1"
+            >
+              Label
+            </label>
+            <div className={selectWrapperClass}>
+              <select
+                id="filter-label"
+                value={filters.label}
+                onChange={(e) => update("label", e.target.value)}
+                className={`${selectClass} min-w-[140px]`}
+              >
+                <option value="">All</option>
+                {labels.map((l) => (
+                  <option key={l} value={l}>
+                    {l}
+                  </option>
+                ))}
+              </select>
+              <span className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-400 text-xs">
+                ▼
+              </span>
+            </div>
+          </div>
+          <div className="flex items-center gap-4 flex-wrap">
+            <label className="flex items-center gap-2 text-sm text-zinc-400 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={filters.recentlyActiveOnly}
+                onChange={(e) => update("recentlyActiveOnly", e.target.checked)}
+                className="rounded border-zinc-600 bg-zinc-800 text-amber-500 focus:ring-amber-500"
+              />
+              Recently active
+            </label>
+            <label className="flex items-center gap-2 text-sm text-zinc-400 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={filters.excludeStale}
+                onChange={(e) => update("excludeStale", e.target.checked)}
+                className="rounded border-zinc-600 bg-zinc-800 text-amber-500 focus:ring-amber-500"
+              />
+              Exclude stale
+            </label>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

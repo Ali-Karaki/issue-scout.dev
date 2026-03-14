@@ -15,6 +15,14 @@ export interface IssuesResponse {
     reposCovered: number;
     failedRepos: string[];
   };
+  filteredSummary?: {
+    total: number;
+    likelyUnclaimed: number;
+    beginnerFriendly: number;
+    stale: number;
+    reposCovered: number;
+    failedRepos: string[];
+  };
   pagination?: {
     page: number;
     limit: number;

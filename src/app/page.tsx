@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ECOSYSTEMS } from "@/lib/ecosystems.config";
+import { PROJECTS } from "@/lib/projects.config";
 import { FeaturedIssues } from "@/components/FeaturedIssues";
 
 export default function HomePage() {
@@ -20,13 +20,13 @@ export default function HomePage() {
             Browse issues
           </Link>
           <div className="flex flex-wrap justify-center gap-2">
-            {ECOSYSTEMS.map((eco) => (
+            {PROJECTS.map((proj) => (
               <Link
-                key={eco.id}
-                href={`/ecosystem/${eco.id}`}
+                key={proj.id}
+                href={`/project/${proj.id}`}
                 className="px-4 py-2 rounded-lg bg-zinc-800/80 text-zinc-300 hover:bg-zinc-700 hover:text-white no-underline text-sm transition"
               >
-                {eco.name}
+                {proj.name}
               </Link>
             ))}
           </div>

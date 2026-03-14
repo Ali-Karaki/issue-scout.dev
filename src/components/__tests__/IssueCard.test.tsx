@@ -32,7 +32,7 @@ describe("IssueCard", () => {
 
   it("renders status pill", () => {
     const { container } = render(<IssueCard issue={mockIssue} />);
-    expect(within(container).getByText("Likely unclaimed")).toBeInTheDocument();
+    expect(within(container).getByText("Unclaimed")).toBeInTheDocument();
   });
 
   it("renders repo and issue number", () => {

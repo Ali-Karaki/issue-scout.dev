@@ -65,7 +65,9 @@ export function useIssuesFetch(apiUrl: string, filters: FilterState) {
     size,
     setSize,
     mutate,
+    dataUpdatedAt,
   } = useSWRInfinite(getKey, fetcher, {
+    keepPreviousData: true,
     revalidateOnFocus: false,
     dedupingInterval: 2000,
     errorRetryCount: 2,
@@ -82,15 +84,17 @@ export function useIssuesFetch(apiUrl: string, filters: FilterState) {
     if (!data || data.length === 0) return null;
     const allIssues = data.flatMap((d) => d.issues);
     const last = data[data.length - 1];
+    const first = data[0];
     return {
       issues: allIssues,
-      summary: data[0].summary,
+      summary: first.summary,
+      filteredSummary: first.filteredSummary,
       pagination: last.pagination,
     };
   }, [data]);
 
-  const loading =
-    isLoading || (isValidating && !!mergedData && size === 1);
+  const loading = isLoading && !mergedData;
+  const isRevalidating = isValidating && !!mergedData;
   const loadingMore = isValidating && size > 1;
   const hasMore = mergedData?.pagination?.hasMore ?? false;
 
@@ -101,14 +105,18 @@ export function useIssuesFetch(apiUrl: string, filters: FilterState) {
 
   const fetchData = useCallback(() => mutate(), [mutate]);
 
+  const lastUpdatedAt = dataUpdatedAt ?? 0;
+
   return {
     data: mergedData,
     loading,
+    isRevalidating,
     loadingMore,
     error: error?.message ?? null,
     retry: fetchData,
     fetchData,
     loadMore,
     hasMore,
+    lastUpdatedAt,
   };
 }

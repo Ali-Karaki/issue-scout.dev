@@ -7,7 +7,7 @@ test.describe("Issues page", () => {
     await expect(
       page
         .getByText("Total:")
-        .or(page.getByLabel(/Ecosystem/i))
+        .or(page.getByLabel(/Project/i))
         .or(page.getByText(/error|unavailable|configuration|token|GitHub|Fetching|Redis/i))
         .first()
     ).toBeVisible({ timeout: 90_000 });
@@ -17,7 +17,7 @@ test.describe("Issues page", () => {
     await page.goto("/issues");
     await expect(
       page
-        .getByLabel(/Ecosystem/i)
+        .getByLabel(/Project/i)
         .or(page.getByRole("button", { name: /retry|refresh/i }))
         .first()
     ).toBeVisible({ timeout: 90_000 });
@@ -26,7 +26,7 @@ test.describe("Issues page", () => {
   test("filter changes update URL and trigger refetch", async ({ page }) => {
     await page.goto("/issues");
     await expect(
-      page.getByLabel(/Ecosystem/i).or(page.getByLabel(/Status/i)).first()
+      page.getByLabel(/Project/i).or(page.getByLabel(/Status/i)).first()
     ).toBeVisible({ timeout: 90_000 });
 
     const statusFilter = page.getByLabel(/Status/i).first();

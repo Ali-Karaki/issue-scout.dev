@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { ECOSYSTEMS } from "@/lib/ecosystems.config";
+import { PROJECTS } from "@/lib/projects.config";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -7,20 +7,20 @@ type Props = {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
-  const ecosystem = ECOSYSTEMS.find((e) => e.id === id);
-  if (!ecosystem)
+  const project = PROJECTS.find((e) => e.id === id);
+  if (!project)
     return { title: "Project not found" };
   return {
-    title: `${ecosystem.name} Issues`,
-    description: ecosystem.description,
+    title: `${project.name} Issues`,
+    description: project.description,
     openGraph: {
-      title: `${ecosystem.name} Issues`,
-      description: ecosystem.description,
+      title: `${project.name} Issues`,
+      description: project.description,
     },
   };
 }
 
-export default function EcosystemLayout({
+export default function ProjectLayout({
   children,
 }: {
   children: React.ReactNode;
