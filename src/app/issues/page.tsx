@@ -135,7 +135,16 @@ export default function IssuesPage() {
       <div className="space-y-4">
         {filteredIssues.length === 0 ? (
           <div className="text-center py-16 text-zinc-500 rounded-xl border border-zinc-700 bg-zinc-800/30">
-            No issues match your filters.
+            <p className="mb-4">No issues match your filters.</p>
+            {hasMore && (
+              <button
+                onClick={loadMore}
+                disabled={loadingMore}
+                className="px-6 py-3 rounded-lg bg-zinc-700 hover:bg-zinc-600 disabled:opacity-50 disabled:cursor-not-allowed text-zinc-200 font-medium transition focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 focus:ring-offset-bg"
+              >
+                {loadingMore ? "Loading..." : "Load more issues"}
+              </button>
+            )}
           </div>
         ) : (
           <>

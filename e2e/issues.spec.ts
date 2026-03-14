@@ -8,7 +8,7 @@ test.describe("Issues page", () => {
       page
         .getByText("Total:")
         .or(page.getByLabel(/Ecosystem/i))
-        .or(page.getByText(/error|unavailable|configuration|token|GitHub|Fetching/i))
+        .or(page.getByText(/error|unavailable|configuration|token|GitHub|Fetching|Redis/i))
         .first()
     ).toBeVisible({ timeout: 90_000 });
   });

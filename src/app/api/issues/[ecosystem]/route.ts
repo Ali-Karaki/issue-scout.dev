@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ECOSYSTEMS } from "@/lib/ecosystems.config";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
+import { hasKv } from "@/lib/kv";
 import { fetchIssues } from "@/lib/api/fetch-issues";
 
 export async function GET(
@@ -21,13 +22,23 @@ export async function GET(
       { status: 503 }
     );
   }
+  if (!hasKv()) {
+    return NextResponse.json(
+      {
+        error:
+          "Redis cache required. Set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN.",
+      },
+      { status: 503 }
+    );
+  }
   const { ecosystem } = await params;
   const { searchParams } = new URL(request.url);
-  const page = Math.max(1, parseInt(searchParams.get("page") ?? "1", 10));
-  const limit = Math.min(
-    100,
-    Math.max(1, parseInt(searchParams.get("limit") ?? "50", 10))
-  );
+  const rawPage = parseInt(searchParams.get("page") ?? "1", 10);
+  const rawLimit = parseInt(searchParams.get("limit") ?? "50", 10);
+  const page = Number.isFinite(rawPage) ? Math.max(1, rawPage) : 1;
+  const limit = Number.isFinite(rawLimit)
+    ? Math.min(100, Math.max(1, rawLimit))
+    : 50;
 
   if (!ECOSYSTEMS.some((e) => e.id === ecosystem)) {
     return NextResponse.json(

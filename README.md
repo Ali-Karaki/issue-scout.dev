@@ -23,6 +23,18 @@ Find OSS issues that don't appear to have an open PR referencing them. Live at [
 
    For preview deployments, set `NEXT_PUBLIC_SITE_URL` to your deployment URL so Open Graph and metadata use the correct domain.
 
+3. Add Upstash Redis for caching (required):
+
+   - Vercel: [Integrations](https://vercel.com/dashboard) → **Browse Marketplace** → **Upstash** → **Upstash KV** → Install and link to your project
+   - Add env vars `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` (from Upstash Console, or map Vercel’s `KV_*` vars when connecting)
+
+**Verifying KV cache:**
+
+1. Run `pnpm dev` with `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` in `.env.local`.
+2. `curl http://localhost:3000/api/debug/cache` — Expect `redis: "ok"` when configured.
+3. Load `/issues` twice — First request fetches from GitHub and writes to Redis; second request reads from Redis (faster).
+4. [Upstash Console](https://console.upstash.com) → your database → **Data Browser** — After loading `/issues` or `/ecosystem/tanstack`, you should see keys like `issues:tanstack`, `issues:vercel`.
+
 ## Scripts
 
 - `pnpm dev` — Start the development server

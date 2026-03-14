@@ -7,6 +7,8 @@ on:
 jobs:
   ci:
     runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     permissions:
       statuses: write
     steps:
@@ -24,6 +26,8 @@ jobs:
       - id: e2e
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          UPSTASH_REDIS_REST_URL: ${{ secrets.UPSTASH_REDIS_REST_URL }}
+          UPSTASH_REDIS_REST_TOKEN: ${{ secrets.UPSTASH_REDIS_REST_TOKEN }}
         run: pnpm test:e2e
       - name: notify vercel
         if: always()

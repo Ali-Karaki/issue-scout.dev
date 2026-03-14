@@ -11,11 +11,9 @@ Thanks for your interest in contributing. This document covers how to set up the
    pnpm install
    ```
 
-3. **Environment:** Copy `.env.example` to `.env.local` and add your GitHub token:
-   ```
-   GITHUB_TOKEN=your_github_personal_access_token
-   ```
-   A token is required to avoid GitHub API rate limits.
+3. **Environment:** Copy `.env.example` to `.env.local` and configure:
+   - `GITHUB_TOKEN` — required for GitHub API rate limits
+   - `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` — required for caching (from [Upstash Console](https://console.upstash.com) or Vercel Upstash integration)
 
 4. **Run the dev server:**
    ```bash
