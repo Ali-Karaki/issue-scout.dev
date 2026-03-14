@@ -155,7 +155,7 @@ export function IssueFilters({
         </div>
       </div>
       {expanded && (
-        <div className="flex flex-wrap gap-x-6 gap-y-3 p-3 pt-0 border-t border-zinc-700/50">
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-3 p-3 border-t border-zinc-700/50">
           {showProject && (
             <div className="min-w-[140px]">
               <label
@@ -236,7 +236,7 @@ export function IssueFilters({
               </span>
             </div>
           </div>
-          <div className="flex items-center gap-4 flex-wrap">
+          <div className="flex items-center gap-4 mt-4 flex-wrap">
             <label className="flex items-center gap-2 text-sm text-zinc-400 cursor-pointer">
               <input
                 type="checkbox"
