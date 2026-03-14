@@ -3,6 +3,7 @@ import type { NormalizedIssue } from "@/lib/types";
 
 interface IssueCardProps {
   issue: NormalizedIssue;
+  compact?: boolean;
 }
 
 function StatusPill({ status }: { status: NormalizedIssue["status"] }) {
@@ -38,7 +39,7 @@ function ReadinessBadge({ readiness }: { readiness: NormalizedIssue["readiness"]
   );
 }
 
-export function IssueCard({ issue }: IssueCardProps) {
+export function IssueCard({ issue, compact = false }: IssueCardProps) {
   const title = issue.title ?? "";
   const displayTitle =
     title.slice(0, 100) + (title.length > 100 ? "…" : "");
@@ -63,16 +64,20 @@ export function IssueCard({ issue }: IssueCardProps) {
           )}
         </div>
       </div>
-      <div className="flex flex-wrap items-center gap-2 text-sm text-zinc-500 mb-2">
+      <div className="flex flex-wrap items-center gap-2 text-sm text-zinc-500">
         <span className="font-mono">{issue.repo}</span>
         <span className="text-amber-500">#{issue.number}</span>
         <span>·</span>
         <span>{formatDate(issue.updatedAt)}</span>
-        <span>·</span>
-        <span>{issue.comments} comments</span>
+        {!compact && (
+          <>
+            <span>·</span>
+            <span>{issue.comments} comments</span>
+          </>
+        )}
       </div>
-      {issue.labels.length > 0 && (
-        <div className="flex flex-wrap gap-1.5 mb-2">
+      {!compact && issue.labels.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 mt-2">
           {issue.labels.slice(0, 5).map((label) => (
             <span
               key={label}
@@ -88,10 +93,14 @@ export function IssueCard({ issue }: IssueCardProps) {
           )}
         </div>
       )}
-      <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
-        <ReadinessBadge readiness={issue.readiness} />
-      </div>
-      <p className="text-xs text-zinc-500 mt-1">{issue.explanation}</p>
+      {!compact && (
+        <>
+          <div className="flex flex-wrap items-center justify-between gap-2 mt-2">
+            <ReadinessBadge readiness={issue.readiness} />
+          </div>
+          <p className="text-xs text-zinc-500 mt-1">{issue.explanation}</p>
+        </>
+      )}
     </div>
   );
 }

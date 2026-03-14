@@ -1,67 +1,66 @@
 import Link from "next/link";
 import { ECOSYSTEMS } from "@/lib/ecosystems.config";
+import { FeaturedIssues } from "@/components/FeaturedIssues";
 
 export default function HomePage() {
   return (
-    <main className="max-w-lg mx-auto px-8 py-20">
-      <h1 className="text-3xl font-semibold tracking-tight text-white mb-1">
-        Issue<span className="text-amber-400">Scout</span>
-      </h1>
-      <p className="text-zinc-400 text-base leading-relaxed mb-4">
-        Find OSS issues that don&apos;t currently appear to have an open PR
-        referencing them.
-      </p>
-      <p className="text-zinc-500 text-sm mb-12">
-        Built for contributors who want to find available work across curated
-        open-source projects—without manually checking every issue and PR thread.
-      </p>
-
-      <h2 className="text-sm font-medium text-zinc-300 mb-4">
-        What this tool does
-      </h2>
-      <ul className="space-y-3 text-zinc-400 text-[15px] leading-7 mb-10">
-        <li>
-          <strong className="text-zinc-300">Surface likely unclaimed issues</strong>{" "}
-          — Shows open issues that do not appear to have an active PR
-          referencing them.
-        </li>
-        <li>
-          <strong className="text-zinc-300">Aggregate across repos</strong> — One
-          place to browse issues from multiple curated OSS repositories.
-        </li>
-        <li>
-          <strong className="text-zinc-300">Filter by ecosystem and repo</strong>{" "}
-          — Narrow results to the project you care about.
-        </li>
-      </ul>
-
-      <h2 className="text-sm font-medium text-zinc-300 mb-4">Ecosystems</h2>
-      <div className="flex flex-wrap gap-3 mb-10">
-        {ECOSYSTEMS.map((eco) => (
+    <main>
+      <section className="max-w-4xl mx-auto px-6 pt-24 pb-20 text-center">
+        <h1 className="text-5xl sm:text-6xl font-semibold tracking-tight text-white mb-5">
+          Issue<span className="text-amber-400">Scout</span>
+        </h1>
+        <p className="text-2xl text-zinc-400 mb-12 max-w-2xl mx-auto leading-relaxed">
+          Find open-source issues that likely aren&apos;t already being worked on.
+        </p>
+        <div className="flex flex-wrap items-center justify-center gap-3">
           <Link
-            key={eco.id}
-            href={`/ecosystem/${eco.id}`}
-            className="px-4 py-2 rounded-lg bg-zinc-800 border border-zinc-700 text-zinc-300 hover:border-amber-600 hover:text-amber-400 no-underline text-sm transition"
+            href="/issues"
+            className="px-4 py-2 rounded-lg bg-amber-500 text-black font-medium hover:bg-amber-400 transition no-underline"
           >
-            {eco.name}
+            Browse issues
           </Link>
-        ))}
-      </div>
+          <div className="flex flex-wrap justify-center gap-2">
+            {ECOSYSTEMS.map((eco) => (
+              <Link
+                key={eco.id}
+                href={`/ecosystem/${eco.id}`}
+                className="px-4 py-2 rounded-lg bg-zinc-800/80 text-zinc-300 hover:bg-zinc-700 hover:text-white no-underline text-sm transition"
+              >
+                {eco.name}
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
 
-      <h2 className="text-sm font-medium text-zinc-300 mb-4">How it works</h2>
-      <p className="text-zinc-500 text-sm leading-relaxed mb-12">
-        The tool scans curated repositories, checks whether open pull requests
-        reference specific issues, and surfaces issues that do not appear to be
-        claimed yet. Results are refreshed periodically and cached to keep
-        browsing fast.
-      </p>
+      <section className="max-w-5xl mx-auto px-6 pb-12">
+        <FeaturedIssues />
+      </section>
 
-      <Link
-        href="/issues"
-        className="inline-block px-6 py-3 rounded-lg bg-amber-500 text-black font-medium hover:bg-amber-400 transition no-underline"
-      >
-        Browse issues
-      </Link>
+      <section className="max-w-4xl mx-auto px-6 py-20">
+        <h2 className="text-base font-medium text-zinc-400 mb-10 text-center">
+          How it works
+        </h2>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-10 text-center">
+          <div>
+            <p className="text-zinc-300 text-base leading-relaxed">
+              Scans curated repositories and checks which open PRs reference
+              which issues.
+            </p>
+          </div>
+          <div>
+            <p className="text-zinc-300 text-base leading-relaxed">
+              Surfaces issues that don&apos;t appear to have an active PR
+              referencing them.
+            </p>
+          </div>
+          <div>
+            <p className="text-zinc-300 text-base leading-relaxed">
+              Refreshes every 6 hours so you see up-to-date data.
+            </p>
+          </div>
+        </div>
+      </section>
     </main>
   );
 }
