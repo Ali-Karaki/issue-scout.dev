@@ -26,6 +26,8 @@ jobs:
       - run: pnpm test:coverage
       - run: pnpm build
       - run: pnpm exec playwright install --with-deps chromium
+      # E2E may be flaky when cache is empty. For reliable runs, add CRON_SECRET and
+      # run the Refresh cache workflow once to populate cache before CI.
       - id: e2e
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

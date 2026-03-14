@@ -44,6 +44,7 @@ export function IssueFilters({
 
   const hasActiveFilters = initialFilters && (
     filters.q !== initialFilters.q ||
+    filters.project !== initialFilters.project ||
     filters.repo !== initialFilters.repo ||
     filters.status !== initialFilters.status ||
     filters.label !== initialFilters.label ||

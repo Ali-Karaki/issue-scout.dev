@@ -50,6 +50,12 @@ export function ResultSummary({
       remove: () => onRemoveFilter({ label: "" }),
     });
   }
+  if (filters.project && filters.project !== initialFilters.project) {
+    chips.push({
+      label: `Project: ${filters.project}`,
+      remove: () => onRemoveFilter({ project: initialFilters.project }),
+    });
+  }
 
   return (
     <div className="flex flex-wrap items-center gap-2 mb-3">

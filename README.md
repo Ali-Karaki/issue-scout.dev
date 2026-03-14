@@ -1,6 +1,6 @@
 # IssueScout
 
-Find OSS issues that don't appear to have an open PR referencing them. Live at [issue-scout.dev](https://www.issue-scout.dev). Browse issues across multiple ecosystems (TanStack, Vercel, etc.) and filter by status, readiness, and labels.
+Find OSS issues that don't appear to have an open PR referencing them. Live at [issue-scout.dev](https://www.issue-scout.dev). Browse issues across multiple projects (TanStack, Vercel, etc.) and filter by status, readiness, and labels.
 
 ---
 
@@ -69,24 +69,24 @@ Find OSS issues that don't appear to have an open PR referencing them. Live at [
 |-------------|------|---------|-------------|
 | `page` | number | 1 | Page number |
 | `limit` | number | 50 | Items per page (max 100) |
-| `ecosystem` | string | — | Filter by ecosystem (e.g. `tanstack`) |
+| `project` | string | — | Filter by project (e.g. `tanstack`) |
 
-Returns all ecosystems or a single ecosystem when `ecosystem` is set. Response: `{ issues, summary, pagination }` with `pagination: { page, limit, total, hasMore }`.
+Returns all projects or a single project when `project` is set. Response: `{ issues, summary, pagination }` with `pagination: { page, limit, total, hasMore }`.
 
-### GET /api/issues/[ecosystem]
+### GET /api/issues/[project]
 
 | Query param | Type | Default | Description |
 |-------------|------|---------|-------------|
 | `page` | number | 1 | Page number |
 | `limit` | number | 50 | Items per page (max 100) |
 
-Returns issues for the specified ecosystem. Valid ecosystem IDs: `tanstack`, `vercel`.
+Returns issues for the specified project. Valid project IDs: `tanstack`, `vercel`.
 
 ### Error codes
 
 | Status | Meaning |
 |--------|---------|
-| 400 | Invalid ecosystem |
+| 400 | Invalid project |
 | 429 | Rate limit exceeded |
 | 500 | Server error |
 | 503 | Missing configuration (Redis) or cache empty (run refresh workflow) |
@@ -97,16 +97,16 @@ Returns issues for the specified ecosystem. Valid ecosystem IDs: `tanstack`, `ve
 
 ![Architecture diagram](public/architecture.png)
 
-- **Config:** [src/lib/ecosystems.config.ts](src/lib/ecosystems.config.ts) defines ecosystems and their repos.
-- **API:** `GET /api/issues` and `GET /api/issues/[ecosystem]` read from the Upstash cache only. A GitHub Actions workflow runs every 6 hours to refresh the cache via `POST /api/cron/refresh`, which fetches from the GitHub API and writes to Upstash.
+- **Config:** [src/lib/projects.config.ts](src/lib/projects.config.ts) defines projects and their repos.
+- **API:** `GET /api/issues` and `GET /api/issues/[project]` read from the Upstash cache only. In development, when cache is empty or Redis is not configured, the API may fetch directly from GitHub for convenience. Production always uses cache only. A GitHub Actions workflow runs every 6 hours to refresh the cache via `POST /api/cron/refresh`, which fetches from the GitHub API and writes to Upstash.
 - **Analysis:** Raw issues are normalized in [src/lib/analysis/normalize.ts](src/lib/analysis/normalize.ts), which uses [status.ts](src/lib/analysis/status.ts) (likely_unclaimed, possible_wip, stale) and [readiness.ts](src/lib/analysis/readiness.ts) (high/medium/low scoring).
-- **Client:** [src/app/issues/page.tsx](src/app/issues/page.tsx) and [src/app/ecosystem/[id]/page.tsx](src/app/ecosystem/[id]/page.tsx) fetch from the API, apply filters from [src/lib/filters.ts](src/lib/filters.ts), and render issue cards. Filters are persisted in the URL.
+- **Client:** [src/app/issues/page.tsx](src/app/issues/page.tsx) and [src/app/project/[id]/page.tsx](src/app/project/[id]/page.tsx) fetch from the API, apply filters from [src/lib/filters.ts](src/lib/filters.ts), and render issue cards. Filters are persisted in the URL.
 
 ---
 
-## 6. Adding Ecosystems
+## 6. Adding Projects
 
-Edit [src/lib/ecosystems.config.ts](src/lib/ecosystems.config.ts) to add or modify ecosystems. Each ecosystem has an `id`, `name`, `description`, and list of `repos` (e.g. `"tanstack/query"`).
+Edit [src/lib/projects.config.ts](src/lib/projects.config.ts) to add or modify projects. Each project has an `id`, `name`, `description`, and list of `repos` (e.g. `"tanstack/query"`).
 
 ---
 

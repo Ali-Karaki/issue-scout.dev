@@ -13,7 +13,7 @@ export default function GlobalError({
         style={{
           margin: 0,
           minHeight: "100vh",
-          background: "#0d0d0f",
+          background: "#0d0d0f", // Matches bg from theme
           color: "#e4e4e7",
           fontFamily: "system-ui, sans-serif",
           display: "flex",

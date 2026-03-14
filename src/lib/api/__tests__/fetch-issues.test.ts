@@ -61,7 +61,7 @@ describe("getIssuesFromCache", () => {
     vi.clearAllMocks();
   });
 
-  it("single ecosystem, KV configured, cache hit returns cached data", async () => {
+  it("single project, KV configured, cache hit returns cached data", async () => {
     const cached = makeMockResponse("tanstack");
     mockHasKv.mockReturnValue(true);
     mockKvGet.mockResolvedValue(cached);
@@ -73,7 +73,7 @@ describe("getIssuesFromCache", () => {
     expect(mockGetIssuesForRepos).not.toHaveBeenCalled();
   });
 
-  it("single ecosystem, KV configured, cache miss returns null", async () => {
+  it("single project, KV configured, cache miss returns null", async () => {
     mockHasKv.mockReturnValue(true);
     mockKvGet.mockResolvedValue(null);
 
@@ -84,7 +84,7 @@ describe("getIssuesFromCache", () => {
     expect(mockGetIssuesForRepos).not.toHaveBeenCalled();
   });
 
-  it("single ecosystem, KV not configured, returns null", async () => {
+  it("single project, KV not configured, returns null", async () => {
     mockHasKv.mockReturnValue(false);
 
     const result = await getIssuesFromCache("tanstack");
@@ -93,7 +93,7 @@ describe("getIssuesFromCache", () => {
     expect(mockKvGet).not.toHaveBeenCalled();
   });
 
-  it('"all" ecosystems returns issues:all when present', async () => {
+  it('"all" projects returns issues:all when present', async () => {
     const combined = makeMockResponse("tanstack");
     combined.issues = [
       ...combined.issues,
@@ -110,7 +110,7 @@ describe("getIssuesFromCache", () => {
     expect(mockKvGet).toHaveBeenCalledWith("issues:all");
   });
 
-  it('"all" ecosystems merges per-ecosystem results when issues:all miss', async () => {
+  it('"all" projects merges per-project results when issues:all miss', async () => {
     const tanstack = makeMockResponse("tanstack");
     const vercel = makeMockResponse("vercel");
     mockHasKv.mockReturnValue(true);
@@ -127,7 +127,7 @@ describe("getIssuesFromCache", () => {
     expect(mockKvGet).toHaveBeenCalledWith("issues:all");
   });
 
-  it('"all" ecosystems returns null when any cache miss', async () => {
+  it('"all" projects returns null when any cache miss', async () => {
     mockHasKv.mockReturnValue(true);
     mockKvGet
       .mockResolvedValueOnce(null)

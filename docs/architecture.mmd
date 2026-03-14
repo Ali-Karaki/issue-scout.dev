@@ -1,0 +1,49 @@
+# Architecture Diagram Source
+
+Regenerate `public/architecture.png` with these corrections:
+
+- Use **project** instead of **ecosystem** throughout
+- `refreshAllEcosystems` → `refreshAllProjects`
+- `fetchSingleEcosystemUncached` → `fetchSingleProjectUncached`
+- Route: `GET /api/issues/[project]` (not `[ecosystem]`)
+
+## Mermaid Reference
+
+```mermaid
+flowchart TB
+    subgraph Client [CLIENT]
+        UI[Issues UI]
+        SWR[useIssuesFetch / SWR]
+    end
+
+    subgraph ReadPath [READ PATH]
+        API[/api/issues]
+        getCache[getIssuesFromCache]
+    end
+
+    subgraph RefreshPath [REFRESH PATH]
+        GA[GitHub Actions]
+        Cron[/api/cron/refresh]
+        Refresh[refreshAllProjects]
+        Fetch[fetchSingleProjectUncached]
+        Normalize[normalize]
+        Status[status]
+        Readiness[readiness]
+    end
+
+    Redis[(Upstash Redis)]
+    GitHub[GitHub API]
+
+    UI --> SWR
+    SWR --> API
+    API --> getCache
+    getCache -->|read only| Redis
+
+    GA -->|every 6h| Cron
+    Cron --> Refresh
+    Refresh --> Fetch
+    Fetch -->|fetch| GitHub
+    GitHub -->|raw| Normalize
+    Normalize --> Status --> Readiness
+    Readiness -->|normalized| Redis
+```

@@ -68,9 +68,9 @@ For the **Refresh cache** workflow (scheduled every 6h), add `CRON_SECRET` (gene
 
 ---
 
-## 5. Adding Ecosystems
+## 5. Adding Projects
 
-To add or modify ecosystems, edit [src/lib/ecosystems.config.ts](src/lib/ecosystems.config.ts). Each ecosystem has an `id`, `name`, `description`, and list of `repos` (e.g. `"owner/repo"`).
+To add or modify projects, edit [src/lib/projects.config.ts](src/lib/projects.config.ts). Each project has an `id`, `name`, `description`, and list of `repos` (e.g. `"owner/repo"`).
 
 ---
 

@@ -14,7 +14,7 @@ export default function OpenGraphImage() {
         style={{
           fontSize: 72,
           fontWeight: 700,
-          background: "#0d0d0f",
+          background: "#0d0d0f", // Matches bg from theme
           width: "100%",
           height: "100%",
           display: "flex",

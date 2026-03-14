@@ -182,6 +182,7 @@ async function fetchRepo(
     }
     return { results, failed: false };
   } catch (err) {
+    // Log for observability; consider structured logger in production
     console.error(`Failed to fetch ${repo}:`, err);
     return { results: [], failed: true };
   }

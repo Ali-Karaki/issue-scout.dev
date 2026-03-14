@@ -10,6 +10,7 @@ export default function Error({
   reset: () => void;
 }) {
   useEffect(() => {
+    // Log for debugging; consider error reporting service
     console.error(error);
   }, [error]);
 

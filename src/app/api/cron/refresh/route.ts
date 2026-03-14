@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   const token = process.env.GITHUB_TOKEN ?? "";
-  if (!token || token === "your_github_token_here") {
+  if (!token) {
     return NextResponse.json(
       { error: "GitHub token required for refresh" },
       { status: 503 }

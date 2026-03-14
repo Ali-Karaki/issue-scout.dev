@@ -10,6 +10,7 @@ import { PROJECTS } from "@/lib/projects.config";
 import { applyFiltersAndSort } from "@/lib/filters";
 import { paramsToFilters } from "@/lib/url-filters";
 
+// Dev-only: bypass cache when empty for local dev without running refresh job
 function canUseDevFallback(): boolean {
   return process.env.NODE_ENV !== "production";
 }
