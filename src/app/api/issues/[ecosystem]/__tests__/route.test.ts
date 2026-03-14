@@ -6,7 +6,7 @@ import type { IssuesResponse } from "@/lib/api/fetch-issues";
 const mockCheckRateLimit = vi.fn();
 const mockGetClientIp = vi.fn();
 const mockHasKv = vi.fn();
-const mockFetchIssues = vi.fn();
+const mockGetIssuesFromCache = vi.fn();
 
 vi.mock("@/lib/rate-limit", () => ({
   checkRateLimit: (ip: string) => mockCheckRateLimit(ip),
@@ -18,8 +18,8 @@ vi.mock("@/lib/kv", () => ({
 }));
 
 vi.mock("@/lib/api/fetch-issues", () => ({
-  fetchIssues: (ecosystem: string, token: string) =>
-    mockFetchIssues(ecosystem, token),
+  getIssuesFromCache: (ecosystem: string) =>
+    mockGetIssuesFromCache(ecosystem),
 }));
 
 function makeMockResponse(ecosystemId: string, issueCount: number): IssuesResponse {
@@ -59,7 +59,7 @@ describe("GET /api/issues/[ecosystem]", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    process.env = { ...originalEnv, GITHUB_TOKEN: "valid-token", PAT: "" };
+    process.env = { ...originalEnv };
     mockCheckRateLimit.mockResolvedValue(true);
     mockGetClientIp.mockReturnValue("127.0.0.1");
     mockHasKv.mockReturnValue(true);
@@ -80,22 +80,7 @@ describe("GET /api/issues/[ecosystem]", () => {
 
     expect(res.status).toBe(429);
     expect(body.error).toBe("Too many requests");
-    expect(mockFetchIssues).not.toHaveBeenCalled();
-  });
-
-  it("returns 503 when GITHUB_TOKEN is missing", async () => {
-    process.env.GITHUB_TOKEN = "";
-    process.env.PAT = "";
-
-    const req = new NextRequest("http://localhost:3000/api/issues/tanstack");
-    const res = await GET(req, {
-      params: Promise.resolve({ ecosystem: "tanstack" }),
-    });
-    const body = await res.json();
-
-    expect(res.status).toBe(503);
-    expect(body.error).toBe("GitHub token required");
-    expect(mockFetchIssues).not.toHaveBeenCalled();
+    expect(mockGetIssuesFromCache).not.toHaveBeenCalled();
   });
 
   it("returns 503 when Redis not configured", async () => {
@@ -109,7 +94,21 @@ describe("GET /api/issues/[ecosystem]", () => {
 
     expect(res.status).toBe(503);
     expect(body.error).toContain("Redis cache required");
-    expect(mockFetchIssues).not.toHaveBeenCalled();
+    expect(mockGetIssuesFromCache).not.toHaveBeenCalled();
+  });
+
+  it("returns 503 when cache is empty", async () => {
+    mockGetIssuesFromCache.mockResolvedValue(null);
+
+    const req = new NextRequest("http://localhost:3000/api/issues/tanstack");
+    const res = await GET(req, {
+      params: Promise.resolve({ ecosystem: "tanstack" }),
+    });
+    const body = await res.json();
+
+    expect(res.status).toBe(503);
+    expect(body.error).toBe("Data not yet available. Try again later.");
+    expect(res.headers.get("Retry-After")).toBe("300");
   });
 
   it("returns 400 for invalid ecosystem", async () => {
@@ -121,11 +120,11 @@ describe("GET /api/issues/[ecosystem]", () => {
 
     expect(res.status).toBe(400);
     expect(body.error).toBe("Invalid ecosystem");
-    expect(mockFetchIssues).not.toHaveBeenCalled();
+    expect(mockGetIssuesFromCache).not.toHaveBeenCalled();
   });
 
-  it("returns 500 when fetchIssues throws", async () => {
-    mockFetchIssues.mockRejectedValue(new Error("GitHub API error"));
+  it("returns 500 when getIssuesFromCache throws", async () => {
+    mockGetIssuesFromCache.mockRejectedValue(new Error("Cache error"));
 
     const req = new NextRequest("http://localhost:3000/api/issues/tanstack");
     const res = await GET(req, {
@@ -134,12 +133,12 @@ describe("GET /api/issues/[ecosystem]", () => {
     const body = await res.json();
 
     expect(res.status).toBe(500);
-    expect(body.error).toBe("GitHub API error");
+    expect(body.error).toBe("Cache error");
   });
 
   it("returns success with pagination and Cache-Control", async () => {
     const data = makeMockResponse("tanstack", 50);
-    mockFetchIssues.mockResolvedValue(data);
+    mockGetIssuesFromCache.mockResolvedValue(data);
 
     const req = new NextRequest(
       "http://localhost:3000/api/issues/tanstack?page=2&limit=10"
@@ -159,12 +158,12 @@ describe("GET /api/issues/[ecosystem]", () => {
     });
     expect(body.summary).toEqual(data.summary);
     expect(res.headers.get("Cache-Control")).toContain("s-maxage=3600");
-    expect(mockFetchIssues).toHaveBeenCalledWith("tanstack", "valid-token");
+    expect(mockGetIssuesFromCache).toHaveBeenCalledWith("tanstack");
   });
 
   it("sanitizes invalid page and limit to defaults", async () => {
     const data = makeMockResponse("vercel", 5);
-    mockFetchIssues.mockResolvedValue(data);
+    mockGetIssuesFromCache.mockResolvedValue(data);
 
     const req = new NextRequest(
       "http://localhost:3000/api/issues/vercel?page=-1&limit=999"

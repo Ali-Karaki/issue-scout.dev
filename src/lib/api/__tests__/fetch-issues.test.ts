@@ -1,6 +1,9 @@
 import { vi, describe, it, expect, beforeEach } from "vitest";
-import { fetchIssues } from "../fetch-issues";
-import type { IssuesResponse } from "../fetch-issues";
+import {
+  getIssuesFromCache,
+  refreshAllEcosystems,
+  type IssuesResponse,
+} from "../fetch-issues";
 import type { RawIssueWithPrCount } from "../../github";
 
 const mockGetIssuesForRepos = vi.fn();
@@ -53,7 +56,72 @@ function makeMockResponse(ecosystemId: string): IssuesResponse {
   };
 }
 
-describe("fetchIssues", () => {
+describe("getIssuesFromCache", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("single ecosystem, KV configured, cache hit returns cached data", async () => {
+    const cached = makeMockResponse("tanstack");
+    mockHasKv.mockReturnValue(true);
+    mockKvGet.mockResolvedValue(cached);
+
+    const result = await getIssuesFromCache("tanstack");
+
+    expect(result).toEqual(cached);
+    expect(mockKvGet).toHaveBeenCalledWith("issues:tanstack");
+    expect(mockGetIssuesForRepos).not.toHaveBeenCalled();
+  });
+
+  it("single ecosystem, KV configured, cache miss returns null", async () => {
+    mockHasKv.mockReturnValue(true);
+    mockKvGet.mockResolvedValue(null);
+
+    const result = await getIssuesFromCache("tanstack");
+
+    expect(result).toBeNull();
+    expect(mockKvGet).toHaveBeenCalledWith("issues:tanstack");
+    expect(mockGetIssuesForRepos).not.toHaveBeenCalled();
+  });
+
+  it("single ecosystem, KV not configured, returns null", async () => {
+    mockHasKv.mockReturnValue(false);
+
+    const result = await getIssuesFromCache("tanstack");
+
+    expect(result).toBeNull();
+    expect(mockKvGet).not.toHaveBeenCalled();
+  });
+
+  it('"all" ecosystems merges results when all cached', async () => {
+    const tanstack = makeMockResponse("tanstack");
+    const vercel = makeMockResponse("vercel");
+    mockHasKv.mockReturnValue(true);
+    mockKvGet
+      .mockResolvedValueOnce(tanstack)
+      .mockResolvedValueOnce(vercel);
+
+    const result = await getIssuesFromCache(null);
+
+    expect(result).not.toBeNull();
+    expect(result!.issues).toHaveLength(2);
+    expect(result!.summary.total).toBe(2);
+    expect(mockKvGet).toHaveBeenCalledTimes(2);
+  });
+
+  it('"all" ecosystems returns null when any cache miss', async () => {
+    mockHasKv.mockReturnValue(true);
+    mockKvGet
+      .mockResolvedValueOnce(makeMockResponse("tanstack"))
+      .mockResolvedValueOnce(null);
+
+    const result = await getIssuesFromCache(null);
+
+    expect(result).toBeNull();
+  });
+});
+
+describe("refreshAllEcosystems", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockGetIssuesForRepos.mockImplementation(
@@ -78,68 +146,42 @@ describe("fetchIssues", () => {
     );
   });
 
-  it("single ecosystem, KV configured, cache hit returns cached data", async () => {
-    const cached = makeMockResponse("tanstack");
+  it("fetches and writes all ecosystems when KV configured", async () => {
     mockHasKv.mockReturnValue(true);
-    mockKvGet.mockResolvedValue(cached);
-
-    const result = await fetchIssues("tanstack", "token");
-
-    expect(result).toEqual(cached);
-    expect(mockKvGet).toHaveBeenCalledWith("issues:tanstack");
-    expect(mockGetIssuesForRepos).not.toHaveBeenCalled();
-    expect(mockKvSet).not.toHaveBeenCalled();
-  });
-
-  it("single ecosystem, KV configured, cache miss fetches and sets", async () => {
-    mockHasKv.mockReturnValue(true);
-    mockKvGet.mockResolvedValue(null);
     mockKvSet.mockResolvedValue(true);
 
-    const result = await fetchIssues("tanstack", "token");
+    const result = await refreshAllEcosystems("token");
 
-    expect(mockKvGet).toHaveBeenCalledWith("issues:tanstack");
-    expect(mockGetIssuesForRepos).toHaveBeenCalled();
-    expect(mockKvSet).toHaveBeenCalledWith(
-      "issues:tanstack",
-      expect.objectContaining({
-        issues: expect.any(Array),
-        summary: expect.objectContaining({ total: expect.any(Number) }),
-      }),
-      expect.any(Number)
-    );
-    expect(result.issues.length).toBeGreaterThan(0);
-    expect(result.summary.total).toBeGreaterThan(0);
+    expect(result.ok).toBe(true);
+    expect(result.ecosystems).toHaveLength(2);
+    expect(result.ecosystems.every((e) => e.ok)).toBe(true);
+    expect(mockGetIssuesForRepos).toHaveBeenCalledTimes(2);
+    expect(mockKvSet).toHaveBeenCalledTimes(2);
   });
 
-  it("single ecosystem, KV not configured, throws", async () => {
+  it("returns error when KV not configured", async () => {
     mockHasKv.mockReturnValue(false);
 
-    await expect(fetchIssues("tanstack", "token")).rejects.toThrow(
-      "Redis cache required"
-    );
-    expect(mockKvGet).not.toHaveBeenCalled();
+    const result = await refreshAllEcosystems("token");
+
+    expect(result.ok).toBe(false);
+    expect(result.ecosystems.every((e) => !e.ok && e.error === "Redis cache required")).toBe(true);
+    expect(mockGetIssuesForRepos).not.toHaveBeenCalled();
     expect(mockKvSet).not.toHaveBeenCalled();
-    expect(mockGetIssuesForRepos).not.toHaveBeenCalled();
   });
 
-  it('"all" ecosystems merges results', async () => {
+  it("reports partial failure when one ecosystem fails", async () => {
     mockHasKv.mockReturnValue(true);
-    mockKvGet.mockResolvedValue(null);
     mockKvSet.mockResolvedValue(true);
+    mockGetIssuesForRepos
+      .mockResolvedValueOnce({ raw: [], failedRepos: [] })
+      .mockRejectedValueOnce(new Error("GitHub API error"));
 
-    const result = await fetchIssues(null, "token");
+    const result = await refreshAllEcosystems("token");
 
-    expect(mockGetIssuesForRepos).toHaveBeenCalledTimes(2); // tanstack + vercel
-    expect(result.issues).toBeDefined();
-    expect(result.summary.total).toBeGreaterThanOrEqual(0);
-    expect(Array.isArray(result.summary.failedRepos)).toBe(true);
-  });
-
-  it("invalid ecosystem throws", async () => {
-    await expect(fetchIssues("invalid-eco", "token")).rejects.toThrow(
-      "Unknown ecosystem"
-    );
-    expect(mockGetIssuesForRepos).not.toHaveBeenCalled();
+    expect(result.ok).toBe(false);
+    expect(result.ecosystems).toHaveLength(2);
+    const failed = result.ecosystems.find((e) => !e.ok);
+    expect(failed?.error).toBe("GitHub API error");
   });
 });

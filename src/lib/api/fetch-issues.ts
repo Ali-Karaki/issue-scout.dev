@@ -23,6 +23,11 @@ export interface IssuesResponse {
   };
 }
 
+export interface RefreshResult {
+  ok: boolean;
+  ecosystems: { id: string; ok: boolean; error?: string }[];
+}
+
 async function fetchSingleEcosystemUncached(
   ecosystemId: string,
   token: string
@@ -52,43 +57,60 @@ async function fetchSingleEcosystemUncached(
   };
 }
 
-async function fetchEcosystemCached(
-  ecosystemId: string,
+/**
+ * Refresh all ecosystems from GitHub and write to Upstash.
+ * Used by the cron/refresh endpoint only.
+ */
+export async function refreshAllEcosystems(
   token: string
-): Promise<IssuesResponse> {
+): Promise<RefreshResult> {
   if (!hasKv()) {
-    throw new Error(
-      "Redis cache required. Set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN."
-    );
+    return {
+      ok: false,
+      ecosystems: ECOSYSTEMS.map((e) => ({
+        id: e.id,
+        ok: false,
+        error: "Redis cache required",
+      })),
+    };
   }
-  const cacheKey = `issues:${ecosystemId}`;
-  const cached = await kvGet<IssuesResponse>(cacheKey);
-  if (cached) return cached;
-
-  const data = await fetchSingleEcosystemUncached(ecosystemId, token);
-  await kvSet(cacheKey, data, CACHE_REVALIDATE_SECONDS);
-  return data;
+  const results: { id: string; ok: boolean; error?: string }[] = [];
+  for (const eco of ECOSYSTEMS) {
+    try {
+      const data = await fetchSingleEcosystemUncached(eco.id, token);
+      await kvSet(`issues:${eco.id}`, data, CACHE_REVALIDATE_SECONDS);
+      results.push({ id: eco.id, ok: true });
+    } catch (err) {
+      results.push({
+        id: eco.id,
+        ok: false,
+        error: err instanceof Error ? err.message : "Unknown error",
+      });
+    }
+  }
+  return {
+    ok: results.every((r) => r.ok),
+    ecosystems: results,
+  };
 }
 
 /**
- * Fetch issues from GitHub, optionally filtered by ecosystem.
- * @param ecosystemId - Ecosystem id (e.g. "tanstack") or null for all ecosystems
+ * Read issues from Upstash cache only. No GitHub API calls.
+ * Returns null on cache miss.
  */
-export async function fetchIssues(
-  ecosystemId: string | null,
-  token: string
-): Promise<IssuesResponse> {
+export async function getIssuesFromCache(
+  ecosystemId: string | null
+): Promise<IssuesResponse | null> {
+  if (!hasKv()) return null;
   if (ecosystemId) {
-    return fetchEcosystemCached(ecosystemId, token);
+    return kvGet<IssuesResponse>(`issues:${ecosystemId}`);
   }
-
-  // "all": cache per ecosystem (each under 2MB), then merge
   const results = await Promise.all(
-    ECOSYSTEMS.map((eco) => fetchEcosystemCached(eco.id, token))
+    ECOSYSTEMS.map((eco) => kvGet<IssuesResponse>(`issues:${eco.id}`))
   );
-  const allIssues = results.flatMap((r) => r.issues);
-  const allFailedRepos = results.flatMap((r) => r.summary.failedRepos);
-
+  if (results.some((r) => !r)) return null;
+  const allIssues = results.flatMap((r) => r!.issues);
+  const allFailedRepos = results.flatMap((r) => r!.summary.failedRepos);
   return {
     issues: allIssues,
     summary: {

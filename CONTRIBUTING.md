@@ -16,8 +16,9 @@ Thanks for your interest in contributing. This document covers how to set up the
 
 3. **Environment:** Copy `.env.example` to `.env.local` and configure:
 
-   - `GITHUB_TOKEN` — required for GitHub API rate limits
    - `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` — required for caching (from [Upstash Console](https://console.upstash.com) or Vercel Upstash integration)
+   - `GITHUB_TOKEN` — optional for local; required in production for the refresh job
+   - `CRON_SECRET` — optional for local; required to call `/api/cron/refresh` (e.g. to populate cache before testing)
 
 4. **Run the dev server:**
 
@@ -49,9 +50,16 @@ The CI workflow runs on push and pull requests. For E2E tests to pass, add these
 
 | Secret | Source |
 |--------|--------|
-| `GITHUB_TOKEN` | Provided by GitHub Actions |
+| `GITHUB_TOKEN` | Provided by GitHub Actions (or add your own) |
 | `UPSTASH_REDIS_REST_URL` | [Upstash Console](https://console.upstash.com) |
 | `UPSTASH_REDIS_REST_TOKEN` | Upstash Console |
+
+For the **Refresh cache** workflow (scheduled every 6h), also add:
+
+| Secret | Source |
+|--------|--------|
+| `CRON_SECRET` | Generate with `openssl rand -hex 32` (same as Vercel) |
+| `SITE_URL` | Production URL, e.g. `https://www.issue-scout.dev` (no trailing slash) |
 
 ---
 

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import { hasKv } from "@/lib/kv";
-import { fetchIssues } from "@/lib/api/fetch-issues";
+import { getIssuesFromCache } from "@/lib/api/fetch-issues";
 import { CACHE_REVALIDATE_SECONDS } from "@/lib/constants";
 import { ECOSYSTEMS } from "@/lib/ecosystems.config";
 
@@ -11,13 +11,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(
       { error: "Too many requests" },
       { status: 429, headers: { "Retry-After": "60" } }
-    );
-  }
-  const token = process.env.GITHUB_TOKEN || process.env.PAT || "";
-  if (!token || token === "your_github_token_here") {
-    return NextResponse.json(
-      { error: "GitHub token required" },
-      { status: 503 }
     );
   }
   if (!hasKv()) {
@@ -48,7 +41,13 @@ export async function GET(request: NextRequest) {
   const ecosystemParam = ecosystem === "" ? null : ecosystem;
 
   try {
-    const data = await fetchIssues(ecosystemParam, token);
+    const data = await getIssuesFromCache(ecosystemParam);
+    if (!data) {
+      return NextResponse.json(
+        { error: "Data not yet available. Try again later." },
+        { status: 503, headers: { "Retry-After": "300" } }
+      );
+    }
     const total = data.issues.length;
     const start = (page - 1) * limit;
     const paginatedIssues = data.issues.slice(start, start + limit);

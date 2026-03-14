@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { ECOSYSTEMS } from "@/lib/ecosystems.config";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import { hasKv } from "@/lib/kv";
-import { fetchIssues } from "@/lib/api/fetch-issues";
+import { getIssuesFromCache } from "@/lib/api/fetch-issues";
 import { CACHE_REVALIDATE_SECONDS } from "@/lib/constants";
 
 export async function GET(
@@ -24,13 +24,6 @@ export async function GET(
       { status: 429, headers: { "Retry-After": "60" } }
     );
   }
-  const token = process.env.GITHUB_TOKEN || process.env.PAT || "";
-  if (!token || token === "your_github_token_here") {
-    return NextResponse.json(
-      { error: "GitHub token required" },
-      { status: 503 }
-    );
-  }
   if (!hasKv()) {
     return NextResponse.json(
       {
@@ -49,7 +42,13 @@ export async function GET(
     : 50;
 
   try {
-    const data = await fetchIssues(ecosystem, token);
+    const data = await getIssuesFromCache(ecosystem);
+    if (!data) {
+      return NextResponse.json(
+        { error: "Data not yet available. Try again later." },
+        { status: 503, headers: { "Retry-After": "300" } }
+      );
+    }
     const total = data.issues.length;
     const start = (page - 1) * limit;
     const paginatedIssues = data.issues.slice(start, start + limit);

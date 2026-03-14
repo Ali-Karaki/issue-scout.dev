@@ -1,6 +1,6 @@
 # IssueScout
 
-Find OSS issues that don't appear to have an open PR referencing them. Live at [issuescout.dev](https://issuescout.dev). Browse issues across multiple ecosystems (TanStack, Vercel, etc.) and filter by status, readiness, and labels.
+Find OSS issues that don't appear to have an open PR referencing them. Live at [issue-scout.dev](https://www.issue-scout.dev). Browse issues across multiple ecosystems (TanStack, Vercel, etc.) and filter by status, readiness, and labels.
 
 ---
 
@@ -19,15 +19,18 @@ Find OSS issues that don't appear to have an open PR referencing them. Live at [
    pnpm install
    ```
 
-2. **Create `.env.local`** with your GitHub token (required):
+2. **Create `.env.local`** with Upstash Redis (required) and optionally a GitHub token for local refresh testing:
 
    ```
-   GITHUB_TOKEN=your_github_personal_access_token
+   UPSTASH_REDIS_REST_URL=...
+   UPSTASH_REDIS_REST_TOKEN=...
+   GITHUB_TOKEN=...   # optional for local; required in production for cron refresh
+   CRON_SECRET=...    # optional for local; required in production
    ```
 
-   A token is required for the app to fetch issues from the GitHub API. For preview deployments, set `NEXT_PUBLIC_SITE_URL` to your deployment URL so Open Graph and metadata use the correct domain.
+   Data is served from the Upstash cache. A scheduled job (GitHub Actions) refreshes the cache from GitHub every 6 hours. No user token is required. For preview deployments, set `NEXT_PUBLIC_SITE_URL` to your deployment URL so Open Graph and metadata use the correct domain.
 
-3. **Add Upstash Redis** for caching (required):
+3. **Add Upstash Redis** (required):
 
    - Vercel: [Integrations](https://vercel.com/dashboard) → **Browse Marketplace** → **Upstash** → **Upstash KV** → Install and link to your project
    - Add env vars `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` (from Upstash Console, or map Vercel's `KV_REDIS_REST_*` vars to `UPSTASH_REDIS_REST_*` when connecting)
@@ -36,8 +39,8 @@ Find OSS issues that don't appear to have an open PR referencing them. Live at [
 
 1. Run `pnpm dev` with `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` in `.env.local`.
 2. `curl http://localhost:3000/api/debug/cache` — Expect `redis: "ok"` when configured.
-3. Load `/issues` twice — First request fetches from GitHub and writes to Redis; second request reads from Redis (faster).
-4. [Upstash Console](https://console.upstash.com) → your database → **Data Browser** — After loading `/issues` or `/ecosystem/tanstack`, you should see keys like `issues:tanstack`, `issues:vercel`.
+3. To populate the cache locally: `curl -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/cron/refresh` (requires `GITHUB_TOKEN` and `CRON_SECRET`).
+4. [Upstash Console](https://console.upstash.com) → your database → **Data Browser** — After a refresh, you should see keys like `issues:tanstack`, `issues:vercel`.
 
 ---
 
@@ -85,8 +88,8 @@ Returns issues for the specified ecosystem. Valid ecosystem IDs: `tanstack`, `ve
 |--------|---------|
 | 400 | Invalid ecosystem |
 | 429 | Rate limit exceeded |
-| 500 | Server error (e.g. GitHub API failure) |
-| 503 | Missing configuration (GitHub token or Redis) |
+| 500 | Server error |
+| 503 | Missing configuration (Redis) or cache empty (run refresh workflow) |
 
 ---
 
@@ -95,7 +98,7 @@ Returns issues for the specified ecosystem. Valid ecosystem IDs: `tanstack`, `ve
 ![Architecture diagram](public/architecture.png)
 
 - **Config:** [src/lib/ecosystems.config.ts](src/lib/ecosystems.config.ts) defines ecosystems and their repos.
-- **API:** `GET /api/issues` and `GET /api/issues/[ecosystem]` fetch and cache issues via [src/lib/api/fetch-issues.ts](src/lib/api/fetch-issues.ts), which calls [src/lib/github.ts](src/lib/github.ts) to fetch from the GitHub REST API.
+- **API:** `GET /api/issues` and `GET /api/issues/[ecosystem]` read from the Upstash cache only. A GitHub Actions workflow runs every 6 hours to refresh the cache via `POST /api/cron/refresh`, which fetches from the GitHub API and writes to Upstash.
 - **Analysis:** Raw issues are normalized in [src/lib/analysis/normalize.ts](src/lib/analysis/normalize.ts), which uses [status.ts](src/lib/analysis/status.ts) (likely_unclaimed, possible_wip, stale) and [readiness.ts](src/lib/analysis/readiness.ts) (high/medium/low scoring).
 - **Client:** [src/app/issues/page.tsx](src/app/issues/page.tsx) and [src/app/ecosystem/[id]/page.tsx](src/app/ecosystem/[id]/page.tsx) fetch from the API, apply filters from [src/lib/filters.ts](src/lib/filters.ts), and render issue cards. Filters are persisted in the URL.
 
@@ -110,10 +113,12 @@ Edit [src/lib/ecosystems.config.ts](src/lib/ecosystems.config.ts) to add or modi
 ## 7. Deploying to Vercel
 
 1. Connect your repo to Vercel.
-2. Set env vars: `GITHUB_TOKEN`, `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`. Optionally `NEXT_PUBLIC_SITE_URL` for preview deployments.
-3. The `vercel.json` `ignoreCommand` runs lint, typecheck, and unit tests before deploy. E2E runs in CI only; deploys are gated by CI (including E2E).
-4. For production, consider adding error tracking (e.g. Sentry) and monitoring `/api/health` for uptime checks.
-5. Rate limiting uses `x-forwarded-for`; the proxy (Vercel) must be trusted.
+2. Set env vars: `GITHUB_TOKEN`, `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`, `CRON_SECRET`. Optionally `NEXT_PUBLIC_SITE_URL` for preview deployments.
+3. Add GitHub secrets: `CRON_SECRET` (same as Vercel), `SITE_URL` (e.g. `https://www.issue-scout.dev`, no trailing slash) for the refresh workflow.
+4. After first deploy, run the **Refresh cache** workflow manually (Actions → Refresh cache → Run workflow) to populate the cache.
+5. The `vercel.json` `ignoreCommand` runs lint, typecheck, and unit tests before deploy. E2E runs in CI only; deploys are gated by CI (including E2E).
+6. For production, consider adding error tracking (e.g. Sentry) and monitoring `/api/health` for uptime checks.
+7. Rate limiting uses `x-forwarded-for`; the proxy (Vercel) must be trusted.
 
 ---
 
