@@ -67,7 +67,7 @@ export default function HomePage() {
             </AnimatedItem>
             <AnimatedItem>
               <p className="text-zinc-300 text-base leading-relaxed">
-                Refreshes every 6 hours so you see up-to-date data.
+                Refreshes daily so you see up-to-date data.
               </p>
             </AnimatedItem>
           </AnimatedSection>

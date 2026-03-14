@@ -28,7 +28,7 @@ Find OSS issues that don't appear to have an open PR referencing them. Live at [
    CRON_SECRET=...    # optional for local; required in production
    ```
 
-   Data is served from the Upstash cache. A scheduled job (GitHub Actions) refreshes the cache from GitHub every 6 hours. No user token is required. For preview deployments, set `NEXT_PUBLIC_SITE_URL` to your deployment URL so Open Graph and metadata use the correct domain.
+   Data is served from the Upstash cache. A scheduled job (GitHub Actions) refreshes the cache from GitHub daily. No user token is required. For preview deployments, set `NEXT_PUBLIC_SITE_URL` to your deployment URL so Open Graph and metadata use the correct domain.
 
 3. **Add Upstash Redis** (required):
 
@@ -98,7 +98,7 @@ Returns issues for the specified project. Valid project IDs: `tanstack`, `vercel
 ![Architecture diagram](public/architecture.png)
 
 - **Config:** [src/lib/projects.config.ts](src/lib/projects.config.ts) defines projects and their repos.
-- **API:** `GET /api/issues` and `GET /api/issues/[project]` read from the Upstash cache. When the cache is empty and `GITHUB_TOKEN` is set, the API falls back to fetching directly from GitHub and repopulates the cache. A GitHub Actions workflow runs every 6 hours to refresh the cache via `POST /api/cron/refresh`, which fetches from the GitHub API and writes to Upstash.
+- **API:** `GET /api/issues` and `GET /api/issues/[project]` read from the Upstash cache. When the cache is empty and `GITHUB_TOKEN` is set, the API falls back to fetching directly from GitHub and repopulates the cache. A GitHub Actions workflow runs daily to refresh the cache via `POST /api/cron/refresh`, which fetches from the GitHub API and writes to Upstash.
 - **Analysis:** Raw issues are normalized in [src/lib/analysis/normalize.ts](src/lib/analysis/normalize.ts), which uses [status.ts](src/lib/analysis/status.ts) (likely_unclaimed, possible_wip, stale) and [readiness.ts](src/lib/analysis/readiness.ts) (high/medium/low scoring).
 - **Client:** [src/app/issues/page.tsx](src/app/issues/page.tsx) and [src/app/project/[id]/page.tsx](src/app/project/[id]/page.tsx) fetch from the API, apply filters from [src/lib/filters.ts](src/lib/filters.ts), and render issue cards. Filters are persisted in the URL.
 

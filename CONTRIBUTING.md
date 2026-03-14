@@ -54,7 +54,7 @@ The CI workflow runs on push and pull requests. For E2E tests to pass, add these
 | `UPSTASH_REDIS_REST_URL` | [Upstash Console](https://console.upstash.com) |
 | `UPSTASH_REDIS_REST_TOKEN` | Upstash Console |
 
-For the **Refresh cache** workflow (scheduled every 6h), add `CRON_SECRET` (generate with `openssl rand -hex 32`, same as Vercel). The site URL is read from [config/site.json](config/site.json).
+For the **Refresh cache** workflow (scheduled daily), add `CRON_SECRET` (generate with `openssl rand -hex 32`, same as Vercel). The site URL is read from [config/site.json](config/site.json).
 
 ---
 

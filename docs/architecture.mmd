@@ -39,7 +39,7 @@ flowchart TB
     API --> getCache
     getCache -->|read only| Redis
 
-    GA -->|every 6h| Cron
+    GA -->|daily| Cron
     Cron --> Refresh
     Refresh --> Fetch
     Fetch -->|fetch| GitHub
