@@ -9,7 +9,7 @@ const mockIssue: NormalizedIssue = {
   title: "Fix the bug in component",
   url: "https://github.com/owner/repo/issues/123",
   repo: "owner/repo",
-  ecosystem: "tanstack",
+  project: "tanstack",
   labels: ["bug", "good first issue"],
   state: "open",
   comments: 5,
