@@ -17,6 +17,7 @@ export function filtersToParams(filters: FilterState): URLSearchParams {
   if (filters.repo) params.set("repo", filters.repo);
   if (filters.status) params.set("status", filters.status);
   if (filters.label) params.set("label", filters.label);
+  if (filters.tech) params.set("tech", filters.tech);
   if (filters.beginnerOnly) params.set("beginnerOnly", "1");
   if (filters.excludeStale) params.set("excludeStale", "1");
   if (filters.sort && filters.sort !== "best_match")
@@ -52,6 +53,8 @@ export function paramsToFilters(params: URLSearchParams): FilterState {
     filters.status = status;
   const label = params.get("label");
   if (label) filters.label = label;
+  const tech = params.get("tech");
+  if (tech) filters.tech = tech;
   filters.beginnerOnly = params.get("beginnerOnly") === "1";
   filters.excludeStale = params.get("excludeStale") === "1";
   if (sort && sortOptions.includes(sort as SortOption))

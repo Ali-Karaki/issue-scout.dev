@@ -26,6 +26,7 @@ export interface RawIssueWithPrCount {
   repo: string;
   project: string;
   matchedOpenPrs: number;
+  languages: string[];
 }
 
 async function fetchWithRetry(
@@ -144,6 +145,31 @@ export interface GetIssuesForReposResult {
   failedRepos: string[];
 }
 
+function topLanguagesByBytes(
+  obj: Record<string, number>,
+  limit = 3
+): string[] {
+  return Object.entries(obj)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, limit)
+    .map(([lang]) => lang);
+}
+
+async function fetchRepoLanguages(
+  base: string,
+  token: string
+): Promise<string[]> {
+  try {
+    const res = await fetchWithRetry(`${base}/languages`, token);
+    if (!res.ok) return [];
+    const data = (await res.json()) as Record<string, number>;
+    if (!data || typeof data !== "object") return [];
+    return topLanguagesByBytes(data);
+  } catch {
+    return [];
+  }
+}
+
 async function fetchRepo(
   repo: string,
   projectId: string,
@@ -153,9 +179,10 @@ async function fetchRepo(
     const [owner, name] = repo.split("/");
     const base = `${GITHUB_API}/repos/${owner}/${name}`;
 
-    const [allIssuesRaw, allPullsRaw] = await Promise.all([
+    const [allIssuesRaw, allPullsRaw, languages] = await Promise.all([
       fetchPaginated(`${base}/issues?state=open&per_page=100`, token),
       fetchPaginated(`${base}/pulls?state=open&per_page=100`, token),
+      fetchRepoLanguages(base, token),
     ]);
 
     const allIssues = allIssuesRaw as GitHubIssue[];
@@ -178,6 +205,7 @@ async function fetchRepo(
         repo,
         project: projectId,
         matchedOpenPrs: linkedByPrs.get(issue.number) ?? 0,
+        languages,
       });
     }
     return { results, failed: false };

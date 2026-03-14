@@ -10,6 +10,7 @@ const mockFilters: FilterState = {
   beginnerOnly: false,
   excludeStale: false,
   label: "",
+  tech: "",
   sort: "best_match",
   sortColumn: null,
   sortDesc: false,
@@ -25,6 +26,7 @@ describe("IssueFilters", () => {
         onChange={onChange}
         repos={[]}
         labels={[]}
+        techs={[]}
       />
     );
     const firstRoot = container.firstElementChild;
@@ -40,6 +42,7 @@ describe("IssueFilters", () => {
         onChange={onChange}
         repos={["owner/repo"]}
         labels={["bug"]}
+        techs={[]}
         showProject={true}
       />
     );
@@ -63,6 +66,7 @@ describe("IssueFilters", () => {
         onChange={onChange}
         repos={[]}
         labels={[]}
+        techs={[]}
       />
     );
     const unclaimedBtn = Array.from(container.querySelectorAll("button")).find(
@@ -83,6 +87,7 @@ describe("IssueFilters", () => {
         onChange={onChange}
         repos={[]}
         labels={[]}
+        techs={[]}
       />
     );
     const beginnerBtn = Array.from(container.querySelectorAll("button")).find(

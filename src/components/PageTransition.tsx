@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { motion } from "motion/react";
 import { useReducedMotion } from "motion/react";
 import { fadeInUp, fadeInUpReduced, defaultTransition } from "@/lib/animations";
@@ -10,8 +11,18 @@ interface PageTransitionProps {
 }
 
 export function PageTransition({ children, className }: PageTransitionProps) {
+  const [mounted, setMounted] = useState(false);
   const reduceMotion = useReducedMotion();
   const variants = reduceMotion ? fadeInUpReduced : fadeInUp;
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Render plain div on server/first paint to avoid motion style hydration mismatch
+  if (!mounted) {
+    return <div className={className}>{children}</div>;
+  }
 
   return (
     <motion.div

@@ -10,6 +10,7 @@ export interface NormalizedIssue {
   repo: string;
   project: string;
   labels: string[];
+  languages: string[];
   state: string;
   comments: number;
   updatedAt: string;

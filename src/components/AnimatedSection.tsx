@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { motion } from "motion/react";
 import { useReducedMotion } from "motion/react";
 import {
@@ -26,8 +27,18 @@ export function AnimatedSection({
   stagger = false,
   delay = 0,
 }: AnimatedSectionProps) {
+  const [mounted, setMounted] = useState(false);
   const reduceMotion = useReducedMotion();
   const variants = reduceMotion ? fadeInUpReduced : fadeInUp;
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Render plain div on server/first paint to avoid motion style hydration mismatch
+  if (!mounted) {
+    return <div className={className}>{children}</div>;
+  }
 
   if (stagger) {
     return (

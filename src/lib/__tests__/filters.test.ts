@@ -11,6 +11,7 @@ function makeIssue(overrides: Partial<NormalizedIssue> = {}): NormalizedIssue {
     repo: "owner/repo",
     project: "tanstack",
     labels: ["bug"],
+    languages: [],
     state: "open",
     comments: 5,
     updatedAt: "2024-01-15T00:00:00Z",
@@ -160,5 +161,18 @@ describe("applyFiltersAndSort", () => {
     });
     expect(result).toHaveLength(1);
     expect(result[0].isStale).toBe(false);
+  });
+
+  it("filters by tech", () => {
+    const issues = [
+      makeIssue({ id: "1", languages: ["TypeScript", "JavaScript"] }),
+      makeIssue({ id: "2", languages: ["Python"] }),
+    ];
+    const result = applyFiltersAndSort(issues, {
+      ...INITIAL_FILTERS,
+      tech: "TypeScript",
+    });
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe("1");
   });
 });

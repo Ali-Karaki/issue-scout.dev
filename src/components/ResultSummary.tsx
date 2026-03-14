@@ -52,6 +52,12 @@ export function ResultSummary({
       remove: () => onRemoveFilter({ label: "" }),
     });
   }
+  if (filters.tech) {
+    chips.push({
+      label: `Tech: ${filters.tech}`,
+      remove: () => onRemoveFilter({ tech: "" }),
+    });
+  }
   if (filters.project && filters.project !== initialFilters.project) {
     chips.push({
       label: `Project: ${filters.project}`,

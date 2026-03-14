@@ -37,6 +37,7 @@ function makeMockResponse(issueCount: number): IssuesResponse {
       repo: "owner/repo",
       project: "tanstack",
       labels: ["bug"],
+      languages: ["TypeScript"],
       state: "open",
       comments: 0,
       updatedAt: new Date().toISOString(),
@@ -255,5 +256,26 @@ describe("GET /api/issues", () => {
     expect(body.issues).toHaveLength(5);
     expect(body.pagination.total).toBe(5);
     expect(body.issues.every((i: { status: string }) => i.status === "likely_unclaimed")).toBe(true);
+  });
+
+  it("applies tech filter server-side", async () => {
+    const data = makeMockResponse(10);
+    data.issues = data.issues.map((issue, i) => ({
+      ...issue,
+      id: `owner/repo#${i + 1}`,
+      languages: i < 3 ? ["TypeScript", "JavaScript"] : ["Python"],
+    }));
+    mockGetIssuesFromCache.mockResolvedValue(data);
+
+    const req = new NextRequest(
+      "http://localhost:3000/api/issues?tech=TypeScript&page=1&limit=50"
+    );
+    const res = await GET(req);
+    const body = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(body.issues).toHaveLength(3);
+    expect(body.pagination.total).toBe(3);
+    expect(body.issues.every((i: { languages: string[] }) => i.languages?.includes("TypeScript"))).toBe(true);
   });
 });

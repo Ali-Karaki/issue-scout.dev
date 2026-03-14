@@ -21,6 +21,7 @@ interface IssueFiltersProps {
   onChange: (filters: FilterState) => void;
   repos: string[];
   labels: string[];
+  techs: string[];
   initialFilters?: FilterState;
   onClear?: () => void;
   showProject?: boolean;
@@ -31,6 +32,7 @@ export function IssueFilters({
   onChange,
   repos,
   labels,
+  techs,
   initialFilters,
   onClear,
   showProject = true,
@@ -49,6 +51,7 @@ export function IssueFilters({
     filters.repo !== initialFilters.repo ||
     filters.status !== initialFilters.status ||
     filters.label !== initialFilters.label ||
+    filters.tech !== initialFilters.tech ||
     filters.sort !== initialFilters.sort ||
     filters.sortColumn !== initialFilters.sortColumn ||
     filters.sortDesc !== initialFilters.sortDesc ||
@@ -243,6 +246,32 @@ export function IssueFilters({
                 {labels.map((l) => (
                   <option key={l} value={l}>
                     {l}
+                  </option>
+                ))}
+              </select>
+              <span className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-400 text-xs">
+                ▼
+              </span>
+            </div>
+          </div>
+          <div className="min-w-[140px]">
+            <label
+              htmlFor="filter-tech"
+              className="block text-xs text-zinc-500 mb-1"
+            >
+              Tech
+            </label>
+            <div className={selectWrapperClass}>
+              <select
+                id="filter-tech"
+                value={filters.tech}
+                onChange={(e) => update("tech", e.target.value)}
+                className={`${selectClass} min-w-[140px]`}
+              >
+                <option value="">All</option>
+                {techs.map((t) => (
+                  <option key={t} value={t}>
+                    {t}
                   </option>
                 ))}
               </select>

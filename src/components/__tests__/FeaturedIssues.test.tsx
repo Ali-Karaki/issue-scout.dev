@@ -21,6 +21,7 @@ const mockIssue: NormalizedIssue = {
   repo: "owner/repo",
   project: "tanstack",
   labels: ["bug"],
+  languages: [],
   state: "open",
   comments: 0,
   updatedAt: new Date().toISOString(),

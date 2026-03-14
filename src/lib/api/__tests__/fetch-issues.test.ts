@@ -33,6 +33,7 @@ function makeMockResponse(projectId: string): IssuesResponse {
         repo: "owner/repo",
         project: projectId,
         labels: ["bug"],
+        languages: [],
         state: "open",
         comments: 0,
         updatedAt: new Date().toISOString(),
@@ -159,6 +160,7 @@ describe("refreshAllProjects", () => {
           repo: "owner/repo",
           project: projectId,
           matchedOpenPrs: 0,
+          languages: [],
         };
         return { raw: [raw], failedRepos: [] };
       }

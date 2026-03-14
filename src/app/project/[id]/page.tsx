@@ -118,6 +118,15 @@ export default function ProjectPage() {
     return [...set].sort();
   }, [data]);
 
+  const techs = useMemo(() => {
+    if (!data) return [];
+    const set = new Set<string>();
+    for (const i of data.issues) {
+      for (const l of i.languages ?? []) set.add(l);
+    }
+    return [...set].sort();
+  }, [data]);
+
   const displayIssues = data?.issues ?? [];
 
   if (!projectConfig) {
@@ -191,6 +200,7 @@ export default function ProjectPage() {
         onChange={updateFilters}
         repos={repos}
         labels={labels}
+        techs={techs}
         initialFilters={initialFilters}
         onClear={() => updateFilters(initialFilters)}
         showProject={false}

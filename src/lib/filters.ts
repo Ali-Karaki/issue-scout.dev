@@ -23,6 +23,7 @@ export interface FilterState {
   beginnerOnly: boolean;
   excludeStale: boolean;
   label: string;
+  tech: string;
   sort: SortOption;
   sortColumn: SortColumn | null;
   sortDesc: boolean;
@@ -36,6 +37,7 @@ export const INITIAL_FILTERS: FilterState = {
   beginnerOnly: false,
   excludeStale: false,
   label: "",
+  tech: "",
   sort: "best_match",
   sortColumn: null,
   sortDesc: false,
@@ -69,6 +71,13 @@ export function applyFiltersAndSort(
   if (filters.label) {
     result = result.filter((i) =>
       i.labels.some((l) => l.toLowerCase() === filters.label.toLowerCase())
+    );
+  }
+  if (filters.tech) {
+    result = result.filter((i) =>
+      (i.languages ?? []).some(
+        (l) => l.toLowerCase() === filters.tech.toLowerCase()
+      )
     );
   }
   if (filters.beginnerOnly) {

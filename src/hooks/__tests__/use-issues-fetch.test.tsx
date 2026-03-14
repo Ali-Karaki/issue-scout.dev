@@ -21,6 +21,7 @@ function makeMockResponse(page: number): IssuesResponse {
         repo: "owner/repo",
         project: "tanstack",
         labels: ["bug"],
+        languages: ["TypeScript"],
         state: "open",
         comments: 0,
         updatedAt: new Date().toISOString(),

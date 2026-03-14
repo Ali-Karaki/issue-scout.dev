@@ -18,6 +18,7 @@ function makeRaw(overrides: Partial<RawIssueWithPrCount> = {}): RawIssueWithPrCo
     repo: "owner/repo",
     project: "tanstack",
     matchedOpenPrs: 0,
+    languages: [],
     ...overrides,
   };
 }
@@ -35,6 +36,7 @@ describe("normalizeIssue", () => {
       repo: "owner/repo",
       project: "tanstack",
       labels: ["bug"],
+      languages: [],
       state: "open",
       comments: 3,
       matchedOpenPrs: 0,
@@ -77,5 +79,11 @@ describe("normalizeIssue", () => {
     const raw = makeRaw({ matchedOpenPrs: 2 });
     const result = normalizeIssue(raw);
     expect(result.status).toBe("possible_wip");
+  });
+
+  it("passes through languages from raw", () => {
+    const raw = makeRaw({ languages: ["TypeScript", "JavaScript"] });
+    const result = normalizeIssue(raw);
+    expect(result.languages).toEqual(["TypeScript", "JavaScript"]);
   });
 });
