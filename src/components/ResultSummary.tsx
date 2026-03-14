@@ -1,6 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "motion/react";
+import { AnimatedNumber } from "@/components/AnimatedNumber";
 import type { FilterState } from "@/lib/filters";
 
 interface ResultSummaryProps {
@@ -61,7 +62,9 @@ export function ResultSummary({
   return (
     <div className="flex flex-wrap items-center gap-2 mb-3">
       <span className="text-sm text-zinc-400">
-        <strong className="text-zinc-200 font-medium">{count}</strong>
+        <strong className="text-zinc-200 font-medium">
+          <AnimatedNumber value={count} duration={0.3} />
+        </strong>
         {total !== undefined && total !== count && (
           <span className="text-zinc-500"> of {total}</span>
         )}{" "}

@@ -1,5 +1,7 @@
 "use client";
 
+import { motion } from "motion/react";
+
 export default function GlobalError({
   error,
   reset,
@@ -22,7 +24,7 @@ export default function GlobalError({
           padding: "1.5rem",
         }}
       >
-        <div
+        <motion.div
           style={{
             maxWidth: "32rem",
             padding: "1.5rem",
@@ -31,6 +33,9 @@ export default function GlobalError({
             background: "rgba(239, 68, 68, 0.1)",
             color: "#f87171",
           }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3, ease: "easeOut" }}
         >
           <h2 style={{ margin: "0 0 0.5rem", fontSize: "1.125rem", fontWeight: 600 }}>
             Something went wrong
@@ -54,7 +59,7 @@ export default function GlobalError({
           >
             Try again
           </button>
-        </div>
+        </motion.div>
       </body>
     </html>
   );

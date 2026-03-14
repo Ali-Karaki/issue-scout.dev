@@ -8,6 +8,10 @@
   --color-border: #2a2a2e;
   --color-accent: #f59e0b;
   --color-accent-dim: #b45309;
+  /* Consistent transition durations */
+  --transition-duration-smooth: 200ms;
+  --transition-duration-moderate: 300ms;
+  --transition-duration-slow: 400ms;
 }
 
 /* View Transitions API - smooth page transitions */

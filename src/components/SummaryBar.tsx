@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
+import { AnimatedNumber } from "@/components/AnimatedNumber";
 import { fadeIn, defaultTransition } from "@/lib/animations";
 
 interface SummaryBarProps {
@@ -58,24 +59,33 @@ export function SummaryBar({
         <span className="text-sm text-zinc-500">
           Total:{" "}
           <strong className="text-zinc-300 font-medium">
-            {displayTotal}
+            <AnimatedNumber value={displayTotal} />
             {isFiltered && ` of ${total}`}
           </strong>
         </span>
         <span className="text-sm text-zinc-500">
           Likely unclaimed:{" "}
-          <strong className="text-emerald-400 font-medium">{displayLikelyUnclaimed}</strong>
+          <strong className="text-emerald-400 font-medium">
+            <AnimatedNumber value={displayLikelyUnclaimed} />
+          </strong>
         </span>
         <span className="text-sm text-zinc-500">
           Beginner-friendly:{" "}
-          <strong className="text-amber-500 font-medium">{displayBeginnerFriendly}</strong>
+          <strong className="text-amber-500 font-medium">
+            <AnimatedNumber value={displayBeginnerFriendly} />
+          </strong>
         </span>
         <span className="text-sm text-zinc-500">
           Stale:{" "}
-          <strong className="text-zinc-400 font-medium">{displayStale}</strong>
+          <strong className="text-zinc-400 font-medium">
+            <AnimatedNumber value={displayStale} />
+          </strong>
         </span>
         <span className="text-sm text-zinc-500">
-          Repos: <strong className="text-zinc-300 font-medium">{displayReposCovered}</strong>
+          Repos:{" "}
+          <strong className="text-zinc-300 font-medium">
+            <AnimatedNumber value={displayReposCovered} />
+          </strong>
         </span>
       </div>
     </motion.div>

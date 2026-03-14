@@ -7,6 +7,15 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      transitionDuration: {
+        smooth: "200ms",
+        moderate: "300ms",
+        slow: "400ms",
+      },
+      transitionTimingFunction: {
+        smooth: "cubic-bezier(0.4, 0, 0.2, 1)",
+        "smooth-out": "cubic-bezier(0, 0, 0.2, 1)",
+      },
       colors: {
         bg: "#0d0d0f",
         surface: "#161618",
