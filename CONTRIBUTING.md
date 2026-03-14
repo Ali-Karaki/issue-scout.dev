@@ -31,7 +31,7 @@ Thanks for your interest in contributing. This document covers how to set up the
 - `pnpm test` — Run unit tests
 - `pnpm test:watch` — Run tests in watch mode
 - `pnpm test:coverage` — Run tests with coverage
-- `pnpm test:e2e` — Run E2E tests (requires dev server)
+- `pnpm test:e2e` — Run E2E tests (starts dev server automatically)
 - `pnpm test:e2e:ui` — Run E2E tests with Playwright UI
 
 ## Pull Request Process
