@@ -1,6 +1,6 @@
 import { revalidateTag } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
-import { refreshAllProjects } from "@/lib/api/fetch-issues";
+import { refreshProjectsBatch } from "@/lib/api/fetch-issues";
 import { verifyCronSecret } from "@/lib/cron-auth";
 
 export async function POST(request: NextRequest) {
@@ -15,13 +15,22 @@ export async function POST(request: NextRequest) {
     );
   }
   try {
-    const result = await refreshAllProjects(token);
-    if (result.ok) {
+    const result = await refreshProjectsBatch(token);
+    if (!result.skipped && (result.ok || result.projects.some((p) => p.ok))) {
       revalidateTag("issues", "max");
     }
-    return NextResponse.json(result, {
-      status: result.ok ? 200 : 207,
-    });
+    return NextResponse.json(
+      {
+        ok: result.ok,
+        refreshed: result.projects.filter((p) => p.ok).map((p) => p.id),
+        failed: result.projects.filter((p) => !p.ok).map((p) => ({ id: p.id, error: p.error })),
+        nextIndex: result.nextIndex,
+        cycleComplete: result.cycleComplete,
+        retryQueueSize: result.retryQueueSize,
+        ...(result.skipped && { skipped: result.skipped, reason: result.reason }),
+      },
+      { status: result.skipped ? 200 : result.ok ? 200 : 207 }
+    );
   } catch (err) {
     const message =
       process.env.NODE_ENV === "production"

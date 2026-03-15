@@ -44,6 +44,58 @@ export async function kvSet(
   }
 }
 
+/**
+ * Set key only if it does not exist (NX). Returns true if set, false if key existed.
+ * Used for distributed locks.
+ */
+export async function kvSetNx(
+  key: string,
+  value: unknown,
+  ttlSeconds: number
+): Promise<boolean> {
+  const redis = getRedis();
+  if (!redis) return false;
+  try {
+    const result = await redis.set(key, value, { nx: true, ex: ttlSeconds });
+    return result === "OK";
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Delete a key. Returns true if deleted or key did not exist.
+ */
+export async function kvDel(key: string): Promise<boolean> {
+  const redis = getRedis();
+  if (!redis) return false;
+  try {
+    await redis.del(key);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Get a list from Redis. Returns empty array if missing.
+ */
+export async function kvListGet(key: string): Promise<string[]> {
+  const val = await kvGet<string[]>(key);
+  return Array.isArray(val) ? val : [];
+}
+
+/**
+ * Set a list in Redis. Uses long TTL for metadata keys.
+ */
+export async function kvListSet(
+  key: string,
+  value: string[],
+  ttlSeconds: number = 604800
+): Promise<boolean> {
+  return kvSet(key, value, ttlSeconds);
+}
+
 /** Reset cached client. For testing only. */
 export function __resetForTesting(): void {
   _redis = undefined;

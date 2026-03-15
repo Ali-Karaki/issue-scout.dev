@@ -38,7 +38,7 @@ function makeMockResponse(issueCount: number): IssuesResponse {
       title: "Test",
       url: "https://github.com/owner/repo/issues/1",
       repo: "owner/repo",
-      project: "tanstack",
+      project: "facebook-react",
       labels: ["bug"],
       languages: ["TypeScript"],
       state: "open",
@@ -96,8 +96,8 @@ describe("GET /api/issues/[project]", () => {
   it("returns 429 when rate limit exceeded", async () => {
     mockCheckRateLimit.mockResolvedValue(false);
 
-    const req = new NextRequest("http://localhost:3000/api/issues/tanstack");
-    const res = await GET(req, createContext("tanstack"));
+    const req = new NextRequest("http://localhost:3000/api/issues/facebook-react");
+    const res = await GET(req, createContext("facebook-react"));
     const body = await res.json();
 
     expect(res.status).toBe(429);
@@ -109,8 +109,8 @@ describe("GET /api/issues/[project]", () => {
     mockGetCachedIssues.mockResolvedValue(null);
     delete process.env.GITHUB_TOKEN;
 
-    const req = new NextRequest("http://localhost:3000/api/issues/tanstack");
-    const res = await GET(req, createContext("tanstack"));
+    const req = new NextRequest("http://localhost:3000/api/issues/facebook-react");
+    const res = await GET(req, createContext("facebook-react"));
     const body = await res.json();
 
     expect(res.status).toBe(503);
@@ -123,9 +123,9 @@ describe("GET /api/issues/[project]", () => {
     mockGetCachedIssues.mockResolvedValue(data);
 
     const req = new NextRequest(
-      "http://localhost:3000/api/issues/tanstack?page=1&limit=10"
+      "http://localhost:3000/api/issues/facebook-react?page=1&limit=10"
     );
-    const res = await GET(req, createContext("tanstack"));
+    const res = await GET(req, createContext("facebook-react"));
     const body = await res.json();
 
     expect(res.status).toBe(200);
@@ -137,7 +137,7 @@ describe("GET /api/issues/[project]", () => {
       hasMore: true,
     });
     expect(res.headers.get("Cache-Control")).toContain("s-maxage=86400");
-    expect(mockGetCachedIssues).toHaveBeenCalledWith("tanstack");
+    expect(mockGetCachedIssues).toHaveBeenCalledWith("facebook-react");
   });
 
   it("writes to cache when falling back to GitHub", async () => {
@@ -146,11 +146,11 @@ describe("GET /api/issues/[project]", () => {
     const data = makeMockResponse(5);
     mockFetchIssuesFromGitHub.mockResolvedValue(data);
 
-    const req = new NextRequest("http://localhost:3000/api/issues/tanstack");
-    await GET(req, createContext("tanstack"));
+    const req = new NextRequest("http://localhost:3000/api/issues/facebook-react");
+    await GET(req, createContext("facebook-react"));
 
     expect(mockKvSet).toHaveBeenCalledWith(
-      "issues:tanstack",
+      "issues:facebook-react",
       data,
       604800
     );

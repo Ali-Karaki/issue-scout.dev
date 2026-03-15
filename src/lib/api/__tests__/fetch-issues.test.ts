@@ -3,6 +3,7 @@ import {
   getIssuesFromCache,
   getCachedIssues,
   refreshAllProjects,
+  refreshProjectsBatch,
   type IssuesResponse,
 } from "../fetch-issues";
 import { PROJECTS } from "../../projects.config";
@@ -12,16 +13,27 @@ const mockGetIssuesForRepos = vi.fn();
 const mockHasKv = vi.fn();
 const mockKvGet = vi.fn();
 const mockKvSet = vi.fn();
-
-vi.mock("../../github", () => ({
-  getIssuesForRepos: (...args: unknown[]) => mockGetIssuesForRepos(...args),
-}));
+const mockKvSetNx = vi.fn();
+const mockKvDel = vi.fn();
 
 vi.mock("../../kv", () => ({
   hasKv: () => mockHasKv(),
   kvGet: (key: string) => mockKvGet(key),
   kvSet: (key: string, value: unknown, ttl: number) =>
     mockKvSet(key, value, ttl),
+  kvSetNx: (key: string, value: unknown, ttl: number) =>
+    mockKvSetNx(key, value, ttl),
+  kvDel: (key: string) => mockKvDel(key),
+  kvListGet: async (key: string) => {
+    const v = await mockKvGet(key);
+    return Array.isArray(v) ? v : [];
+  },
+  kvListSet: (key: string, value: string[], ttl?: number) =>
+    mockKvSet(key, value, ttl ?? 604800),
+}));
+
+vi.mock("../../github", () => ({
+  getIssuesForRepos: (...args: unknown[]) => mockGetIssuesForRepos(...args),
 }));
 
 vi.mock("next/cache", () => ({
@@ -134,10 +146,11 @@ describe("getIssuesFromCache", () => {
   });
 
   it('"all" projects returns null when any cache miss', async () => {
+    const projectWithMiss = PROJECTS[0]!.id;
     mockHasKv.mockReturnValue(true);
     mockKvGet.mockImplementation((key: string) => {
       if (key === "issues:all") return Promise.resolve(null);
-      if (key === "issues:vercel") return Promise.resolve(null);
+      if (key === `issues:${projectWithMiss}`) return Promise.resolve(null);
       const projectId = key.replace("issues:", "");
       return Promise.resolve(makeMockResponse(projectId));
     });
@@ -219,7 +232,7 @@ describe("refreshAllProjects", () => {
     expect(result.projects).toHaveLength(PROJECTS.length);
     expect(result.projects.every((p) => p.ok)).toBe(true);
     expect(mockGetIssuesForRepos).toHaveBeenCalledTimes(PROJECTS.length);
-    expect(mockKvSet).toHaveBeenCalledTimes(PROJECTS.length + 1);
+    expect(mockKvSet).toHaveBeenCalledTimes(PROJECTS.length + 2);
   });
 
   it("returns error when KV not configured", async () => {
@@ -247,5 +260,210 @@ describe("refreshAllProjects", () => {
     expect(result.projects).toHaveLength(PROJECTS.length);
     const failed = result.projects.find((p) => !p.ok);
     expect(failed?.error).toBe("GitHub API error");
+  });
+});
+
+describe("refreshProjectsBatch", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockKvSetNx.mockResolvedValue(true);
+    mockKvDel.mockResolvedValue(true);
+    mockGetIssuesForRepos.mockImplementation(
+      async (_repos: string[], projectId: string) => {
+        const raw: RawIssueWithPrCount = {
+          issue: {
+            number: 1,
+            title: "Test",
+            state: "open",
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            html_url: "https://github.com/owner/repo/issues/1",
+            comments: 0,
+            labels: [{ name: "bug" }],
+          },
+          repo: "owner/repo",
+          project: projectId,
+          matchedOpenPrs: 0,
+          languages: [],
+        };
+        return { raw: [raw], failedRepos: [] };
+      }
+    );
+  });
+
+  it("returns error when KV not configured", async () => {
+    mockHasKv.mockReturnValue(false);
+
+    const result = await refreshProjectsBatch("token");
+
+    expect(result.ok).toBe(false);
+    expect(result.nextIndex).toBe(0);
+    expect(result.cycleComplete).toBe(false);
+    expect(mockGetIssuesForRepos).not.toHaveBeenCalled();
+    expect(mockKvSet).not.toHaveBeenCalled();
+  });
+
+  it("returns skipped when lock is held", async () => {
+    mockHasKv.mockReturnValue(true);
+    mockKvSetNx.mockResolvedValue(false);
+    mockKvGet.mockImplementation((key: string) => {
+      if (key === "cron:refresh:index") return Promise.resolve(5);
+      if (key === "cron:retry:queue") return Promise.resolve(["p1", "p2"]);
+      return Promise.resolve(null);
+    });
+
+    const result = await refreshProjectsBatch("token");
+
+    expect(result.skipped).toBe(true);
+    expect(result.reason).toBe("lock held");
+    expect(result.nextIndex).toBe(5);
+    expect(result.retryQueueSize).toBe(2);
+    expect(result.projects).toEqual([]);
+    expect(mockGetIssuesForRepos).not.toHaveBeenCalled();
+    expect(mockKvDel).not.toHaveBeenCalled();
+  });
+
+  it("fetches batch and updates index when KV configured", async () => {
+    mockHasKv.mockReturnValue(true);
+    mockKvGet.mockResolvedValue(0);
+    mockKvSet.mockResolvedValue(true);
+
+    const result = await refreshProjectsBatch("token");
+
+    expect(result.ok).toBe(true);
+    expect(result.projects.length).toBeLessThanOrEqual(10);
+    expect(result.nextIndex).toBe(result.projects.length);
+    expect(mockKvGet).toHaveBeenCalledWith("cron:refresh:index");
+    expect(mockGetIssuesForRepos).toHaveBeenCalledTimes(result.projects.length);
+  });
+
+  it("adds failed projects to retry queue and only advances index for successes", async () => {
+    mockHasKv.mockReturnValue(true);
+    mockKvGet.mockImplementation((key: string) => {
+      if (key === "cron:refresh:index") return Promise.resolve(0);
+      if (key === "cron:retry:queue") return Promise.resolve([]);
+      if (key === "cron:retry:counts") return Promise.resolve(null);
+      return Promise.resolve(null);
+    });
+    mockKvSet.mockResolvedValue(true);
+
+    let callCount = 0;
+    mockGetIssuesForRepos.mockImplementation(
+      async (_repos: string[], projectId: string) => {
+        callCount++;
+        if (projectId === PROJECTS[1]!.id) {
+          throw new Error("Rate limited");
+        }
+        const raw: RawIssueWithPrCount = {
+          issue: {
+            number: 1,
+            title: "Test",
+            state: "open",
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            html_url: "https://github.com/owner/repo/issues/1",
+            comments: 0,
+            labels: [],
+            matchedOpenPrs: 0,
+            languages: [],
+          },
+          repo: "owner/repo",
+          project: projectId,
+        };
+        return { raw: [raw], failedRepos: [] };
+      }
+    );
+
+    const result = await refreshProjectsBatch("token");
+
+    expect(result.ok).toBe(false);
+    expect(result.retryQueueSize).toBe(1);
+    expect(result.nextIndex).toBe(9);
+    expect(mockKvSet).toHaveBeenCalledWith(
+      "cron:retry:queue",
+      [PROJECTS[1]!.id],
+      expect.any(Number)
+    );
+  });
+
+  it("drops failed project from retry queue when at cap", async () => {
+    const fullQueue = Array.from({ length: 60 }, (_, i) => PROJECTS[i % PROJECTS.length]!.id);
+    mockHasKv.mockReturnValue(true);
+    mockKvGet.mockImplementation((key: string) => {
+      if (key === "cron:refresh:index") return Promise.resolve(0);
+      if (key === "cron:retry:queue") return Promise.resolve(fullQueue);
+      if (key === "cron:retry:counts") return Promise.resolve({});
+      return Promise.resolve(null);
+    });
+    mockKvSet.mockResolvedValue(true);
+
+    let callCount = 0;
+    mockGetIssuesForRepos.mockImplementation(
+      async (_repos: string[], projectId: string) => {
+        callCount++;
+        if (callCount === 1) throw new Error("Rate limited");
+        const raw: RawIssueWithPrCount = {
+          issue: {
+            number: 1,
+            title: "Test",
+            state: "open",
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            html_url: "https://github.com/owner/repo/issues/1",
+            comments: 0,
+            labels: [],
+            matchedOpenPrs: 0,
+            languages: [],
+          },
+          repo: "owner/repo",
+          project: projectId,
+        };
+        return { raw: [raw], failedRepos: [] };
+      }
+    );
+
+    const result = await refreshProjectsBatch("token");
+
+    expect(result.ok).toBe(false);
+    expect(result.retryQueueSize).toBe(50);
+    expect(mockKvSet).toHaveBeenCalledWith(
+      "cron:retry:queue",
+      expect.any(Array),
+      expect.any(Number)
+    );
+    const retryQueueArg = mockKvSet.mock.calls.find(
+      (c) => c[0] === "cron:retry:queue"
+    )?.[1] as string[];
+    expect(retryQueueArg.length).toBe(50);
+  });
+
+  it("rebuilds issues:all when cycle completes", async () => {
+    mockHasKv.mockReturnValue(true);
+    mockKvGet.mockImplementation((key: string) => {
+      if (key === "cron:refresh:index") {
+        return Promise.resolve(PROJECTS.length - 3);
+      }
+      if (key.startsWith("issues:")) {
+        const id = key.replace("issues:", "");
+        if (id === "all" || id === "summary") return Promise.resolve(null);
+        return Promise.resolve(makeMockResponse(id));
+      }
+      return Promise.resolve(null);
+    });
+    mockKvSet.mockResolvedValue(true);
+
+    const result = await refreshProjectsBatch("token");
+
+    expect(result.cycleComplete).toBe(true);
+    expect(mockKvSet).toHaveBeenCalledWith(
+      "issues:all",
+      expect.any(Object),
+      expect.any(Number)
+    );
+    expect(mockKvSet).toHaveBeenCalledWith(
+      "issues:summary",
+      expect.any(Object),
+      expect.any(Number)
+    );
   });
 });

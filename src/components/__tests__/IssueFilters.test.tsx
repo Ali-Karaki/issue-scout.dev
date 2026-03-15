@@ -50,9 +50,9 @@ describe("IssueFilters", () => {
     fireEvent.click(moreFiltersBtn!);
     const projectButton = getByRole("button", { name: "Project: All projects" });
     fireEvent.click(projectButton);
-    fireEvent.click(getByText("TanStack"));
+    fireEvent.click(getByText("freeCodeCamp"));
     expect(onChange).toHaveBeenCalledWith(
-      expect.objectContaining({ project: ["tanstack"] })
+      expect.objectContaining({ project: ["freecodecamp-freecodecamp"] })
     );
   });
 

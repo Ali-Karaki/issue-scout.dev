@@ -1,8 +1,21 @@
+export type ProjectCategory =
+  | "framework"
+  | "library"
+  | "infra"
+  | "tooling"
+  | "database"
+  | "devtools"
+  | "mobile"
+  | "ai"
+  | "other";
+
 export interface ProjectConfig {
   id: string;
   name: string;
   description: string;
   repos: string[];
+  featured?: boolean;
+  category?: ProjectCategory;
 }
 
 // Top 200 public OSS software projects by GitHub stars (proxy for popularity).
@@ -13,6 +26,8 @@ export const PROJECTS: ProjectConfig[] = [
   {
     id: "freecodecamp-freecodecamp",
     name: "freeCodeCamp",
+    featured: true,
+    category: "other",
     description: "freeCodeCamp.org's open-source codebase and curriculum. Learn math, programming, and computer science for free.",
     repos: ["freeCodeCamp/freeCodeCamp"],
   },
@@ -25,18 +40,15 @@ export const PROJECTS: ProjectConfig[] = [
   {
     id: "facebook-react",
     name: "react",
+    featured: true,
+    category: "library",
     description: "The library for web and native user interfaces.",
     repos: ["facebook/react"],
   },
   {
-    id: "torvalds-linux",
-    name: "linux",
-    description: "Linux kernel source tree",
-    repos: ["torvalds/linux"],
-  },
-  {
     id: "tensorflow-tensorflow",
     name: "tensorflow",
+    category: "ai",
     description: "An Open Source Machine Learning Framework for Everyone",
     repos: ["tensorflow/tensorflow"],
   },
@@ -49,6 +61,8 @@ export const PROJECTS: ProjectConfig[] = [
   {
     id: "microsoft-vscode",
     name: "vscode",
+    featured: true,
+    category: "devtools",
     description: "Visual Studio Code",
     repos: ["microsoft/vscode"],
   },
@@ -61,18 +75,21 @@ export const PROJECTS: ProjectConfig[] = [
   {
     id: "n8n-io-n8n",
     name: "n8n",
+    category: "tooling",
     description: "Fair-code workflow automation platform with native AI capabilities. Combine visual building with custom code, self-host or cloud, 400+ integrations.",
     repos: ["n8n-io/n8n"],
   },
   {
     id: "flutter-flutter",
     name: "flutter",
+    category: "framework",
     description: "Flutter makes it easy and fast to build beautiful apps for mobile and beyond",
     repos: ["flutter/flutter"],
   },
   {
     id: "twbs-bootstrap",
     name: "bootstrap",
+    category: "library",
     description: "The most popular HTML, CSS, and JavaScript framework for developing responsive, mobile first projects on the web.",
     repos: ["twbs/bootstrap"],
   },
@@ -91,6 +108,7 @@ export const PROJECTS: ProjectConfig[] = [
   {
     id: "huggingface-transformers",
     name: "transformers",
+    category: "ai",
     description: "🤗 Transformers: the model-definition framework for state-of-the-art machine learning models in text, vision, audio, and multimodal models, for both inference and training.",
     repos: ["huggingface/transformers"],
   },
@@ -115,6 +133,8 @@ export const PROJECTS: ProjectConfig[] = [
   {
     id: "vercel-next-js",
     name: "next.js",
+    featured: true,
+    category: "framework",
     description: "The React Framework",
     repos: ["vercel/next.js"],
   },
@@ -139,6 +159,7 @@ export const PROJECTS: ProjectConfig[] = [
   {
     id: "langchain-ai-langchain",
     name: "langchain",
+    category: "ai",
     description: "The agent engineering platform",
     repos: ["langchain-ai/langchain"],
   },
@@ -151,6 +172,8 @@ export const PROJECTS: ProjectConfig[] = [
   {
     id: "facebook-react-native",
     name: "react-native",
+    featured: true,
+    category: "mobile",
     description: "A framework for building native applications using React",
     repos: ["facebook/react-native"],
   },
@@ -163,12 +186,16 @@ export const PROJECTS: ProjectConfig[] = [
   {
     id: "kubernetes-kubernetes",
     name: "kubernetes",
+    featured: true,
+    category: "infra",
     description: "Production-Grade Container Scheduling and Management",
     repos: ["kubernetes/kubernetes"],
   },
   {
     id: "electron-electron",
     name: "electron",
+    featured: true,
+    category: "library",
     description: ":electron: Build cross-platform desktop apps with JavaScript, HTML, and CSS",
     repos: ["electron/electron"],
   },
@@ -181,30 +208,36 @@ export const PROJECTS: ProjectConfig[] = [
   {
     id: "nodejs-node",
     name: "node",
+    featured: true,
+    category: "tooling",
     description: "Node.js JavaScript runtime ✨🐢🚀✨",
     repos: ["nodejs/node"],
   },
   {
     id: "d3-d3",
     name: "d3",
+    category: "library",
     description: "Bring data to life with SVG, Canvas and HTML. :bar_chart::chart_with_upwards_trend::tada:",
     repos: ["d3/d3"],
   },
   {
     id: "mrdoob-three-js",
     name: "three.js",
+    category: "library",
     description: "JavaScript 3D Library.",
     repos: ["mrdoob/three.js"],
   },
   {
     id: "rust-lang-rust",
     name: "rust",
+    category: "other",
     description: "Empowering everyone to build reliable and efficient software.",
     repos: ["rust-lang/rust"],
   },
   {
     id: "shadcn-ui-ui",
     name: "ui",
+    category: "library",
     description: "A set of beautifully-designed, accessible components and a code distribution platform. Works with your favorite frameworks. Open Source. Open Code.",
     repos: ["shadcn-ui/ui"],
   },
@@ -217,12 +250,14 @@ export const PROJECTS: ProjectConfig[] = [
   {
     id: "axios-axios",
     name: "axios",
+    category: "library",
     description: "Promise based HTTP client for the browser and node.js",
     repos: ["axios/axios"],
   },
   {
     id: "microsoft-typescript",
     name: "TypeScript",
+    category: "tooling",
     description: "TypeScript is a superset of JavaScript that compiles to clean JavaScript output.",
     repos: ["microsoft/TypeScript"],
   },
@@ -235,6 +270,7 @@ export const PROJECTS: ProjectConfig[] = [
   {
     id: "denoland-deno",
     name: "deno",
+    category: "tooling",
     description: "A modern runtime for JavaScript and TypeScript.",
     repos: ["denoland/deno"],
   },
@@ -253,6 +289,7 @@ export const PROJECTS: ProjectConfig[] = [
   {
     id: "tauri-apps-tauri",
     name: "tauri",
+    category: "library",
     description: "Build smaller, faster, and more secure desktop and mobile applications with a web frontend.",
     repos: ["tauri-apps/tauri"],
   },
@@ -271,18 +308,21 @@ export const PROJECTS: ProjectConfig[] = [
   {
     id: "angular-angular",
     name: "angular",
+    category: "framework",
     description: "Deliver web apps with confidence 🚀",
     repos: ["angular/angular"],
   },
   {
     id: "supabase-supabase",
     name: "supabase",
+    category: "database",
     description: "The Postgres development platform. Supabase gives you a dedicated Postgres database to build your web, mobile, and AI applications.",
     repos: ["supabase/supabase"],
   },
   {
     id: "pytorch-pytorch",
     name: "pytorch",
+    category: "ai",
     description: "Tensors and Dynamic neural networks in Python with strong GPU acceleration",
     repos: ["pytorch/pytorch"],
   },
@@ -319,6 +359,7 @@ export const PROJECTS: ProjectConfig[] = [
   {
     id: "fastapi-fastapi",
     name: "fastapi",
+    category: "framework",
     description: "FastAPI framework, high performance, easy to learn, fast to code, ready for production",
     repos: ["fastapi/fastapi"],
   },
@@ -343,12 +384,14 @@ export const PROJECTS: ProjectConfig[] = [
   {
     id: "tailwindlabs-tailwindcss",
     name: "tailwindcss",
+    category: "library",
     description: "A utility-first CSS framework for rapid UI development.",
     repos: ["tailwindlabs/tailwindcss"],
   },
   {
     id: "puppeteer-puppeteer",
     name: "puppeteer",
+    category: "devtools",
     description: "JavaScript API for Chrome and Firefox",
     repos: ["puppeteer/puppeteer"],
   },
@@ -373,6 +416,7 @@ export const PROJECTS: ProjectConfig[] = [
   {
     id: "storybookjs-storybook",
     name: "storybook",
+    category: "devtools",
     description: "Storybook is the industry standard workshop for building, documenting, and testing UI components in isolation",
     repos: ["storybookjs/storybook"],
   },
@@ -397,18 +441,21 @@ export const PROJECTS: ProjectConfig[] = [
   {
     id: "gohugoio-hugo",
     name: "hugo",
+    category: "tooling",
     description: "The world’s fastest framework for building websites.",
     repos: ["gohugoio/hugo"],
   },
   {
     id: "django-django",
     name: "django",
+    category: "framework",
     description: "The Web framework for perfectionists with deadlines.",
     repos: ["django/django"],
   },
   {
     id: "mermaid-js-mermaid",
     name: "mermaid",
+    category: "library",
     description: "Generation of diagrams like flowcharts or sequence diagrams from text in a similar manner as markdown",
     repos: ["mermaid-js/mermaid"],
   },
@@ -421,6 +468,8 @@ export const PROJECTS: ProjectConfig[] = [
   {
     id: "sveltejs-svelte",
     name: "svelte",
+    featured: true,
+    category: "framework",
     description: "web development for the rest of us",
     repos: ["sveltejs/svelte"],
   },
@@ -439,6 +488,7 @@ export const PROJECTS: ProjectConfig[] = [
   {
     id: "microsoft-playwright",
     name: "playwright",
+    category: "devtools",
     description: "Playwright is a framework for Web Testing and Automation. It allows testing Chromium, Firefox and WebKit with a single API.",
     repos: ["microsoft/playwright"],
   },
@@ -493,6 +543,8 @@ export const PROJECTS: ProjectConfig[] = [
   {
     id: "vitejs-vite",
     name: "vite",
+    featured: true,
+    category: "tooling",
     description: "Next generation frontend tooling. It's fast!",
     repos: ["vitejs/vite"],
   },
@@ -1057,6 +1109,8 @@ export const PROJECTS: ProjectConfig[] = [
   {
     id: "withastro-astro",
     name: "astro",
+    featured: true,
+    category: "framework",
     description: "The web framework for content-driven websites. ⭐️ Star to support our work!",
     repos: ["withastro/astro"],
   },
@@ -1117,6 +1171,8 @@ export const PROJECTS: ProjectConfig[] = [
   {
     id: "remix-run-react-router",
     name: "react-router",
+    featured: true,
+    category: "library",
     description: "Declarative routing for React",
     repos: ["remix-run/react-router"],
   },
@@ -1211,3 +1267,53 @@ export const PROJECTS: ProjectConfig[] = [
     repos: ["marktext/marktext"],
   },
 ];
+
+const CATEGORY_LABELS: Record<ProjectCategory, string> = {
+  framework: "Framework",
+  library: "Library",
+  infra: "Infrastructure",
+  tooling: "Tooling",
+  database: "Database",
+  devtools: "DevTools",
+  mobile: "Mobile",
+  ai: "AI",
+  other: "Other",
+};
+
+const CATEGORY_ORDER: ProjectCategory[] = [
+  "framework",
+  "library",
+  "infra",
+  "tooling",
+  "database",
+  "devtools",
+  "mobile",
+  "ai",
+  "other",
+];
+
+export function getCategories(): ProjectCategory[] {
+  const seen = new Set<ProjectCategory>();
+  for (const p of PROJECTS) {
+    if (p.category) seen.add(p.category);
+  }
+  return CATEGORY_ORDER.filter((c) => seen.has(c));
+}
+
+export function getProjectsByCategory(): Map<ProjectCategory | null, typeof PROJECTS> {
+  const map = new Map<ProjectCategory | null, typeof PROJECTS>();
+  for (const p of PROJECTS) {
+    const cat = p.category ?? null;
+    if (!map.has(cat)) map.set(cat, []);
+    map.get(cat)!.push(p);
+  }
+  return map;
+}
+
+export function getCategoryLabel(cat: ProjectCategory): string {
+  return CATEGORY_LABELS[cat] ?? cat;
+}
+
+export function getFeaturedProjects(): typeof PROJECTS {
+  return PROJECTS.filter((p) => p.featured);
+}

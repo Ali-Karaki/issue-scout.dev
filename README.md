@@ -28,7 +28,7 @@ Find OSS issues that don't appear to have an open PR referencing them. Live at [
    CRON_SECRET=...    # optional for local; required in production
    ```
 
-   Data is served from the Upstash cache. A scheduled job (GitHub Actions) refreshes the cache from GitHub daily. No user token is required. For preview deployments, set `NEXT_PUBLIC_SITE_URL` to your deployment URL so Open Graph and metadata use the correct domain.
+   Data is served from the Upstash cache. A scheduled job (GitHub Actions) refreshes the cache from GitHub every 30 minutes (batch). No user token is required. For preview deployments, set `NEXT_PUBLIC_SITE_URL` to your deployment URL so Open Graph and metadata use the correct domain.
 
 3. **Add Upstash Redis** (required):
 
@@ -39,7 +39,7 @@ Find OSS issues that don't appear to have an open PR referencing them. Live at [
 
 1. Run `pnpm dev` with `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` in `.env.local`.
 2. `curl http://localhost:3000/api/debug/cache` — Expect `redis: "ok"` when configured.
-3. To populate the cache locally: `curl -X POST -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/cron/refresh` (requires `GITHUB_TOKEN` and `CRON_SECRET`).
+3. To populate the cache locally: run `pnpm refresh` (requires `GITHUB_TOKEN`), or `curl -X POST -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/cron/refresh` (requires `GITHUB_TOKEN` and `CRON_SECRET`).
 4. [Upstash Console](https://console.upstash.com) → your database → **Data Browser** — After a refresh, you should see keys like `issues:tanstack`, `issues:vercel`.
 
 **Verifying response caching:**
@@ -54,6 +54,7 @@ Find OSS issues that don't appear to have an open PR referencing them. Live at [
 | Script | Description |
 |--------|-------------|
 | `pnpm dev` | Start the development server |
+| `pnpm refresh` | Fetch issues from GitHub and upload to Upstash (requires `GITHUB_TOKEN`, `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`) |
 | `pnpm build` | Build for production |
 | `pnpm start` | Start the production server |
 | `pnpm lint` | Run ESLint |
