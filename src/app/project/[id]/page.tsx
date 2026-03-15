@@ -10,7 +10,6 @@ import { IssuesTable } from "@/components/issues-table/IssuesTable";
 import { Pagination } from "@/components/Pagination";
 import { AnimatePresence, motion } from "motion/react";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
-import { formatUpdatedAgo } from "@/lib/utils";
 import { PROJECTS } from "@/lib/projects.config";
 import { INITIAL_FILTERS, type FilterState } from "@/lib/filters";
 import { filtersToParams, paramsToFilters } from "@/lib/url-filters";
@@ -36,7 +35,7 @@ export default function ProjectPage() {
     const p = parseInt(searchParams.get("page") ?? "1", 10);
     return Number.isFinite(p) && p >= 1 ? p : 1;
   });
-  const { data, loading, isRevalidating, error, retry, fetchData, totalPages, total, limit, lastUpdatedAt } =
+  const { data, loading, isRevalidating, error, retry, fetchData, totalPages, total, limit } =
     useIssuesFetch(
       projectConfig ? `/api/issues/${id}` : "",
       filters,
@@ -178,7 +177,7 @@ export default function ProjectPage() {
           aria-label="Refresh issues"
           className="text-xs text-zinc-500 hover:text-zinc-300 transition disabled:opacity-50 disabled:cursor-wait"
         >
-          {isRevalidating ? "Refreshing…" : formatUpdatedAgo(lastUpdatedAt) || "Updated just now"}
+          {isRevalidating ? "Refreshing…" : "Refresh"}
         </button>
       </div>
 
