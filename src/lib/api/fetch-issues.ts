@@ -1,4 +1,3 @@
-import { unstable_cache } from "next/cache";
 import { CACHE_REVALIDATE_SECONDS } from "../constants";
 import { PROJECTS } from "../projects.config";
 import { getIssuesForRepos, type RawIssueWithPrCount } from "../github";
@@ -534,17 +533,11 @@ export async function getProjectSummary(): Promise<ProjectSummary | null> {
 }
 
 /**
- * Read issues with Next.js Data Cache. Avoids Upstash reads on cache hit.
- * When KV is not configured, falls back to getIssuesFromCache (no caching).
+ * Read issues from cache (Redis when configured).
+ * Returns null on cache miss.
  */
 export async function getCachedIssues(
   projectId: string | null
 ): Promise<IssuesResponse | null> {
-  if (!hasKv()) return getIssuesFromCache(projectId);
-  const cached = unstable_cache(
-    async () => getIssuesFromCache(projectId),
-    ["issues", projectId ?? "all"],
-    { revalidate: CACHE_REVALIDATE_SECONDS, tags: ["issues"] }
-  );
-  return cached();
+  return getIssuesFromCache(projectId);
 }

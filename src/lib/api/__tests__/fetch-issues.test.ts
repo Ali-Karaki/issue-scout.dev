@@ -36,10 +36,6 @@ vi.mock("../../github", () => ({
   getIssuesForRepos: (...args: unknown[]) => mockGetIssuesForRepos(...args),
 }));
 
-vi.mock("next/cache", () => ({
-  unstable_cache: (fn: () => Promise<unknown>) => () => fn(),
-}));
-
 function makeMockResponse(projectId: string): IssuesResponse {
   return {
     issues: [

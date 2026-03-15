@@ -26,10 +26,6 @@ vi.mock("@/lib/api/fetch-issues", () => ({
     mockFetchIssuesFromGitHub(project, _token),
 }));
 
-vi.mock("next/cache", () => ({
-  unstable_cache: (fn: () => Promise<unknown>) => fn,
-}));
-
 function makeMockResponse(issueCount: number): IssuesResponse {
   return {
     issues: Array.from({ length: issueCount }, (_, i) => ({
