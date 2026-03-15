@@ -360,11 +360,11 @@ describe("refreshProjectsBatch", () => {
             html_url: "https://github.com/owner/repo/issues/1",
             comments: 0,
             labels: [],
-            matchedOpenPrs: 0,
-            languages: [],
           },
           repo: "owner/repo",
           project: projectId,
+          matchedOpenPrs: 0,
+          languages: [],
         };
         return { raw: [raw], failedRepos: [] };
       }
@@ -408,11 +408,11 @@ describe("refreshProjectsBatch", () => {
             html_url: "https://github.com/owner/repo/issues/1",
             comments: 0,
             labels: [],
-            matchedOpenPrs: 0,
-            languages: [],
           },
           repo: "owner/repo",
           project: projectId,
+          matchedOpenPrs: 0,
+          languages: [],
         };
         return { raw: [raw], failedRepos: [] };
       }

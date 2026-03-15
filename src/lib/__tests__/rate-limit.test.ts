@@ -11,10 +11,12 @@ describe("rate-limit", () => {
       vi.useFakeTimers({ now: 0 });
       delete process.env.UPSTASH_REDIS_REST_URL;
       delete process.env.UPSTASH_REDIS_REST_TOKEN;
+      process.env.RATE_LIMIT_TEST_LIMIT = "10";
       __resetForTesting();
     });
 
     afterEach(() => {
+      delete process.env.RATE_LIMIT_TEST_LIMIT;
       vi.useRealTimers();
     });
 

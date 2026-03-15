@@ -62,17 +62,27 @@ function getRatelimit(): Ratelimit | null {
  * persist across instances. For strict rate limiting, ensure Upstash Redis is
  * configured.
  */
+function getEffectiveLimit(): number {
+  const env = process.env.RATE_LIMIT_TEST_LIMIT;
+  if (env) {
+    const n = parseInt(env, 10);
+    if (Number.isFinite(n) && n > 0) return n;
+  }
+  return LIMIT;
+}
+
 export async function checkRateLimit(key: string): Promise<boolean> {
+  const limit = getEffectiveLimit();
   const ratelimit = getRatelimit();
   if (ratelimit) {
     try {
       const { success } = await ratelimit.limit(key);
       return success;
     } catch {
-      return checkRateLimitInMemory(key, LIMIT, WINDOW_MS);
+      return checkRateLimitInMemory(key, limit, WINDOW_MS);
     }
   }
-  return checkRateLimitInMemory(key, LIMIT, WINDOW_MS);
+  return checkRateLimitInMemory(key, limit, WINDOW_MS);
 }
 
 /**
