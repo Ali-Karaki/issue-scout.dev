@@ -1,8 +1,8 @@
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 
-const LIMIT = 10;
-const WINDOW_MS = 60_000;
+const LIMIT = 200;
+const WINDOW_MS = 30_000;
 
 const inMemoryStore = new Map<
   string,

@@ -1,10 +1,14 @@
 import { Link } from "next-view-transitions";
 import { PROJECTS } from "@/lib/projects.config";
 import { SUGGEST_ISSUE_URL } from "@/lib/constants";
+import { getProjectSummary } from "@/lib/api/fetch-issues";
 import { FeaturedIssues } from "@/components/FeaturedIssues";
 import { AnimatedSection, AnimatedItem } from "@/components/AnimatedSection";
 
-export default function HomePage() {
+export default async function HomePage() {
+  const summary = await getProjectSummary();
+  const topProjects = PROJECTS.slice(0, 5);
+  const totalProjects = PROJECTS.length;
   return (
     <main>
       <AnimatedSection delay={0}>
@@ -17,23 +21,29 @@ export default function HomePage() {
             on.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-3">
-            <Link
-              href="/issues"
-              className="min-h-[44px] sm:min-h-0 inline-flex items-center px-4 py-2 rounded-lg bg-amber-500 text-black font-medium hover:bg-amber-400 transition-colors duration-200 no-underline"
-            >
-              Browse issues
-            </Link>
             <AnimatedSection className="flex flex-wrap justify-center gap-2" stagger>
-              {PROJECTS.map((proj) => (
-                <AnimatedItem key={proj.id}>
-                  <Link
-                    href={`/project/${proj.id}`}
-                    className="min-h-[44px] sm:min-h-0 inline-flex items-center px-4 py-2 rounded-lg bg-zinc-800/80 text-zinc-300 hover:bg-zinc-700 hover:text-white no-underline text-sm transition-colors duration-200"
-                  >
-                    {proj.name}
-                  </Link>
-                </AnimatedItem>
-              ))}
+              {topProjects.map((proj) => {
+                const unclaimed = summary?.[proj.id]?.unclaimed;
+                return (
+                  <AnimatedItem key={proj.id}>
+                    <Link
+                      href={`/project/${proj.id}`}
+                      className="min-h-[44px] sm:min-h-0 inline-flex items-center px-4 py-2 rounded-lg bg-zinc-800/80 text-zinc-300 hover:bg-zinc-700 hover:text-white no-underline text-sm transition-colors duration-200"
+                    >
+                      {proj.name}
+                      {typeof unclaimed === "number" && ` (${unclaimed})`}
+                    </Link>
+                  </AnimatedItem>
+                );
+              })}
+              <AnimatedItem>
+                <Link
+                  href="/projects"
+                  className="min-h-[44px] sm:min-h-0 inline-flex items-center px-4 py-2 rounded-lg bg-amber-500 text-black font-medium hover:bg-amber-400 transition-colors duration-200 no-underline"
+                >
+                  and many more
+                </Link>
+              </AnimatedItem>
             </AnimatedSection>
           </div>
           {SUGGEST_ISSUE_URL && (
