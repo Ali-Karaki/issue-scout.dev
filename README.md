@@ -128,6 +128,28 @@ Edit [src/lib/projects.config.ts](src/lib/projects.config.ts) to add or modify p
 
 ---
 
-## 8. Contributing
+## 8. Roadmap
+
+**Current:** Finds OSS issues that likely aren't already being worked on.
+
+**Planned:**
+
+- [ ] **Watchlists** — Save and track issues across projects
+- [ ] **Personalization** — Issue recommendations and contribution dashboard; optional GitHub username for lightweight personalization without OAuth
+- [ ] **Issue deduplication** — Surface and merge duplicate or related issues
+- [ ] **Cross-project debugging** — Identify and trace related issues across multiple repositories
+- [ ] **Repository metrics** — Maintainer responsiveness, average PR merge time, and similar health indicators
+- [ ] **Notifications** — Alerts for new or updated issues matching user preferences
+- [ ] **Weekly digests** — Curated summaries of relevant issues delivered on a schedule
+- [ ] **Contribution leaderboards** — Rankings by issues resolved, PR merge speed, and related metrics
+- [ ] **Repository onboarding guides** — Project-specific contribution workflows (e.g., docs-first vs. code-first)
+- [ ] **One-click reproduction environments** — Gitpod, Codespaces, or devcontainer templates preloaded with repo and issue context
+- [ ] **Code area detection** — Map issues to likely files or directories based on commit history referencing the issue
+- [ ] **Work-in-progress indicators** — Surface "Working on this" or similar signals (requires auth)
+- [ ] **Issue subscriptions** — Subscribe to specific issues for updates
+
+---
+
+## 9. Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for setup, scripts, and PR process.
