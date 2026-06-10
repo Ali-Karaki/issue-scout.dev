@@ -6,9 +6,9 @@ test.describe("Home page", () => {
     await expect(page.getByRole("heading", { name: "IssueScout" })).toBeVisible();
   });
 
-  test("clicking Browse issues navigates to /issues", async ({ page }) => {
+  test("clicking Issues in header navigates to /issues", async ({ page }) => {
     await page.goto("/");
-    await page.getByRole("link", { name: "Browse issues" }).click();
+    await page.getByRole("link", { name: "Issues", exact: true }).click();
     await expect(page).toHaveURL(/\/issues/);
   });
 });

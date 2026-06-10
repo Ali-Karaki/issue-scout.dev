@@ -1,13 +1,13 @@
 import { test, expect } from "@playwright/test";
 
 test.describe("Project page", () => {
-  test("shows project name for TanStack", async ({ page }) => {
-    await page.goto("/project/tanstack");
-    // TanStack project name or loading/error
+  test("shows react project page content", async ({ page }) => {
+    await page.goto("/project/facebook-react");
     await expect(
       page
-        .getByText("TanStack")
-        .or(page.getByText(/Fetching|error|unavailable|token|GitHub/i))
+        .getByRole("heading", { name: "react" })
+        .or(page.getByText("Loading issues..."))
+        .or(page.getByRole("button", { name: "Retry loading issues" }))
         .first()
     ).toBeVisible({ timeout: 60_000 });
   });
