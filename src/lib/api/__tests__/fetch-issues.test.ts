@@ -2,6 +2,7 @@ import { vi, describe, it, expect, beforeEach } from "vitest";
 import {
   getIssuesFromCache,
   getCachedIssues,
+  getProjectSummary,
   refreshAllProjects,
   refreshProjectsBatch,
   type IssuesResponse,
@@ -141,7 +142,7 @@ describe("getIssuesFromCache", () => {
     expect(mockKvGet).toHaveBeenCalledWith("issues:all");
   });
 
-  it('"all" projects returns null when any cache miss', async () => {
+  it('"all" projects merges available per-project caches when some miss', async () => {
     const projectWithMiss = PROJECTS[0]!.id;
     mockHasKv.mockReturnValue(true);
     mockKvGet.mockImplementation((key: string) => {
@@ -153,7 +154,80 @@ describe("getIssuesFromCache", () => {
 
     const result = await getIssuesFromCache(null);
 
-    expect(result).toBeNull();
+    expect(result).not.toBeNull();
+    expect(result!.issues).toHaveLength(PROJECTS.length - 1);
+    expect(result!.summary.total).toBe(PROJECTS.length - 1);
+  });
+
+  it('"all" projects ignores stale empty issues:all and rebuilds from per-project caches', async () => {
+    const staleEmpty = makeMockResponse("stale");
+    staleEmpty.issues = [];
+    staleEmpty.summary = {
+      total: 0,
+      likelyUnclaimed: 0,
+      beginnerFriendly: 0,
+      stale: 0,
+      reposCovered: 0,
+      failedRepos: ["owner/repo"],
+    };
+    mockHasKv.mockReturnValue(true);
+    mockKvGet.mockImplementation((key: string) => {
+      if (key === "issues:all") return Promise.resolve(staleEmpty);
+      const projectId = key.replace("issues:", "");
+      return Promise.resolve(makeMockResponse(projectId));
+    });
+
+    const result = await getIssuesFromCache(null);
+
+    expect(result).not.toBeNull();
+    expect(result!.issues).toHaveLength(PROJECTS.length);
+    expect(mockKvSet).toHaveBeenCalledWith(
+      "issues:all",
+      expect.objectContaining({ summary: expect.objectContaining({ total: PROJECTS.length }) }),
+      expect.any(Number)
+    );
+    expect(mockKvSet).toHaveBeenCalledWith(
+      "issues:summary",
+      expect.any(Object),
+      expect.any(Number)
+    );
+  });
+});
+
+
+describe("getProjectSummary", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("returns cached summary when present", async () => {
+    const summary = { tanstack: { total: 10, unclaimed: 3 } };
+    mockHasKv.mockReturnValue(true);
+    mockKvGet.mockResolvedValue(summary);
+
+    const result = await getProjectSummary();
+
+    expect(result).toEqual(summary);
+    expect(mockKvGet).toHaveBeenCalledWith("issues:summary");
+  });
+
+  it("rebuilds summary from per-project caches when summary missing", async () => {
+    mockHasKv.mockReturnValue(true);
+    mockKvGet.mockImplementation((key: string) => {
+      if (key === "issues:summary") return Promise.resolve(null);
+      const projectId = key.replace("issues:", "");
+      return Promise.resolve(makeMockResponse(projectId));
+    });
+
+    const result = await getProjectSummary();
+
+    expect(result).not.toBeNull();
+    expect(Object.keys(result!)).toHaveLength(PROJECTS.length);
+    expect(mockKvSet).toHaveBeenCalledWith(
+      "issues:summary",
+      expect.any(Object),
+      expect.any(Number)
+    );
   });
 });
 
