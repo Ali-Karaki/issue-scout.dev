@@ -29,7 +29,10 @@ export async function POST(request: NextRequest) {
         retryQueueSize: result.retryQueueSize,
         ...(result.skipped && { skipped: result.skipped, reason: result.reason }),
       },
-      { status: result.skipped ? 200 : result.ok ? 200 : 207 }
+      {
+        status:
+          result.skipped || result.projects.some((p) => p.ok) ? 200 : 207,
+      }
     );
   } catch (err) {
     const message =
