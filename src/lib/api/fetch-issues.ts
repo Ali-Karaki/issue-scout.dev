@@ -223,51 +223,6 @@ export async function refreshAllProjects(
   };
 }
 
-function combineIssuesResponses(validData: IssuesResponse[]): IssuesResponse {
-  const allIssues = validData.flatMap((d) => d.issues);
-  const allFailedRepos = validData.flatMap((d) => d.summary.failedRepos);
-  return {
-    issues: allIssues,
-    summary: {
-      total: allIssues.length,
-      likelyUnclaimed: allIssues.filter(
-        (i) => i.status === "likely_unclaimed"
-      ).length,
-      beginnerFriendly: allIssues.filter((i) => i.isBeginnerFriendly).length,
-      stale: allIssues.filter((i) => i.isStale).length,
-      reposCovered: new Set(allIssues.map((i) => i.repo)).size,
-      failedRepos: [...new Set(allFailedRepos)],
-    },
-  };
-}
-
-function isEmptyAggregate(data: IssuesResponse): boolean {
-  return data.summary.total === 0 && data.issues.length === 0;
-}
-
-async function loadPerProjectCaches(): Promise<IssuesResponse[]> {
-  const results = await Promise.all(
-    PROJECTS.map((proj) => kvGet<IssuesResponse>(`issues:${proj.id}`))
-  );
-  return results.filter((r): r is IssuesResponse => r != null);
-}
-
-function buildProjectSummaryFromCaches(
-  results: (IssuesResponse | null)[]
-): ProjectSummary {
-  const projectSummary: ProjectSummary = {};
-  for (let i = 0; i < PROJECTS.length; i++) {
-    const data = results[i];
-    if (data) {
-      projectSummary[PROJECTS[i]!.id] = {
-        total: data.issues.length,
-        unclaimed: data.summary.likelyUnclaimed,
-      };
-    }
-  }
-  return projectSummary;
-}
-
 /**
  * Rebuild issues:all and issues:summary from all per-project caches.
  * Use when a full cycle completes.
@@ -281,19 +236,37 @@ async function rebuildAllAndSummary(): Promise<void> {
   );
   if (validData.length === 0) return;
 
-  const combined = combineIssuesResponses(validData);
+  const allIssues = validData.flatMap((d) => d.issues);
+  const allFailedRepos = validData.flatMap((d) => d.summary.failedRepos);
+  const combined: IssuesResponse = {
+    issues: allIssues,
+    summary: {
+      total: allIssues.length,
+      likelyUnclaimed: allIssues.filter(
+        (i) => i.status === "likely_unclaimed"
+      ).length,
+      beginnerFriendly: allIssues.filter((i) => i.isBeginnerFriendly).length,
+      stale: allIssues.filter((i) => i.isStale).length,
+      reposCovered: new Set(allIssues.map((i) => i.repo)).size,
+      failedRepos: allFailedRepos,
+    },
+  };
   await kvSet("issues:all", combined, CACHE_REVALIDATE_SECONDS);
 
-  const projectSummary = buildProjectSummaryFromCaches(results);
+  const projectSummary: Record<string, { total: number; unclaimed: number }> =
+    {};
+  for (let i = 0; i < PROJECTS.length; i++) {
+    const data = results[i];
+    if (data) {
+      projectSummary[PROJECTS[i]!.id] = {
+        total: data.issues.length,
+        unclaimed: data.summary.likelyUnclaimed,
+      };
+    }
+  }
   if (Object.keys(projectSummary).length > 0) {
     await kvSet("issues:summary", projectSummary, CACHE_REVALIDATE_SECONDS);
   }
-}
-
-async function mergeFromPerProjectCaches(): Promise<IssuesResponse | null> {
-  const perProject = await loadPerProjectCaches();
-  if (perProject.length === 0) return null;
-  return combineIssuesResponses(perProject);
 }
 
 function logRefreshFailure(
@@ -524,27 +497,26 @@ export async function getIssuesFromCache(
     return kvGet<IssuesResponse>(`issues:${projectId}`);
   }
   const combined = await kvGet<IssuesResponse>("issues:all");
-  if (combined && !isEmptyAggregate(combined)) {
-    return combined;
-  }
-
-  const merged = await mergeFromPerProjectCaches();
-  if (!merged) {
-    return combined ?? null;
-  }
-
-  if (!combined || isEmptyAggregate(combined)) {
-    await kvSet("issues:all", merged, CACHE_REVALIDATE_SECONDS);
-    const results = await Promise.all(
-      PROJECTS.map((proj) => kvGet<IssuesResponse>(`issues:${proj.id}`))
-    );
-    const projectSummary = buildProjectSummaryFromCaches(results);
-    if (Object.keys(projectSummary).length > 0) {
-      await kvSet("issues:summary", projectSummary, CACHE_REVALIDATE_SECONDS);
-    }
-  }
-
-  return merged;
+  if (combined) return combined;
+  const results = await Promise.all(
+    PROJECTS.map((proj) => kvGet<IssuesResponse>(`issues:${proj.id}`))
+  );
+  if (results.some((r) => !r)) return null;
+  const allIssues = results.flatMap((r) => r!.issues);
+  const allFailedRepos = results.flatMap((r) => r!.summary.failedRepos);
+  return {
+    issues: allIssues,
+    summary: {
+      total: allIssues.length,
+      likelyUnclaimed: allIssues.filter(
+        (i) => i.status === "likely_unclaimed"
+      ).length,
+      beginnerFriendly: allIssues.filter((i) => i.isBeginnerFriendly).length,
+      stale: allIssues.filter((i) => i.isStale).length,
+      reposCovered: new Set(allIssues.map((i) => i.repo)).size,
+      failedRepos: allFailedRepos,
+    },
+  };
 }
 
 export interface ProjectSummary {
@@ -557,21 +529,7 @@ export interface ProjectSummary {
  */
 export async function getProjectSummary(): Promise<ProjectSummary | null> {
   if (!hasKv()) return null;
-  const summary = await kvGet<ProjectSummary>("issues:summary");
-  if (summary && Object.keys(summary).length > 0) {
-    return summary;
-  }
-
-  const results = await Promise.all(
-    PROJECTS.map((proj) => kvGet<IssuesResponse>(`issues:${proj.id}`))
-  );
-  const rebuilt = buildProjectSummaryFromCaches(results);
-  if (Object.keys(rebuilt).length === 0) {
-    return summary ?? null;
-  }
-
-  await kvSet("issues:summary", rebuilt, CACHE_REVALIDATE_SECONDS);
-  return rebuilt;
+  return kvGet<ProjectSummary>("issues:summary");
 }
 
 /**
